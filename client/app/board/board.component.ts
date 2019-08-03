@@ -2,11 +2,11 @@ import { Component, OnInit } from '@angular/core';
 declare const ChessBoard: any;
 
 @Component({
-  selector: 'app-game',
-  templateUrl: './game.component.html',
-  styleUrls: ['./game.component.scss']
+  selector: 'app-board',
+  templateUrl: './board.component.html',
+  styleUrls: ['./board.component.scss']
 })
-export class GameComponent implements OnInit {
+export class BoardComponent implements OnInit {
   board: any;
 
   constructor() { }
