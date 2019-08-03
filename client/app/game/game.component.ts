@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+declare const ChessBoard: any;
 
 @Component({
   selector: 'app-game',
@@ -6,10 +7,14 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./game.component.scss']
 })
 export class GameComponent implements OnInit {
+  board: any;
 
   constructor() { }
-
-  ngOnInit() {
+  ngOnInit(): void {
+    this.board = ChessBoard('board', {
+      position: 'start',
+      draggable: true,
+    })
   }
 
 }

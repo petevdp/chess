@@ -5,7 +5,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { NavBarComponent } from './nav-bar/nav-bar.component';
 import { GameComponent } from './game/game.component';
-import { ChessboardModule } from 'ng2-chessboard';
 
 @NgModule({
   declarations: [
@@ -16,7 +15,6 @@ import { ChessboardModule } from 'ng2-chessboard';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    ChessboardModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
