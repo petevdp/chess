@@ -1,7 +1,9 @@
+const socketIO = require('socket.io');
+const { RoomsController } = require('./rooms')
+// const { GamesController } = require('./games')
 
-module.exports = http => {
-  const io = require('socket.io')(http);
-  io.on('connection', socket => {
-    console.log('hi!');
-  })
+module.exports = (http) => {
+  const io = SocketIO(http);
+  const roomsController = new RoomsController(io.of('/rooms'));
+  // const gamesController = new GamesController(io.of('/games'))
 }
