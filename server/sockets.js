@@ -1,4 +1,4 @@
-const socketIO = require('socket.io');
+const SocketIO = require('socket.io');
 const { RoomsController } = require('./rooms')
 // const { GamesController } = require('./games')
 

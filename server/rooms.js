@@ -16,16 +16,16 @@ class Room {
 
 
   join = socket => {
-    const joinable = () => this._players.length < 2;
+    const joinable = () => this.players.length < 2;
     const empty = () => this.players.length === 0;
 
     if (!joinable()) {
-      throw 'room is full!'
+      throw 'room is full!';
     }
     if (empty()) {
       this._host = socket;
     }
-    this._players.push(socket);
+    this.players.push(socket);
     console.log('player joined game!')
   }
 
@@ -42,8 +42,8 @@ class RoomsController {
     this._rooms.map(room => room.getDetails())
   )
 
-  _broadcastRooms() {
-    this._io.emit('rooms', this._getRoomsDetails())
+  _broadcastRoomsUpdate() {
+    this._io.emit('room update', this._getRoomsDetails())
   }
 
   _hostRoom(socket) {
@@ -56,20 +56,24 @@ class RoomsController {
 
   _handleRoomUpdates () {
     this._io.on('connection', socket => {
-      console.log('connected!')
-      socket.emit('rooms', this._getRoomsDetails())
+      console.log('connected to rooms!')
+      socket.emit('rooms', this._getRoomsDetails());
+
+      socket.on('host', () => {
+        console.log('hosting!!');
+        this._rooms.push(new Room(socket))
+        this._broadcastRoomsUpdate()
+      })
+
+      socket.on('join', (room_id) => {
+        this._rooms.find(room => room.room_id === room_id).join(socket)
+        this._broadcastRoomsUpdate()
+      })
     });
 
-    socket.on('host', () => {
-      this._rooms.push(new Room(socket))
-    })
-
-    socket.on('join', (room_id) => {
-      this._rooms.find(room => room.room_id === room_id).join(socket)
-    })
   }
 }
 
-module.exports({
+module.exports= {
   RoomsController,
-})
+};

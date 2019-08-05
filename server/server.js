@@ -7,7 +7,7 @@ const app = express();
 
 const http = require('http').createServer(app);
 
-const { PORT } = dotenv.config({path: path.resolve('../.env')}).parsed.
+const { PORT } = dotenv.config({path: path.resolve('../.env')}).parsed;
 
 require('./sockets')(http);
 
