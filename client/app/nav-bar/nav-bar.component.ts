@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { environment } from '../../environments/environment';
+import { LoginService } from '../login.service';
 
 @Component({
   selector: 'app-nav-bar',
@@ -7,9 +9,13 @@ import { Component, OnInit } from '@angular/core';
 })
 export class NavBarComponent implements OnInit {
 
-  constructor() { }
+  currentUsername: string;
+  constructor(private loginService: LoginService) { }
 
   ngOnInit() {
+    this.loginService.currentUsername.subscribe(username => {
+      this.currentUsername = username;
+    })
   }
 
 }
