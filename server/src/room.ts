@@ -45,6 +45,7 @@ export class Rooms {
   }
 
   broadcastRoomsDetails() {
+    console.log('broadcasting rooms!')
     this.io.emit('room update', this.roomsDetails);
   }
 
@@ -55,6 +56,7 @@ export class Rooms {
   addRoom(host: User): Room {
     const room = new Room(host);
     this.rooms.push(room);
+    this.broadcastRoomsDetails();
     return room;
   }
 }

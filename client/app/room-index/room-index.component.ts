@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { SocketService, RoomDetails, RoomsDetails } from '../socket.service';
+import { SocketService } from '../socket.service';
 import { Observer, Observable } from 'rxjs';
+import { RoomsDetails } from 'APIInterfaces/roomDetails';
 
 @Component({
   selector: 'app-room-index',
@@ -19,7 +20,7 @@ export class RoomIndexComponent implements OnInit {
     console.log(this.socketService);
     const roomIndexUpdates = this.socketService.onRoomIndexUpdate() as Observable<RoomsDetails>;
 
-    roomIndexUpdates.subscribe((details: Array<RoomDetails>) => {
+    roomIndexUpdates.subscribe((details: RoomsDetails) => {
       console.log('details: ', details);
       this.roomsDetails = details;
     })

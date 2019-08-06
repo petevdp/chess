@@ -1,13 +1,14 @@
 import { Rooms, Room } from './room';
 import { Socket } from 'socket.io';
 export class User {
-  private _username: string;
+  private _username: string = 'john doe';
   private room: Room;
 
   constructor(
     private socket: Socket,
     private rooms: Rooms
   ) {
+    console.log('new user!')
     // get rooms for client
     socket.emit('rooms');
     this.socket.on('set username', (username: string) => {
@@ -34,13 +35,10 @@ export class User {
 
 }
 export class UsersController {
-  constructor(
-    private parent_io: any
-  ) {
-    const io = parent_io.of('/users');
+  constructor(private io: any) {
     const rooms = new Rooms(io);
-    io.on('connection', (socket: Socket) => (
-      new User(socket, rooms)
-    ));
+    io.on('connection', (socket: Socket) => {
+      const user = new User(socket, rooms);
+    });
   }
 }

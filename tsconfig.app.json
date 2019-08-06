@@ -9,7 +9,8 @@
     "client/polyfills.ts"
   ],
   "include": [
-    "client/**/*.ts"
+    "client/**/*.ts",
+    "APIInterfaces/**/*.ts"
   ],
   "exclude": [
     "client/test.ts",

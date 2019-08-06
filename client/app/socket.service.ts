@@ -2,14 +2,8 @@ import { Injectable } from '@angular/core';
 import { environment } from 'client/environments/environment.prod';
 import * as io from 'socket.io-client'
 import { Subject, Observable, Observer } from 'rxjs';
+import { RoomsDetails } from 'APIInterfaces/roomDetails';
 
-export interface RoomDetails {
-  room_id: string;
-}
-
-export interface RoomsDetails  {
-  [index: number]: RoomDetails;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +14,7 @@ export class SocketService {
   constructor() {}
 
   connect() {
-    this.socket = io('http://localhost:3000/rooms');
+    this.socket = io('http://localhost:3000');
   }
 
   onRoomIndexUpdate() {
