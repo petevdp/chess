@@ -1,7 +1,7 @@
-const { Chess } = require('chess');
+import { Chess } from 'chess.js';
 
 // create a game client
-const gameClient = chess.create({PGN: true});
+const gameClient = Chess.create({PGN: true});
 
 let move;
 let status;
