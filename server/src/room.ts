@@ -1,15 +1,24 @@
 import * as uuidv4 from 'uuid/v4';
 import { User } from './user';
+import { Server } from 'socket.io';
 
 export class Room {
-  players: any[];
+  users: User[] = [];
   uuid: string;
-  constructor(private host: User) {
-    this.players = [];
+  constructor(host: User, private io: Server) {
     console.log('hosted!');
     this.uuid = `room/${uuidv4()}`;
+    this.join(host);
+    host.socket.emit('room create', this.uuid);
   }
   addPlayer(user: User) {
+  }
+
+  get host() {
+    if (this.users.length < 0) {
+      throw new Error('no host! room is empty!');
+    }
+    return this.users[0];
   }
 
   get details() {
@@ -19,16 +28,30 @@ export class Room {
     }
   }
 
-  join = user => {
-    const joinable = () => this.players.length < 2;
+  join(user) {
+    const joinable = () => this.users.length < 2;
 
     if (!joinable()) {
       throw new Error('room is full!');
     }
-    this.players.push(user);
+    if (this.users.find(u => u === user)) {
+      throw new Error('player already joined!');
+    }
+    this.users.push(user);
+
+    user.socket.join(this.uuid);
     console.log('player joined game!');
+    console.log('num users: ', this.users.length);
+
+    if (this.users.length === 2) {
+      this.startGame();
+    }
   }
 
+  private startGame(): void {
+    console.log(Object.keys(this.io.in(this.uuid).sockets));
+    this.io.in(this.uuid).emit('start game', 'viable moves');
+  }
 }
 
 export class Rooms {
@@ -53,10 +76,20 @@ export class Rooms {
     const index = this.rooms.findIndex(room => room.uuid === uuid);
   }
 
+  joinRoom(user: User, room_id: string): Room {
+    const room = this.findRoom(room_id);
+    room.join(user);
+    return room;
+  }
+
   addRoom(host: User): Room {
-    const room = new Room(host);
+    const room = new Room(host, this.io);
     this.rooms.push(room);
     this.broadcastRoomsDetails();
     return room;
+  }
+
+  private findRoom(room_id): Room {
+    return this.rooms.find(room => room.uuid === room_id);
   }
 }

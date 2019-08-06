@@ -1,16 +1,17 @@
 import { Rooms, Room } from './room';
 import { Socket } from 'socket.io';
 export class User {
-  private _username: string = null;
+  private _username: string = 'pete';
   private room: Room;
 
   constructor(
-    private socket: Socket,
+    public socket: Socket,
     private rooms: Rooms
   ) {
     console.log('new user!')
     // get rooms for client
-    socket.emit('rooms');
+    this.rooms.broadcastRoomsDetails();
+
     this.socket.on('set username', (username: string) => {
       this.username = username;
     } );
@@ -20,11 +21,18 @@ export class User {
     })
 
     this.socket.on('join', (room_id: string) => {
-
-    })
+      // TODO make it impossible to join a room if you're already hosting
+      const room = this.rooms.joinRoom(this, room_id) as Room;
+      if (!room) {
+        throw new Error('joined room doesn\'t exist!');
+      }
+    });
   }
 
   get username() {
+    if (!this._username) {
+      throw new Error('username not set');
+  }
     return this._username;
   }
 

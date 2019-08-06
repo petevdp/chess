@@ -12,20 +12,32 @@ import { RoomsDetails } from 'APIInterfaces/roomDetails';
 export class RoomIndexComponent implements OnInit {
 
   roomsDetails: RoomsDetails = [];
+  hostedRoomId: string;
 
   constructor(private socketService: SocketService) { }
 
   ngOnInit() {
     console.log(this.socketService);
-    const roomIndexUpdates = this.socketService.onRoomIndexUpdate() as Observable<RoomsDetails>;
-
-    roomIndexUpdates.subscribe((details: RoomsDetails) => {
+    this.socketService.roomsDetailsObservable.subscribe((details: RoomsDetails) => {
       console.log('details: ', details);
       this.roomsDetails = details;
-    })
+    });
+
+    this.socketService.hostedRoomIdObservable.subscribe((room_id: string) => {
+      this.hostedRoomId = room_id;
+    });
   }
 
   hostRoom() {
     this.socketService.host();
+  }
+
+  joinRoom(room_id) {
+    if (room_id === this.hostedRoomId) {
+      console.log('already in this room');
+      return;
+    }
+    console.log(`joining room ${room_id}`);
+    this.socketService.join(room_id);
   }
 }
