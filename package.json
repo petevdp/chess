@@ -8,7 +8,7 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "server": "server/node_modules/.bin/ts-node-dev server/src/server.ts"
+    "server": "cd server && node_modules/.bin/ts-node-dev src/server.ts"
   },
   "private": true,
   "dependencies": {

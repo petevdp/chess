@@ -1,7 +1,7 @@
 import { Rooms, Room } from './room';
 import { Socket } from 'socket.io';
 export class User {
-  private _username: string = 'john doe';
+  private _username: string = null;
   private room: Room;
 
   constructor(

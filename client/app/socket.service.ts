@@ -3,6 +3,7 @@ import { environment } from 'client/environments/environment.prod';
 import * as io from 'socket.io-client'
 import { Subject, Observable, Observer } from 'rxjs';
 import { RoomsDetails } from 'APIInterfaces/roomDetails';
+import { LoginService } from './login.service';
 
 
 @Injectable({
@@ -11,10 +12,16 @@ import { RoomsDetails } from 'APIInterfaces/roomDetails';
 export class SocketService {
   private socket;
 
-  constructor() {}
-
-  connect() {
+  constructor(
+    private loginService: LoginService
+  ) {
     this.socket = io('http://localhost:3000');
+    this.loginService.currentUsername.subscribe(username => {
+      if (username) {
+        console.log('setting username')
+        this.socket.emit('set username', username);
+      }
+    });
   }
 
   onRoomIndexUpdate() {
@@ -26,7 +33,6 @@ export class SocketService {
   }
 
   setUsername(username: string) {
-    this.socket.emit('set username', username);
   }
 
   host() {

@@ -16,7 +16,6 @@ export class RoomIndexComponent implements OnInit {
   constructor(private socketService: SocketService) { }
 
   ngOnInit() {
-    this.socketService.connect();
     console.log(this.socketService);
     const roomIndexUpdates = this.socketService.onRoomIndexUpdate() as Observable<RoomsDetails>;
 
