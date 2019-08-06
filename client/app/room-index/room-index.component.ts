@@ -1,22 +1,23 @@
 import { Component, OnInit } from '@angular/core';
-import { RoomIndexService, RoomDetails, RoomsDetails } from '../room-index.service';
+import { SocketService, RoomDetails, RoomsDetails } from '../socket.service';
 import { Observer, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-room-index',
   templateUrl: './room-index.component.html',
   styleUrls: ['./room-index.component.scss'],
-  providers: [RoomIndexService]
+  providers: [SocketService]
 })
 export class RoomIndexComponent implements OnInit {
 
   roomsDetails: RoomsDetails = [];
 
-  constructor(private roomIndexService: RoomIndexService) { }
+  constructor(private socketService: SocketService) { }
 
   ngOnInit() {
-    this.roomIndexService.connect();
-    const roomIndexUpdates = this.roomIndexService.onRoomIndexUpdate() as Observable<RoomsDetails>;
+    this.socketService.connect();
+    console.log(this.socketService);
+    const roomIndexUpdates = this.socketService.onRoomIndexUpdate() as Observable<RoomsDetails>;
 
     roomIndexUpdates.subscribe((details: Array<RoomDetails>) => {
       console.log('details: ', details);
@@ -25,6 +26,6 @@ export class RoomIndexComponent implements OnInit {
   }
 
   hostRoom() {
-    this.roomIndexService.host();
+    this.socketService.host();
   }
 }

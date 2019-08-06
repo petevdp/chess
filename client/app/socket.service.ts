@@ -3,34 +3,42 @@ import { environment } from 'client/environments/environment.prod';
 import * as io from 'socket.io-client'
 import { Subject, Observable, Observer } from 'rxjs';
 
+export interface RoomDetails {
+  room_id: string;
+}
+
+export interface RoomsDetails  {
+  [index: number]: RoomDetails;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class SocketService {
   private socket;
-  constructor() { }
 
-  connect(): Subject<any> {
-    this.socket = io('http://localhost:3000');
-    // tslint:disable-next-line: no-shadowed-variable
-    const observable = new Observable((observer) => {
-      this.socket.on('message', data => {
-        console.log('received message!');
-        observer.next(data);
-      });
-      return () => {
-        this.socket.disconnect();
-      };
+  constructor() {}
+
+  connect() {
+    this.socket = io('http://localhost:3000/rooms');
+  }
+
+  onRoomIndexUpdate() {
+    return new Observable<RoomsDetails>(observer => {
+      this.socket.on('room update', ((roomsDetails: RoomsDetails) => {
+        observer.next(roomsDetails);
+      }));
     });
-    const observer = {
-      next: (data: any) => {
-        this.socket.emit('message', JSON.stringify(data));
-        return;
-      }
+  }
+
+  setUsername(username: string) {
+    this.socket.emit('set username', username);
+  }
+
+  host() {
+    if (!this.socket) {
+      throw new Error('socket not connected');
     }
-    const subject = new Subject<any>();
-    observable.subscribe(subject);
-    subject.subscribe(observer);
-    return subject;
+    this.socket.emit('host');
   }
 }

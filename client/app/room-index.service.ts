@@ -34,6 +34,6 @@ export class RoomIndexService {
     if (!this.socket) {
       throw new Error('socket not connected');
     }
-    this.socket.emit('host')
+    this.socket.emit('host');
   }
 }

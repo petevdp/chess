@@ -1,11 +1,11 @@
 import * as SocketIO from 'socket.io';
-import { RoomsController } from './rooms';
-import { UsersFactory } from './user';
+import { Rooms } from './room';
+import { UsersController } from './user';
 
 function sockets(http: any) {
   const io = SocketIO(http);
-  const roomsController = new RoomsController(io.of('/rooms'));
-  const usersController = new UsersFactory(io);
+  const roomsController = new Rooms(io.of('/rooms'));
+  const usersController = new UsersController(io);
   // const gamesController = new GamesController(io.of('/games'))
 };
 
