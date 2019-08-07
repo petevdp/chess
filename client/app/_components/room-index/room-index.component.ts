@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { SocketService } from '../socket.service';
+import { SocketService } from '../../_services/socket.service';
 import { Observer, Observable } from 'rxjs';
 import { RoomsDetails } from 'APIInterfaces/roomDetails';
 

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { SocketService } from '../socket.service';
+import { SocketService } from '../../_services/socket.service';
+import { GameService } from '../../_services/game.service';
 
 declare const ChessBoard: any;
 
@@ -13,7 +14,7 @@ export class BoardComponent implements OnInit {
   status: string = 'in check';
 
   constructor(
-    private socketService: SocketService
+    private gameService: GameService
   ) { }
   ngOnInit(): void {
     this.board = ChessBoard('board', {

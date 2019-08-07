@@ -1,24 +1,43 @@
-import { Chess } from 'chess.js';
+import { Chess, ShortMove, ChessInstance } from 'chess.js';
+import { User } from './user';
+import { Room } from './room';
+import * as _ from 'lodash';
+import { Observable, BehaviorSubject, Subject } from 'rxjs';
 
-// create a game client
-const gameClient = Chess.create({PGN: true});
+class Player {
 
-let move;
-let status;
+  private moveSubject: Subject<ShortMove>;
+  public moveObservable: Observable<ShortMove>;
 
-// capture check and checkmate events
-gameClient.on('check', (attack) => {
-  // get more details about the attack on the King
-  console.log(attack);
-});
+  constructor(
+    private user: User,
+    private color: string
+  ) {
+    this.user.socket.emit('start game', { color: this.color });
 
-// look at the status and valid moves
-status = gameClient.getStatus();
+    this.moveSubject = new Subject();
+    this.user.socket.on('move', this.moveSubject.next);
+    this.moveObservable = this.moveSubject.asObservable();
+  }
+}
+export class Game {
 
-// make a move
-move = gameClient.move('a4');
+  private game: ChessInstance = new Chess();
+  private players: Player[];
 
-// look at the status again after the move to see
-// the opposing side's available moves
-status = gameClient.getStatus();
-console.log('status: ', status);
+  constructor(
+    private room: Room
+  ) {
+
+    const colors = _.shuffle(['white', 'black']);
+    this.players = _.zip(room.users, colors, (user, color) => (
+      new Player(user, color)
+    ));
+
+    this.players.forEach(player => {
+      player.moveObservable.subscribe((move: ShortMove) => {
+        if this.game.moves()
+      });
+    });
+  }
+}

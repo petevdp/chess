@@ -1,22 +1,52 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, pipe } from 'rxjs';
+
+import { GameStartState } from 'APIInterfaces/game';
 import { Chess } from 'chess.js';
+import { SocketService } from './socket.service';
+import { start } from 'repl';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GameService {
-  constructor() {
+
+  public board: any = null;
+
+  private color: string;
+  private game: Chess = new Chess();
+  private boardConfig: any;
+
+  constructor(
+    private socketService: SocketService,
+  ) {
+    this.socketService.gameObservable.subscribe((gameStartState: GameStartState) => {
+      const { color } = gameStartState;
+      this.boardConfig({
+        orientation: color,
+        position: start,
+      })
+    });
+  }
+
+  private onDragStart = (source, piece, position, orientation) => {
+    if (this.game.game_over()) {
+      return false;
+    }
+
+    // only pick up pieces for the side to move
+    if ((this.game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+        (this.game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+      return false;
+    }
   }
 }
 // NOTE: this example uses the chess.js library:
 // https://github.com/jhlywa/chess.js
 
-var board = null
-var game = new Chess()
-var $status = $('#status')
-var $fen = $('#fen')
-var $pgn = $('#pgn')
+// var $status = $('#status')
+// var $fen = $('#fen')
+// var $pgn = $('#pgn')
 
 function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over

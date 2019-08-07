@@ -1,9 +1,9 @@
 import { Routes, RouterModule } from '@angular/router';
 
-import { LoginComponent } from './login';
-import { RoomIndexComponent } from './room-index';
-import { BoardComponent } from './board';
-import { LoginGuard } from 'server/login.guard';
+import { LoginComponent } from './_components/login';
+import { RoomIndexComponent } from './_components/room-index/index';
+import { BoardComponent } from './_components/board';
+import { LoginGuard } from 'client/app/login.guard';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full'},
