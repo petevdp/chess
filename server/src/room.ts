@@ -1,6 +1,7 @@
 import * as uuidv4 from 'uuid/v4';
 import { User } from './user';
 import { Server } from 'socket.io';
+import { Game } from './game';
 
 export class Room {
   users: User[] = [];
@@ -49,8 +50,7 @@ export class Room {
   }
 
   private startGame(): void {
-    console.log(Object.keys(this.io.in(this.uuid).sockets));
-    this.io.in(this.uuid).emit('start game', 'viable moves');
+    const game = new Game(this);
   }
 }
 
