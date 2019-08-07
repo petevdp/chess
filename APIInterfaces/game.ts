@@ -1,9 +1,9 @@
-export interface Move {
-  color: string;
-  from: string,
-  to: string;
+import { ShortMove } from 'chess.js';
+
+export interface ClientMove extends ShortMove {
+  colour: string;
 }
 
 export interface GameStartState {
-  color: string;
+  colour: string;
 }
