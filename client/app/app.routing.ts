@@ -12,4 +12,4 @@ const routes: Routes = [
   { path: 'play', component: BoardComponent }
 ];
 
-export const appRoutingModule = RouterModule.forRoot(routes);
+export const AppRoutingModule = RouterModule.forRoot(routes);
