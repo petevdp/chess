@@ -4,6 +4,6 @@ export interface ClientMove extends ShortMove {
   colour: string;
 }
 
-export interface GameStartState {
+export interface GameConfig {
   colour: string;
 }

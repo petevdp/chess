@@ -12,6 +12,10 @@ export class User {
     // get rooms for client
     this.rooms.broadcastRoomsDetails();
 
+    this.socket.on('ready for game', () => {
+
+    })
+
     this.socket.on('set username', (username: string) => {
       this.username = username;
     } );

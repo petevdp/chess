@@ -1,26 +1,37 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { SocketService } from '../../_services/socket.service';
 import { GameService } from '../../_services/game.service';
+import { GameConfig } from 'APIInterfaces/game';
+
 
 declare const ChessBoard: any;
-
 @Component({
   selector: 'app-board',
   templateUrl: './board.component.html',
-  styleUrls: ['./board.component.scss']
+  styleUrls: ['./board.component.scss'],
 })
-export class BoardComponent implements OnInit {
+export class BoardComponent implements OnInit, OnDestroy {
   board: any;
   status: string = 'in check';
 
   constructor(
-    private gameService: GameService
-  ) { }
+    private socketService: SocketService,
+  ) {
+    console.log('const board');
+  }
   ngOnInit(): void {
-    this.board = ChessBoard('board', {
-      position: 'start',
-      draggable: true,
-    })
+    console.log('init board')
+    this.socketService.socket.emit('ready');
+    this.socketService.socket.on('start game', (gameConfig: GameConfig) => {
+      this.board = ChessBoard({
+        orientation: gameConfig.colour,
+      });
+    });
   }
 
+  ngOnDestroy(): void {
+    //Called once, before the instance is destroyed.
+    //Add 'implements OnDestroy' to the class.
+    console.log('ded');
+  }
 }

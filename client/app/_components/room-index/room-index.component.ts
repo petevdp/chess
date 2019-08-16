@@ -1,24 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { SocketService } from '../../_services/socket.service';
 import { Observer, Observable } from 'rxjs';
-import { RoomsDetails } from 'APIInterfaces/roomDetails';
+import { RoomDetails } from 'APIInterfaces/roomDetails';
 
 @Component({
   selector: 'app-room-index',
   templateUrl: './room-index.component.html',
   styleUrls: ['./room-index.component.scss'],
-  providers: [SocketService]
 })
 export class RoomIndexComponent implements OnInit {
 
-  roomsDetails: RoomsDetails = [];
+  roomsDetails: RoomDetails[] = [];
   hostedRoomId: string;
 
   constructor(private socketService: SocketService) { }
 
   ngOnInit() {
-    console.log(this.socketService);
-    this.socketService.roomsDetailsObservable.subscribe((details: RoomsDetails) => {
+    console.log('initializing room-index component');
+    this.socketService.roomsDetailsObservable.subscribe((details: RoomDetails[]) => {
       console.log('details: ', details);
       this.roomsDetails = details;
     });
@@ -26,6 +25,11 @@ export class RoomIndexComponent implements OnInit {
     this.socketService.hostedRoomIdObservable.subscribe((room_id: string) => {
       this.hostedRoomId = room_id;
     });
+
+    this.socketService.gameConfigObservable.subscribe((gameConfig) => {
+      console.log('game config board cb', gameConfig);
+    });
+    console.log('gameConfig in room index', this.socketService.gameConfig);
   }
 
   hostRoom() {
