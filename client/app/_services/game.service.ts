@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject, pipe } from 'rxjs';
 
-import { GameConfig } from 'APIInterfaces/game';
+import { GameConfig } from 'APIInterfaces/api';
 import { ChessInstance } from 'chess.js';
 import * as Chess from 'chess.js';
 import { SocketService } from './socket.service';
@@ -19,17 +19,17 @@ export class GameService {
   constructor(
     private socketService: SocketService
   ) {
-    this.socketService.gameConfigObservable.subscribe((GameConfig: GameConfig) => {
-      if (!GameConfig) {
+    this.socketService.gameConfigObservable.subscribe((gameConfig: GameConfig) => {
+      if (!gameConfig) {
         console.log('GameConfig sux');
         return;
       }
       console.log('initializing board');
       this.board = ChessBoard('board', {
-        orientation: GameConfig.colour,
+        orientation: gameConfig.colour,
         draggable: true,
         position: 'start',
       });
     });
   }
-};
+}

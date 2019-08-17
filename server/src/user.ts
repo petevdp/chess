@@ -1,20 +1,20 @@
 import { Rooms, Room } from './room';
 import { Socket } from 'socket.io';
 export class User {
-  private _username: string = 'pete';
+  private _username = 'pete';
   private room: Room;
 
   constructor(
     public socket: Socket,
     private rooms: Rooms
   ) {
-    console.log('new user!')
+    console.log('new user!');
     // get rooms for client
     this.rooms.broadcastRoomsDetails();
 
     this.socket.on('ready for game', () => {
 
-    })
+    });
 
     this.socket.on('set username', (username: string) => {
       this.username = username;
@@ -22,7 +22,7 @@ export class User {
 
     this.socket.on('host', () => {
       this.room = this.rooms.addRoom(this);
-    })
+    });
 
     this.socket.on('join', (room_id: string) => {
       // TODO make it impossible to join a room if you're already hosting

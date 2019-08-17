@@ -5,7 +5,7 @@ import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { RoomDetails } from 'APIInterfaces/roomDetails';
 import { LoginService } from './login.service';
 import { Router } from '@angular/router';
-import { ClientMove, GameConfig } from 'APIInterfaces/game';
+import { ClientMove, GameConfig } from 'APIInterfaces/api';
 
 
 @Injectable({
