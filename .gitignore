@@ -1,7 +1,10 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # secrets
+/secrets
 .env
+jwtRS256.key
+jwtRS256.key.pub
 
 # compiled output
 /dist
