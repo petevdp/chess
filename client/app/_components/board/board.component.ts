@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { SocketService } from '../../_services/socket.service';
 import { GameService } from '../../_services/game.service';
-import { GameConfig } from 'APIInterfaces/api';
+import { GameConfig } from 'APIInterfaces/types';
 
 
 declare const ChessBoard: any;

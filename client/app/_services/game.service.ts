@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject, pipe } from 'rxjs';
 
-import { GameConfig } from 'APIInterfaces/api';
+import { GameConfig } from 'APIInterfaces/types';
 import { ChessInstance } from 'chess.js';
 import * as Chess from 'chess.js';
 import { SocketService } from './socket.service';

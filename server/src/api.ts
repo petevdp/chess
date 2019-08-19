@@ -1,25 +1,26 @@
 import * as fs from 'fs';
-
 import * as express from 'express';
 import * as jwt from 'jsonwebtoken';
-import * as cors from 'cors';
+// import * as cors from 'cors';
 import * as bodyParser from 'body-parser';
+import * as Moment from 'moment';
 
 import { Validator, ValidationError } from 'express-json-validator-middleware';
 
 import { JWT_SECRET_PATH } from './constants';
-import { UserDetails } from 'APIInterfaces/api';
-
+import { UserLogin, SessionDetails } from 'APIInterfaces/types';
 
 export const api = express();
 
 const RSA_PRIVATE_KEY = fs.readFileSync(JWT_SECRET_PATH);
 
 api.use(bodyParser.json());
-api.use(cors({
-  origin: 'http://localhost:4200',
-  credentials: true,
-}));
+// TODO access control header still present for some reason
+
+// api.use(cors({
+//   origin: 'http://localhost:4200',
+//   credentials: true,
+// }));
 
 const validator = new Validator({allErrors: true})
 
@@ -39,29 +40,35 @@ const loginSchema = {
 }
 
 api.put('/login', validate({body: loginSchema}), (req, res) => {
-  console.log('login route!');
-  console.log(req.body);
-  const { username, password } = req.body as UserDetails;
+  const { username, password } = req.body as UserLogin;
 
   // TODO add validations
   if (!true) {
     return res.sendStatus(401);
   }
-  // res.set({
-  //   'Access-Control-Allow-Credentials': 'true',
-  //   'Access-Control-Allow-Origin': 'http://localhost:4200',
-  // });
 
-  // actual ids will come with db
   const userId = username + password as string;
+
+  const expireHours = 3;
+  const currTime = Date.now();
+
+  // currently not secure, sent over http
   const jwtBearerToken = jwt.sign({}, RSA_PRIVATE_KEY, {
     algorithm: 'RS256',
-    expiresIn: 120,
-    subject: userId
+    expiresIn: `${expireHours}h`,
+    subject: userId,
   });
 
-  res.cookie('session_id', jwtBearerToken, { httpOnly: true, secure: true });
-  res.sendStatus(200);
+  const expireTime = Moment.unix(currTime).add(expireHours, 'hours').valueOf();
+  const sessionDetails = {
+    username,
+    userId,
+    expireTime
+  } as SessionDetails;
+
+  res
+    .cookie(process.env.JWT_COOKIE_NAME, jwtBearerToken, {httpOnly: true})
+    .json(sessionDetails);
 });
 
 // handling validation errors

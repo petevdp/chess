@@ -13,7 +13,13 @@ export interface RoomDetails {
   host_username: string;
 }
 
-export interface UserDetails {
+export interface UserLogin {
   username: string;
   password: string;
+}
+
+export interface SessionDetails extends UserLogin {
+  username: string;
+  userId: string;
+  expireTime: number;
 }

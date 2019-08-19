@@ -3,7 +3,7 @@ import { User } from './user';
 import { Room } from './room';
 import * as _ from 'lodash';
 import { Observable, Subject } from 'rxjs';
-import { ClientMove, GameConfig } from 'APIInterfaces/api';
+import { ClientMove, GameConfig } from 'APIInterfaces/types';
 import { Server } from 'socket.io';
 
 class Player {
