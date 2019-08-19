@@ -10,27 +10,39 @@ import { fstat } from 'fs';
 
 export const api = express();
 
-const RSA_PRIVATE_KEY =  fs.readFileSync(JWT_SECRET_PATH);
+const RSA_PRIVATE_KEY = fs.readFileSync(JWT_SECRET_PATH);
 
 api.use(bodyParser.json());
-api.use(cors());
+api.use(cors({
+  origin: 'http://localhost:4200',
+  credentials: true,
+  exposedHeaders: 'Set-Cookie'
+  // allowedHeaders: 'Set-Cookie,Cache,Content-Type
+}));
 
-api.post('/login', (req, res) => {
+api.put('/login', (req, res) => {
   console.log('login route!');
   console.log(req.body);
   const { username, password } = req.body as UserDetails;
 
   // TODO add validations
   if (true) {
+    // actual ids will come with db
+    // res.set({
+    //   'Access-Control-Allow-Credentials': 'true',
+    //   'Access-Control-Allow-Origin': 'http://localhost:4200',
+    // });
+
     const userId = username + password;
     const jwtBearerToken = jwt.sign({}, RSA_PRIVATE_KEY, {
       algorithm: 'RS256',
       expiresIn: 120,
       subject: userId
     });
-    console.log(jwtBearerToken);
 
-    res.json(jwtBearerToken);
+    res.cookie('session_id', jwtBearerToken, { httpOnly: true, secure: true });
+  } else {
+    return res.sendStatus(401);
   }
-  res.status(200).send();
+  res.send();
 });

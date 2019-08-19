@@ -32,8 +32,9 @@ export class LoginComponent {
     if (val.username && val.username) {
       this.authService.login(val.username, val.password)
         .subscribe(
-          () => {
-            console.log("User is logged in");
+          (out) => {
+            console.log('out: ', out);
+            console.log('User is logged in');
             this.router.navigateByUrl('/games');
           }
         );

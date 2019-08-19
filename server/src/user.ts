@@ -50,6 +50,8 @@ export class UsersController {
   constructor(private io: any) {
     const rooms = new Rooms(io);
     io.on('connection', (socket: Socket) => {
+      console.log('connection:')
+      console.log(socket.handshake.headers);
       const user = new User(socket, rooms);
     });
   }
