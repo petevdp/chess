@@ -12,6 +12,7 @@
     "cors": "^2.8.5",
     "dotenv": "^8.0.0",
     "express": "^4.17.1",
+    "express-json-validator-middleware": "^2.0.0",
     "jsonwebtoken": "^8.5.1",
     "ts-node": "~7.0.0",
     "uuid": "^3.3.2"
