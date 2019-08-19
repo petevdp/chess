@@ -20,9 +20,8 @@ export class AuthService {
     console.log('sending request!');
     // return this.http.put<UserDetails>(environment.API_ROUTE + '/login', {username, password}, options)
     return new Observable<any>(subscriber => {
-      fetch(environment.API_ROUTE + '/login', {
+      fetch('api/login', {
         method: 'PUT',
-        mode: 'cors',
         credentials: 'include',
         headers: {
           Accept: 'application/json',
