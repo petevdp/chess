@@ -37,7 +37,7 @@ const loginSchema = {
       type: 'string'
     }
   }
-}
+};
 
 api.put('/login', validate({body: loginSchema}), (req, res) => {
   const { username, password } = req.body as UserLogin;
