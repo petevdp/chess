@@ -1,104 +1,40 @@
 import * as uuidv4 from 'uuid/v4';
-import { User } from './user';
+import { LobbyMember, Player } from './player';
 import { Server, Socket } from 'socket.io';
 import { Game } from './game';
+import { ClientMove } from 'APIInterfaces/types';
 
 export class Room {
-  users: User[] = [];
-  uuid: string;
-  constructor(host: User, private io: Server) {
-    console.log('hosted!');
-    this.uuid = `room/${uuidv4()}`;
-    this.join(host);
-    host.socket.emit('room create', this.uuid);
-  }
-  addPlayer(user: User) {
+  id: string;
+  players: Player[];
+  game: Game;
+
+  constructor(private io: Server) {
+    this.id = `room/${uuidv4()}`;
   }
 
-  get host() {
-    if (this.users.length < 0) {
-      throw new Error('no host! room is empty!');
+  addPlayer(player: Player) {
+    if (this.players.length > 2) {
+      throw new Error('too many players');
     }
-    return this.users[0];
-  }
-
-  get details() {
-    return {
-      room_id: this.uuid,
-      host_username: this.host.username,
-    }
-  }
-
-  join(user) {
-    const joinable = () => this.users.length < 2;
-
-    if (!joinable()) {
-      throw new Error('room is full!');
-    }
-    if (this.users.find(u => u === user)) {
-      throw new Error('player already joined!');
-    }
-    this.users.push(user);
-
-    user.socket.join(this.uuid);
-    console.log('player joined game!');
-    console.log('num users: ', this.users.length);
-
-    if (this.users.length === 2) {
+    this.players.push(player);
+    if (this.players.length === 2) {
       this.startGame();
     }
   }
 
+  makeMove = (emitMove: (ClientMove) => void, move: ClientMove) => {
+    // TODO validate gamestate with new move
+    if (false) {
+      throw new Error('illegal move!');
+    }
+    // TODO add move to gamestate
+
+    emitMove(move);
+  }
+
   private startGame(): void {
-    const game = new Game(this);
-  }
-}
-
-export class Lobby {
-  rooms = [] as Room[];
-
-  constructor(
-    private io,
-  ) {
-    this.io.on('connection', (socket: Socket) => {
-      console.log('connection:');
-      console.log(socket.handshake.headers);
-      const user = new User(
-        socket,
-        this.createRoom,
-        this.joinRoom
-      );
-      user.updateRoomIndex(this.roomsDetails);
-    });
-  }
-
-  get roomsDetails() {
-    return this.rooms.map(room => room.details);
-  }
-
-  broadcastRoomsDetails() {
-    console.log('broadcasting rooms!')
-    this.io.emit('room update', this.roomsDetails);
-  }
-
-  deleteRoom(uuid) {
-    const index = this.rooms.findIndex(room => room.uuid === uuid);
-  }
-
-  joinRoom = (user: User, room_id: string): Room => {
-    const room = this.findRoom(room_id);
-    room.join(user);
-    return room;
-  }
-
-  createRoom = (host: User): Room => {
-    const room = new Room(host, this.io);
-    this.rooms.push(room);
-    this.broadcastRoomsDetails();
-    return room;
-  }
-
-  private findRoom(room_id): Room {
-    return this.rooms.find(room => room.uuid === room_id);
+    // TODO implement game logic
+    // this.game = new Game();
   }
 }

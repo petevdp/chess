@@ -1,18 +1,18 @@
 import {ChessInstance, Chess } from 'chess.js';
-import { User } from './user';
+import { LobbyMember } from './player';
 import { Room } from './room';
 import * as _ from 'lodash';
 import { Observable, Subject } from 'rxjs';
 import { ClientMove, GameConfig } from 'APIInterfaces/types';
 import { Server } from 'socket.io';
 
-class Player {
+class LobbyMember {
 
   private moveSubject: Subject<ClientMove>;
   public moveObservable: Observable<ClientMove>;
 
   constructor(
-    private user: User,
+    private user: LobbyMember,
     private room: Room,
     public colour: string
   ) {
@@ -34,7 +34,7 @@ class Player {
 
   // sends move to all players in room except sender
   broadcastMove(move: ClientMove) {
-    this.user.socket.to(this.room.uuid).emit('move', move);
+    this.user.socket.to(this.room.id).emit('move', move);
   }
 
   startGame() {
@@ -46,18 +46,18 @@ class Player {
 export class Game {
 
   private game: ChessInstance = new Chess();
-  private players: Player[];
+  private players: LobbyMember[];
 
   constructor(
     private room: Room,
   ) {
     const colors = _.shuffle(['white', 'black']);
-    this.players = _.zip(room.users, colors).map(([user, colour]) => (
-      new Player(user, this.room, colour)
+    this.players = _.zip(room.players, colors).map(([user, colour]) => (
+      new LobbyMember(user, this.room, colour)
     ));
     console.log('players: ', this.players.length);
 
-    this.players.forEach((player: Player) => {
+    this.players.forEach((player: LobbyMember) => {
       player.moveObservable.subscribe((move: ClientMove) => {
         if (player.colour !== move.colour) {
           throw new Error('wrong color!');

@@ -4,13 +4,19 @@ export interface ClientMove extends ShortMove {
   colour: string;
 }
 
+
 export interface GameConfig {
   colour: string;
 }
 
 export interface RoomDetails {
-  room_id: string;
-  host_username: string;
+  roomId: string;
+  hostUsername: string;
+}
+
+export interface User {
+  username: string;
+  userId: string;
 }
 
 export interface UserLogin {
@@ -22,4 +28,9 @@ export interface SessionDetails extends UserLogin {
   username: string;
   userId: string;
   expireTime: number;
+}
+
+export interface Challenge {
+  challengerId: string;
+  receiverId: string;
 }
