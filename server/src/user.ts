@@ -1,58 +1,32 @@
-import { Rooms, Room } from './room';
+import { Lobby, Room } from './room';
 import { Socket } from 'socket.io';
+import { HOST_ROOM, JOIN_ROOM, UPDATE_ROOM_INDEX } from 'APIInterfaces/socketSignals';
+import { RoomDetails } from 'APIInterfaces/roomDetails';
 export class User {
-  private _username = 'pete';
-  private room: Room;
 
   constructor(
-    public socket: Socket,
-    private rooms: Rooms
+    private socket: Socket,
+    private createRoom: (User) => Room,
+    private joinRoom: (User, string) => Room
   ) {
     console.log('new user!');
-    // get rooms for client
-    this.rooms.broadcastRoomsDetails();
 
-    this.socket.on('ready for game', () => {
-
-    });
-
-    this.socket.on('set username', (username: string) => {
-      this.username = username;
-    } );
-
-    this.socket.on('host', () => {
-      this.room = this.rooms.addRoom(this);
-    });
-
-    this.socket.on('join', (room_id: string) => {
-      // TODO make it impossible to join a room if you're already hosting
-      const room = this.rooms.joinRoom(this, room_id) as Room;
-      if (!room) {
-        throw new Error('joined room doesn\'t exist!');
-      }
-    });
+    this.socket
+      .on(HOST_ROOM, () => this.createRoom(this))
+      .on(JOIN_ROOM, (room_id: string) => {
+        this.joinRoom(this, room_id);
+      })
+      .on('disconnect', () => {
+        console.log('socket disconnected!');
+      });
   }
 
-  get username() {
-    if (!this._username) {
-      throw new Error('username not set');
+  updateRoomIndex = (roomsDetails: RoomDetails[]) => {
+    this.socket.emit(UPDATE_ROOM_INDEX, roomsDetails);
   }
-    return this._username;
-  }
-
-  set username(username) {
-    console.log('setting username');
-    this._username = username;
-  }
-
 }
 export class UsersController {
   constructor(private io: any) {
-    const rooms = new Rooms(io);
-    io.on('connection', (socket: Socket) => {
-      console.log('connection:')
-      console.log(socket.handshake.headers);
-      const user = new User(socket, rooms);
-    });
+    const rooms = new Lobby(io);
   }
 }

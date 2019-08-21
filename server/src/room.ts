@@ -1,6 +1,6 @@
 import * as uuidv4 from 'uuid/v4';
 import { User } from './user';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Game } from './game';
 
 export class Room {
@@ -54,13 +54,22 @@ export class Room {
   }
 }
 
-export class Rooms {
-  rooms: Array<Room>;
+export class Lobby {
+  rooms = [] as Room[];
 
   constructor(
     private io,
   ) {
-    this.rooms = [];
+    this.io.on('connection', (socket: Socket) => {
+      console.log('connection:');
+      console.log(socket.handshake.headers);
+      const user = new User(
+        socket,
+        this.createRoom,
+        this.joinRoom
+      );
+      user.updateRoomIndex(this.roomsDetails);
+    });
   }
 
   get roomsDetails() {
@@ -76,13 +85,13 @@ export class Rooms {
     const index = this.rooms.findIndex(room => room.uuid === uuid);
   }
 
-  joinRoom(user: User, room_id: string): Room {
+  joinRoom = (user: User, room_id: string): Room => {
     const room = this.findRoom(room_id);
     room.join(user);
     return room;
   }
 
-  addRoom(host: User): Room {
+  createRoom = (host: User): Room => {
     const room = new Room(host, this.io);
     this.rooms.push(room);
     this.broadcastRoomsDetails();
