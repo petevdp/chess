@@ -1,5 +1,5 @@
 import * as SocketIO from 'socket.io';
-import { UsersController } from './player';
+import { UsersController } from './lobbyMember';
 
 function sockets(http: any) {
   const io = SocketIO(http);

@@ -1,74 +1,89 @@
 import {ChessInstance, Chess } from 'chess.js';
-import { LobbyMember } from './player';
 import { Room } from './room';
 import * as _ from 'lodash';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, merge } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { ClientMove, GameConfig } from 'APIInterfaces/types';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
+import { LobbyMember } from './lobbyMember';
+import { MAKE_MOVE, GAME_START } from 'APIInterfaces/socketSignals';
 
-class LobbyMember {
+// outcomes: disconnect, win, lose, draw
+export class Player {
 
-  private moveSubject: Subject<ClientMove>;
-  public moveObservable: Observable<ClientMove>;
+  socket: Socket;
+  opponentMoveObservable: Observable<ClientMove>;
+  moveObservable: Observable<ClientMove>;
 
   constructor(
-    private user: LobbyMember,
-    private room: Room,
-    public colour: string
-  ) {
-    console.log('new player!');
-    this.user.socket.on('ready', () => {
-      console.log('ready!');
-      this.user.socket.emit('start game', { colour });
-    });
+    lobbyMember: LobbyMember,
+    private gameConfig: GameConfig,
+    public colour: string,
+    moveSubject: Subject<ClientMove>,
+    ) {
+      this.socket = lobbyMember.socket;
 
-    this.moveSubject = new Subject();
-    this.user.socket.on('move', (move: ClientMove) => {
-      this.moveSubject.next(move);
-    });
-    this.moveObservable = this.moveSubject.asObservable();
-
-    this.user.socket.emit('init game');
-  }
-
-
-  // sends move to all players in room except sender
-  broadcastMove(move: ClientMove) {
-    this.user.socket.to(this.room.id).emit('move', move);
+      this.socket.on(MAKE_MOVE, (clientMove: ClientMove) => {
+        moveSubject.next(clientMove);
+      });
+      this.moveObservable = moveSubject.asObservable();
   }
 
   startGame() {
-    console.log('starting game');
-    console.log(this.user.socket.connected);
+    this.socket.emit(GAME_START, {gameConfig: this.gameConfig, colour: this.colour}, )
   }
 }
-
 export class Game {
-
-  private game: ChessInstance = new Chess();
-  private players: LobbyMember[];
+  gameStateObservable: Observable<any>;
+  gameConfig: {};
+  private players: Player[];
 
   constructor(
-    private room: Room,
+    private lobbyMembers: LobbyMember[]
   ) {
-    const colors = _.shuffle(['white', 'black']);
-    this.players = _.zip(room.players, colors).map(([user, colour]) => (
-      new LobbyMember(user, this.room, colour)
-    ));
-    console.log('players: ', this.players.length);
+    if (this.lobbyMembers.length !== 2) {
+      throw new Error('wrong number of players: ' + this.lobbyMembers.length);
+    }
+    const colours = ['black', 'white'];
+    const moveSubjects = _.times(2)
+      .map(this.generateMoveSubject) as Subject<ClientMove>[];
 
-    this.players.forEach((player: LobbyMember) => {
-      player.moveObservable.subscribe((move: ClientMove) => {
-        if (player.colour !== move.colour) {
-          throw new Error('wrong color!');
-        }
-        if (this.game.move(move)) {
-          player.broadcastMove(move);
-        } else {
-          throw new Error('invalid move!');
-        }
-      });
-    });
-    this.players.forEach(player => player.startGame());
+
+    this.players = _.zip(_.shuffle(colours), this.lobbyMembers, moveSubjects)
+      .map(([colour, lobbyMember, moveSubject]) => (
+        new Player(
+          lobbyMember,
+          { ...this.gameConfig },
+          colour,
+          moveSubject,
+        )
+      ));
+
+    // allow players to see each others moves
+    this.players[0].opponentMoveObservable = this.opponentMoveObservableFactory(this.players[1]);
+    this.players[1].opponentMoveObservable = this.opponentMoveObservableFactory(this.players[0]);
+
+    // TODO transform this into a holistic gamestate
+    this.gameStateObservable = merge(...(this.players.map((player: Player) => player.moveObservable)))
+      .pipe(filter(this.validateMove));
+
+    this.startGame();
+  }
+
+  private startGame() {
+    this.players.forEach((player: Player) => player.startGame);
+  }
+
+  private generateMoveSubject() {
+    return new Subject<ClientMove>();
+  }
+
+  private opponentMoveObservableFactory(opponent: Player) {
+    return opponent.moveObservable.pipe(filter(this.validateMove));
+  }
+
+  private validateMove = (clientMove: ClientMove): boolean => {
+    // TODO validate moves
+    return true;
   }
 }

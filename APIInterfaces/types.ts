@@ -6,7 +6,6 @@ export interface ClientMove extends ShortMove {
 
 
 export interface GameConfig {
-  colour: string;
 }
 
 export interface RoomDetails {
@@ -14,9 +13,13 @@ export interface RoomDetails {
   hostUsername: string;
 }
 
+
+export interface LobbymemberDetails extends User {
+  status: string;
+}
 export interface User {
   username: string;
-  userId: string;
+  id: string;
 }
 
 export interface UserLogin {

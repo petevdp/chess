@@ -1,19 +1,23 @@
 import * as uuidv4 from 'uuid/v4';
-import { LobbyMember, Player } from './player';
+import { LobbyMember, LobbyMember } from './lobbyMember';
 import { Server, Socket } from 'socket.io';
 import { Game } from './game';
 import { ClientMove } from 'APIInterfaces/types';
 
+
 export class Room {
   id: string;
-  players: Player[];
   game: Game;
+  players: LobbyMember[];
 
-  constructor(private io: Server) {
-    this.id = `room/${uuidv4()}`;
+  constructor(
+    lobbyMembers: LobbyMember[]
+  ) {
+    players = lobbyMembers.map(member => new )
+    this.startGame();
   }
 
-  addPlayer(player: Player) {
+  addPlayer(player: LobbyMember) {
     if (this.players.length > 2) {
       throw new Error('too many players');
     }
