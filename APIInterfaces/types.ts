@@ -8,12 +8,6 @@ export interface ClientMove extends ShortMove {
 export interface GameConfig {
 }
 
-export interface RoomDetails {
-  roomId: string;
-  hostUsername: string;
-}
-
-
 export interface LobbymemberDetails extends User {
   inGame: null|string;
   username: string;
@@ -46,4 +40,3 @@ export const SocketMessages = {
   CHALLENGE_RESPONSE: 'CHALLENGE_RESPONSE',
   LOBBY_MEMBER_UPDATE: 'LOBBY_MEMBER_UPDATE',
 };
-

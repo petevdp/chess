@@ -7,6 +7,8 @@ import { ClientMove, GameConfig } from 'APIInterfaces/types';
 import { Server, Socket } from 'socket.io';
 import { LobbyMember } from './lobbyMember';
 import { MAKE_MOVE, GAME_START } from 'APIInterfaces/socketSignals';
+import { LobbyStateValue } from './lobbyStateValue';
+import uuidv4 from 'uuid/v4';
 
 // outcomes: disconnect, win, lose, draw
 export class Player {
@@ -33,14 +35,16 @@ export class Player {
     this.socket.emit(GAME_START, {gameConfig: this.gameConfig, colour: this.colour}, )
   }
 }
-export class Game {
+export class Game implements LobbyStateValue {
   gameStateObservable: Observable<any>;
   gameConfig: {};
   private players: Player[];
+  id: string;
 
   constructor(
     private lobbyMembers: LobbyMember[]
   ) {
+    this.id = uuidv4();
     if (this.lobbyMembers.length !== 2) {
       throw new Error('wrong number of players: ' + this.lobbyMembers.length);
     }
@@ -68,6 +72,10 @@ export class Game {
       .pipe(filter(this.validateMove));
 
     this.startGame();
+  }
+
+  cleanup() {
+    throw new Error('not implemented!');
   }
 
   private startGame() {

@@ -1,56 +1,45 @@
 import { Room } from './room';
 import io, { Socket } from 'socket.io';
-import { LobbyMember } from './lobbyMember';
-import { ClientChallenge, User, SocketMessages } from 'APIInterfaces/types';
+import { LobbyMember, MemberState } from './lobbyMember';
+import { ClientChallenge, User, SocketMessages, LobbymemberDetails } from 'APIInterfaces/types';
 import * as http from 'http';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ChallengeStatus, Challenge, LobbyChallengesObservable } from './challenge';
 import { Game } from './game';
+import { GAME_START } from 'APIInterfaces/socketSignals';
+import { LobbyStateValue } from './lobbyStateValue';
 
 const { LOBBY_MEMBER_UPDATE } = SocketMessages;
-export class SyncIndex<T> {
-  constructor(
-    private broadcastUpdates: (index: T[]) => void,
-    private index: T[] = [] as T[]
-  ) {
-  }
+// -> lobby member change -> new lobby member state
 
-  private sync() {
-    this.broadcastUpdates(this.index);
-  }
+interface Map<T> {
+  [id: string]: T;
+}
 
-  find(cb: (val: T, index: number) => boolean) {
-    return this.index.find(cb);
-  }
-
-  push(val: T) {
-    this.index.push(val);
-    this.sync();
-  }
-
-  remove(idx: number): T {
-    return this.index.splice(idx, 1)[0];
-    this.sync();
-  }
+interface LobbyState {
+  members: Map<LobbyMember>;
+  games: Map<Game>;
 }
 
 export class Lobby {
-  lobbyMemberIndex = new SyncIndex<LobbyMember>(
-    this.broadcastLobbyMemberIndexUpdates,
-  );
 
-  gameIndex = new SyncIndex<Game>(
-    this.broadcastGameIndexUpdates
-  )
   private io: io.Server;
-  public lobbyChallengeObserver: Observable<Challenge>;
+
+
+  stateSubject: BehaviorSubject<LobbyState>;
+
+  lobbyChallengeObserver: Observable<Challenge>;
 
   constructor(httpServer: http.Server) {
     this.io = io({
       httpServer
     });
     const lobbyClientChallengeSubject = new Subject<ClientChallenge>();
+    this.stateSubject = new BehaviorSubject({
+      members: {},
+      games: {},
+    });
 
     this.io.on('connection', (socket: Socket) => {
       // TODO verify player and get userId, username, etc, and make sure there are no duplicate users
@@ -61,13 +50,19 @@ export class Lobby {
 
       console.log('connection:');
       console.log(socket.handshake.headers);
-      const player = new LobbyMember(
+      const member = new LobbyMember(
         user,
         socket,
         lobbyClientChallengeSubject
       );
-      player.updateLobbyMemberIndex(this.lobbyMemberIndex);
+
+      this.addStateValue('member', member);
+
+      socket.on('disconnect', () => {
+        this.deleteStateValue('member', member.id);
+      });
     });
+
 
     this.lobbyChallengeObserver = lobbyClientChallengeSubject
       .pipe(map((clientChallenge) => ({
@@ -75,6 +70,7 @@ export class Lobby {
         subject: new BehaviorSubject(ChallengeStatus.pending),
       })));
 
+    // resolve challenges into games
     this.lobbyChallengeObserver.subscribe((challenge) => {
       const receiver = this.findLobbymember(challenge.receiverId);
       const challenger = this.findLobbymember(challenge.challengerId);
@@ -89,10 +85,46 @@ export class Lobby {
 
       challenge.subject.subscribe(outcome => {
         if (outcome === accepted) {
-          this.gameIndex.push(new Game([challenger, receiver]));
+          const game = new Game([challenger, receiver]);
+          [receiver, challenger].forEach(member => {
+            member.stateSubject.next({ currentGame: game });
+          });
+          this.addStateValue('game', game);
         }
       });
     });
+  }
+
+  deleteStateValue(category, id: string) {
+      const {
+        [id]: removed,
+        ...challengableMembers
+      } = this.state[category];
+
+      this.setState({
+        ...this.state,
+        [category]: challengableMembers,
+      });
+  }
+
+  addStateValue(category: 'game' | 'member', value: LobbyStateValue): void {
+    const state = this.state;
+    this.setState({
+      ...state,
+      [category]: {
+        ...value[category],
+        [value.id]: state,
+      }
+    });
+  }
+
+  get state(): LobbyState {
+    return this.stateSubject.getValue();
+  }
+
+  // ghetto react
+  setState(newState: LobbyState) {
+    this.stateSubject.next(newState);
   }
 
   broadcastLobbyMemberIndexUpdates(members: LobbyMember[]) {
