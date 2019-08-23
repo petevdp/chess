@@ -1,6 +1,6 @@
 import { Room } from './room';
 import { Socket } from 'socket.io';
-import { Observable, Subscriber, Observer, Subject } from 'rxjs';
+import { Observable, Subscriber, Observer, Subject, BehaviorSubject } from 'rxjs';
 
 import {
   HOST_ROOM,
@@ -10,95 +10,63 @@ import {
   CHALLENGED,
   MAKE_MOVE,
   MOVE_MADE,
-  ACCEPT_CHALLENGE
 } from 'APIInterfaces/socketSignals';
 
-import { Challenge, GameConfig, User, ClientMove, LobbymemberDetails } from 'APIInterfaces/types';
+import { ClientChallenge, GameConfig, User, ClientMove, LobbymemberDetails, SocketMessages } from 'APIInterfaces/types';
+import { ChallengeStatus, Challenge } from './challenge';
+
+const { CHALLENGE_REQUEST: POST_CHALLENGE, CHALLENGE_RESPONSE, LOBBY_MEMBER_UPDATE } = SocketMessages;
+
 
 export class LobbyMember {
-  challengeObservable: Observable<Challenge>;
-  challengeObserver: Observer<Challenge>;
+  inGame: false;
 
   constructor(
     public user: User,
     public socket: Socket,
-    private lobbyChallengeSubject: Subject<Challenge>
+    private lobbyChallengeSubject: Subject<ClientChallenge>,
   ) {
-    this.socket.on(CHALLENGE_PLAYER, (challenge: Challenge) => {
-      // todo make
-      this.lobbyChallengeSubject.next(challenge);
+    this.socket
+      .on(POST_CHALLENGE, (clientChallenge: ClientChallenge) => {
+      this.lobbyChallengeSubject.next(clientChallenge);
     });
   }
 
-  challenge(challenge): Observable<boolean> {
-    this.socket.emit(CHALLENGED,  challenge);
-    return new Observable(subscriber => {
-      this.socket.on(ACCEPT_CHALLENGE, (isAccepted: boolean) => {
-        subscriber.next(isAccepted);
-        subscriber.unsubscribe();
-      });
+  get isChallengable {
+    return this.inGame;
+  }
+
+  queryCancelChallenge(challenge: Challenge): void {
+    const cancelChallengeChannel = `cancelChallenge/${challenge.id}`;
+    this.socket.on(cancelChallengeChannel, () => {
+      challenge.subject.next(ChallengeStatus.cancelled);
+    });
+    challenge.subject.subscribe({
+      complete: () => {
+        this.socket.removeAllListeners(cancelChallengeChannel);
+        this.socket.emit(`challengeOutcome/${challenge.id}`, challenge.subject.getValue());
+      }
+    });
+  }
+
+  challenge(challenge: Challenge) {
+    const challengeChannel = `challenge/${challenge.id}`;
+    const { subject, ...clientChallenge } = challenge;
+    this.socket.emit(challengeChannel,  clientChallenge);
+    this.socket.on(CHALLENGE_RESPONSE, (isAccepted: boolean) => {
+      const { accepted, declined } = ChallengeStatus;
+      subject.next(isAccepted ? accepted : declined);
+      subject.complete();
+    });
+    subject.subscribe({
+      complete: () => {
+        this.socket.removeAllListeners(challengeChannel);
+        this.socket.emit(`challengeOutcome/${challenge.id}`, subject.getValue());
+      }
     });
   }
 
   updatePlayerIndex = (playerIndex: LobbymemberDetails[]) => {
-    this.socket.emit(UPDATE_PLAYER_INDEX, playerIndex);
-  }
-
-}
-export class old {
-
-  roomId: string;
-  makeMove: any;
-
-  constructor(
-    public user: User,
-    private socket: Socket,
-    private challengePlayer: (Challenge, Player) => void
-  ) {
-    console.log('new user!');
-    this.socket
-      .on(CHALLENGE_PLAYER, (receiverId) => {
-        this.challengePlayer({
-          challengerId: this.user.id,
-          receiverId,
-        }, this);
-      })
-      .on(MAKE_MOVE, (clientMove: ClientMove) => {
-        // move needs to be validated by server first
-        const emitMove = (move: ClientMove) =>  {
-          this.socket.to(this.roomId).emit(MOVE_MADE, move);
-        }
-        this.makeMove(emitMove, clientMove);
-      })
-      .on('disconnect', () => {
-        console.log('socket disconnected!');
-      });
-  }
-
-  challenge(challenge): Observable<boolean> {
-    this.socket.emit(CHALLENGED,  challenge);
-    return new Observable(subscriber => {
-      this.socket.on(ACCEPT_CHALLENGE, (isAccepted: boolean) => {
-        subscriber.next(isAccepted);
-        subscriber.unsubscribe();
-      });
-    });
-  }
-
-  challengeDeclined() {
-    // TODO notify client
-  }
-
-
-  updatePlayerIndex = (playerIndex: PlayerDetails[]) => {
-    this.socket.emit(UPDATE_PLAYER_INDEX, playerIndex);
-  }
-
-  joinRoom(room: Room) {
-    if (room) {
-      throw new Error('already in room!');
-    }
-    this.roomId = room.id;
-    room.addPlayer(this);
+    this.socket.emit(LOBBY_MEMBER_UPDATE, playerIndex);
   }
 }

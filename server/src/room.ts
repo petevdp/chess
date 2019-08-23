@@ -8,12 +8,12 @@ import { ClientMove } from 'APIInterfaces/types';
 export class Room {
   id: string;
   game: Game;
-  players: LobbyMember[];
+  members: LobbyMember[];
 
   constructor(
     lobbyMembers: LobbyMember[]
   ) {
-    players = lobbyMembers.map(member => new )
+    this.players = lobbyMembers.map(member => new )
     this.startGame();
   }
 

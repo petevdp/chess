@@ -15,7 +15,9 @@ export interface RoomDetails {
 
 
 export interface LobbymemberDetails extends User {
-  status: string;
+  inGame: null|string;
+  username: string;
+  userId: string;
 }
 export interface User {
   username: string;
@@ -33,7 +35,15 @@ export interface SessionDetails extends UserLogin {
   expireTime: number;
 }
 
-export interface Challenge {
+export interface ClientChallenge {
+  id: string;
   challengerId: string;
   receiverId: string;
 }
+
+export const SocketMessages = {
+  CHALLENGE_REQUEST: 'CHALLENGE_REQUEST',
+  CHALLENGE_RESPONSE: 'CHALLENGE_RESPONSE',
+  LOBBY_MEMBER_UPDATE: 'LOBBY_MEMBER_UPDATE',
+};
+
