@@ -1,7 +1,6 @@
-import { Room } from './room';
 import io, { Socket } from 'socket.io';
 import { LobbyMember, MemberState } from './lobbyMember';
-import { ClientChallenge, User, SocketMessages, LobbymemberDetails } from 'APIInterfaces/types';
+import { ClientChallenge, User, SocketChannel, LobbymemberDetails, Map } from 'APIInterfaces/types';
 import * as http from 'http';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,12 +9,6 @@ import { Game } from './game';
 import { GAME_START } from 'APIInterfaces/socketSignals';
 import { LobbyStateValue } from './lobbyStateValue';
 
-const { LOBBY_MEMBER_UPDATE } = SocketMessages;
-// -> lobby member change -> new lobby member state
-
-interface Map<T> {
-  [id: string]: T;
-}
 
 interface LobbyState {
   members: Map<LobbyMember>;
@@ -26,74 +19,54 @@ export class Lobby {
 
   private io: io.Server;
 
-
+  // for changes to state that affect the lobby client interface
   stateSubject: BehaviorSubject<LobbyState>;
 
   lobbyChallengeObserver: Observable<Challenge>;
+  private lobbyClientChallengeSubject: Subject<ClientChallenge>;
 
   constructor(httpServer: http.Server) {
     this.io = io({
       httpServer
     });
-    const lobbyClientChallengeSubject = new Subject<ClientChallenge>();
-    this.stateSubject = new BehaviorSubject({
-      members: {},
-      games: {},
-    });
 
+    this.initStateSubject();
+
+
+    this.lobbyClientChallengeSubject = new Subject();
     this.io.on('connection', (socket: Socket) => {
       // TODO verify player and get userId, username, etc, and make sure there are no duplicate users
       const user = {
         id: 'placeholderID',
         username: 'placeholderusername',
       } as User;
-
-      console.log('connection:');
-      console.log(socket.handshake.headers);
-      const member = new LobbyMember(
-        user,
-        socket,
-        lobbyClientChallengeSubject
-      );
-
-      this.addStateValue('member', member);
-
-      socket.on('disconnect', () => {
-        this.deleteStateValue('member', member.id);
-      });
+      this.addMember(user, socket);
     });
 
 
-    this.lobbyChallengeObserver = lobbyClientChallengeSubject
+    this.lobbyChallengeObserver = this.lobbyClientChallengeSubject
       .pipe(map((clientChallenge) => ({
         ...clientChallenge,
         subject: new BehaviorSubject(ChallengeStatus.pending),
       })));
 
-    // resolve challenges into games
-    this.lobbyChallengeObserver.subscribe((challenge) => {
-      const receiver = this.findLobbymember(challenge.receiverId);
-      const challenger = this.findLobbymember(challenge.challengerId);
+    this.lobbyChallengeObserver.subscribe(this.handleChallenge);
+  }
 
-      receiver.challenge(challenge);
-      challenger.queryCancelChallenge(challenge);
+  private addMember(user: User, socket: Socket) {
+    const member = new LobbyMember(
+      user,
+      socket,
+      this.lobbyClientChallengeSubject
+    );
 
-      challenge.subject.subscribe(outcome => {
-        console.log('outcome: ', outcome);
-      });
-      const { accepted }  = ChallengeStatus;
+    this.addStateValue('member', member);
 
-      challenge.subject.subscribe(outcome => {
-        if (outcome === accepted) {
-          const game = new Game([challenger, receiver]);
-          [receiver, challenger].forEach(member => {
-            member.stateSubject.next({ currentGame: game });
-          });
-          this.addStateValue('game', game);
-        }
-      });
+    socket.on('disconnect', () => {
+      this.deleteStateValue('member', member.id);
     });
   }
+
 
   deleteStateValue(category, id: string) {
       const {
@@ -106,11 +79,12 @@ export class Lobby {
         [category]: challengableMembers,
       });
   }
-
+  /**
+   * adds a new value to the lobby state in the given category
+   */
   addStateValue(category: 'game' | 'member', value: LobbyStateValue): void {
     const state = this.state;
     this.setState({
-      ...state,
       [category]: {
         ...value[category],
         [value.id]: state,
@@ -121,25 +95,52 @@ export class Lobby {
   get state(): LobbyState {
     return this.stateSubject.getValue();
   }
-
-  // ghetto react
-  setState(newState: LobbyState) {
-    this.stateSubject.next(newState);
+  /**
+   * ghetto react
+   */
+  private setState(newState) {
+    this.stateSubject.next({
+      ...this.state,
+      ...newState,
+    });
   }
+  /**
+   * initialize state subject, and emit stream to client
+   */
+  private initStateSubject(): void {
+    this.stateSubject = new BehaviorSubject({
+      members: {},
+      games: {},
+    });
 
-  broadcastLobbyMemberIndexUpdates(members: LobbyMember[]) {
-    this.io.emit(LOBBY_MEMBER_UPDATE, members.map());
+    this.stateSubject.subscribe(state => {
+      this.io.emit('lobby update' as SocketChannel, state);
+    });
   }
-
 
   /**
-   * @param  {string} userId
-   * @returns LobbyMember
-   * j
-   * Finds lobbyMember via userId
-   * -1 if not found
+   * Asks lobby members to resolve input challenge, and creates a game if it's accepted.
    */
-  private findLobbymember(userId: string): LobbyMember {
-    return this.lobbyMemberIndex.find(player => player.user.id === userId);
+  private handleChallenge = (challenge: Challenge): void => {
+    const challenger = this.state.members[challenge.challengerId];
+    const receiver = this.state.members[challenge.receiverId];
+
+    receiver.challenge(challenge);
+    challenger.queryCancelChallenge(challenge);
+
+    challenge.subject.subscribe(outcome => {
+      console.log('outcome: ', outcome);
+    });
+    const { accepted }  = ChallengeStatus;
+
+    challenge.subject.subscribe(outcome => {
+      if (outcome === accepted) {
+        const game = new Game([challenger, receiver]);
+        [receiver, challenger].forEach(member => {
+          member.stateSubject.next({ currentGame: game });
+        });
+        this.addStateValue('game', game);
+      }
+    });
   }
 }
