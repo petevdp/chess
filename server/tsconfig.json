@@ -24,10 +24,10 @@
   },
   "include": [
     "src/**/*.ts",
-    "../APIInterfaces/**/*.ts"
+    "../APIInterfaces/**/*.ts",
+    "node_modules/@types"
   ],
   "exclude": [
-    "node_modules",
     "**/*.spec.ts"
   ]
 }
