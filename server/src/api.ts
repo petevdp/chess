@@ -22,7 +22,7 @@ api.use(bodyParser.json());
 //   credentials: true,
 // }));
 
-const validator = new Validator({allErrors: true})
+const validator = new Validator({allErrors: true});
 
 const validate = validator.validate;
 

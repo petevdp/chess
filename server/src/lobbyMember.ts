@@ -1,11 +1,9 @@
 import { Socket } from 'socket.io';
 import { Subject, BehaviorSubject, Observable } from 'rxjs';
-import { ClientChallenge, User, LobbymemberDetails, SocketMessages } from 'APIInterfaces/types';
-import { ChallengeStatus, Challenge } from './challenge';
+import { ClientChallenge, User, LobbyMemberDetails, SocketChannel } from 'APIInterfaces/types';
+import { Challenge } from './challenge';
 import { Game } from './game';
 import { LobbyStateValue } from './lobbyStateValue';
-
-const { CHALLENGE_REQUEST, CHALLENGE_RESPONSE, LOBBY_MEMBER_UPDATE } = SocketMessages;
 
 export interface MemberState {
   currentGame: Game|null;
@@ -19,7 +17,6 @@ export class LobbyMember implements LobbyStateValue {
     public socket: Socket,
     lobbyChallengeSubject: Subject<ClientChallenge>,
   ) {
-    super(user.id);
     this.socket
       .on('challengeRequest', (clientChallenge: ClientChallenge) => {
       lobbyChallengeSubject.next(clientChallenge);
@@ -35,14 +32,15 @@ export class LobbyMember implements LobbyStateValue {
   }
 
   cleanup() {
-    throw new Error('what do');
+    this.stateSubject.complete();
+    this.socket.disconnect();
   }
 
 
   queryCancelChallenge(challenge: Challenge): void {
     const cancelChallengeChannel = `cancelChallenge/${challenge.id}`;
     this.socket.on(cancelChallengeChannel, () => {
-      challenge.subject.next(ChallengeStatus.cancelled);
+      challenge.subject.next('cancelled');
     });
     challenge.subject.subscribe({
       complete: () => {
@@ -54,11 +52,12 @@ export class LobbyMember implements LobbyStateValue {
 
   challenge(challenge: Challenge) {
     const challengeChannel = `challenge/${challenge.id}`;
-    const { subject, ...clientChallenge } = challenge;
+    const { subject, clientChallenge } = challenge;
     this.socket.emit(challengeChannel,  clientChallenge);
     this.socket.on(`challengeResponse/${challenge.id}`, (isAccepted: boolean) => {
-      const { accepted, declined } = ChallengeStatus;
-      subject.next(isAccepted ? accepted : declined);
+      subject.next(isAccepted
+        ? 'accepted'
+        : 'declined');
       subject.complete();
     });
     subject.subscribe({
@@ -69,7 +68,7 @@ export class LobbyMember implements LobbyStateValue {
     });
   }
 
-  updatePlayerIndex = (playerIndex: LobbymemberDetails[]) => {
+  updatePlayerIndex = (playerIndex: LobbyMemberDetails[]) => {
     this.socket.emit('lobbyMemberUpdate', playerIndex);
   }
 }

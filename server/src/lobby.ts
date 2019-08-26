@@ -1,6 +1,6 @@
-import io, { Socket } from 'socket.io';
+import SocketIO, { Socket } from 'socket.io';
 import { LobbyMember, MemberState } from './lobbyMember';
-import { ClientChallenge, User, SocketChannel, LobbymemberDetails, Map } from 'APIInterfaces/types';
+import { ClientChallenge, User, SocketChannel, LobbyMemberDetails, Map } from 'APIInterfaces/types';
 import * as http from 'http';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -17,7 +17,7 @@ interface LobbyState {
 
 export class Lobby {
 
-  private io: io.Server;
+  private io: SocketIO  ;
 
   // for changes to state that affect the lobby client interface
   stateSubject: BehaviorSubject<LobbyState>;
@@ -26,7 +26,7 @@ export class Lobby {
   private lobbyClientChallengeSubject: Subject<ClientChallenge>;
 
   constructor(httpServer: http.Server) {
-    this.io = io({
+    this.io = SocketIO({
       httpServer
     });
 
@@ -45,10 +45,7 @@ export class Lobby {
 
 
     this.lobbyChallengeObserver = this.lobbyClientChallengeSubject
-      .pipe(map((clientChallenge) => ({
-        ...clientChallenge,
-        subject: new BehaviorSubject(ChallengeStatus.pending),
-      })));
+      .pipe(map((clientChallenge) => new Challenge(clientChallenge)));
 
     this.lobbyChallengeObserver.subscribe(this.handleChallenge);
   }
@@ -125,16 +122,16 @@ export class Lobby {
     const challenger = this.state.members[challenge.challengerId];
     const receiver = this.state.members[challenge.receiverId];
 
+    // TODO change to Promise.race possibly
     receiver.challenge(challenge);
     challenger.queryCancelChallenge(challenge);
 
     challenge.subject.subscribe(outcome => {
       console.log('outcome: ', outcome);
     });
-    const { accepted }  = ChallengeStatus;
 
     challenge.subject.subscribe(outcome => {
-      if (outcome === accepted) {
+      if (outcome === 'accepted') {
         const game = new Game([challenger, receiver]);
         [receiver, challenger].forEach(member => {
           member.stateSubject.next({ currentGame: game });

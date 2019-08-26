@@ -1,5 +1,3 @@
-import {ChessInstance, Chess } from 'chess.js';
-import { Room } from './room';
 import * as _ from 'lodash';
 import { Observable, Subject, merge } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -32,7 +30,7 @@ export class Player {
   }
 
   startGame() {
-    this.socket.emit(GAME_START, {gameConfig: this.gameConfig, colour: this.colour}, )
+    this.socket.emit(GAME_START, {gameConfig: this.gameConfig, colour: this.colour});
   }
 }
 export class Game implements LobbyStateValue {
