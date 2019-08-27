@@ -3,7 +3,7 @@ import { LobbyMember } from './lobbyMember';
 import { Lobby } from './lobby';
 import uuidv4 from 'uuid/v4';
 import { reduce } from 'rxjs/operators';
-import { ClientChallenge } from 'APIInterfaces/types';
+import { ClientChallenge } from '../../APIInterfaces/types';
 
 
 export type ChallengeStatus =

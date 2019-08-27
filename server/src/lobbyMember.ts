@@ -1,9 +1,10 @@
 import { Socket } from 'socket.io';
 import { Subject, BehaviorSubject, Observable } from 'rxjs';
-import { ClientChallenge, User, LobbyMemberDetails, SocketChannel } from 'APIInterfaces/types';
+import { ClientChallenge, User, LobbyMemberDetails, SocketChannel } from '../../APIInterfaces/types';
 import { Challenge } from './challenge';
 import { Game } from './game';
 import { LobbyStateValue } from './lobbyStateValue';
+import { serverSignals, clientSignals } from '../../APIInterfaces/socketSignals';
 
 export interface MemberState {
   currentGame: Game|null;
@@ -17,10 +18,12 @@ export class LobbyMember implements LobbyStateValue {
     public socket: Socket,
     lobbyChallengeSubject: Subject<ClientChallenge>,
   ) {
-    this.socket
-      .on('challengeRequest', (clientChallenge: ClientChallenge) => {
-      lobbyChallengeSubject.next(clientChallenge);
-    });
+    this.socket.on(
+      clientSignals.postChallenge(),
+      (clientChallenge: ClientChallenge) => {
+        lobbyChallengeSubject.next(clientChallenge);
+      }
+    );
   }
 
   get id() {
@@ -38,37 +41,44 @@ export class LobbyMember implements LobbyStateValue {
 
 
   queryCancelChallenge(challenge: Challenge): void {
-    const cancelChallengeChannel = `cancelChallenge/${challenge.id}`;
-    this.socket.on(cancelChallengeChannel, () => {
+    const { id, subject } = challenge;
+    this.socket.on(clientSignals.postChallengeResponse(id), () => {
       challenge.subject.next('cancelled');
     });
-    challenge.subject.subscribe({
+    subject.subscribe({
       complete: () => {
-        this.socket.removeAllListeners(cancelChallengeChannel);
-        this.socket.emit(`challengeResolution/${challenge.id}`, challenge.subject.getValue());
+        this.socket.removeAllListeners(clientSignals.postChallengeResponse(id));
+        this.socket.emit(
+          serverSignals.resolveChallenge(id),
+          subject.getValue());
       }
     });
   }
 
   challenge(challenge: Challenge) {
-    const challengeChannel = `challenge/${challenge.id}`;
-    const { subject, clientChallenge } = challenge;
-    this.socket.emit(challengeChannel,  clientChallenge);
-    this.socket.on(`challengeResponse/${challenge.id}`, (isAccepted: boolean) => {
-      subject.next(isAccepted
-        ? 'accepted'
-        : 'declined');
-      subject.complete();
-    });
+    const { subject, clientChallenge, id } = challenge;
+    this.socket.emit(serverSignals.requestChallengeResponse(),  clientChallenge);
+    this.socket.on(
+      clientSignals.postChallengeResponse(id),
+      (isAccepted: boolean) => {
+        subject.next(isAccepted
+          ? 'accepted'
+          : 'declined');
+        subject.complete();
+      });
+
     subject.subscribe({
       complete: () => {
-        this.socket.removeAllListeners(challengeChannel);
-        this.socket.emit(`challengeResolution/${challenge.id}`, subject.getValue());
+        this.socket.removeAllListeners(clientSignals.postChallengeResponse(id));
+        this.socket.emit(
+          serverSignals.resolveChallenge(id),
+          subject.getValue()
+        );
       }
     });
   }
 
-  updatePlayerIndex = (playerIndex: LobbyMemberDetails[]) => {
-    this.socket.emit('lobbyMemberUpdate', playerIndex);
+  updateLobbyDetails = (lobbyDetails: LobbyMemberDetails[]) => {
+    this.socket.emit(serverSignals.updateLobbyDetails(), lobbyDetails);
   }
 }

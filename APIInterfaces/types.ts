@@ -13,22 +13,25 @@ export interface User {
   id: string;
 }
 
+
+export interface SessionDetails extends User {
+  expireTime: number;
+}
+
 export interface LobbyMemberDetails extends User {
   inGame: null|string;
   username: string;
   id: string;
 }
+
+export interface GameDetails {
+  player1Id: string;
+  player2Id: string;
+}
 export interface UserLogin {
   username: string;
   password: string;
 }
-
-export interface SessionDetails extends UserLogin {
-  username: string;
-  userId: string;
-  expireTime: number;
-}
-
 export interface ClientChallenge {
   id: string;
   challengerId: string;
@@ -43,5 +46,9 @@ export interface ClientLobbyState {
   members: Map<LobbyMemberDetails>;
 }
 
+export interface LobbyDetails {
+  members: LobbyMemberDetails[];
+  games: GameDetails[];
+}
 
 export type SocketChannel = 'challenge' | 'lobby update';

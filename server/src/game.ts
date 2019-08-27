@@ -1,10 +1,10 @@
 import * as _ from 'lodash';
 import { Observable, Subject, merge } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { ClientMove, GameConfig } from 'APIInterfaces/types';
+import { ClientMove, GameConfig } from '../../APIInterfaces/types';
 import { Server, Socket } from 'socket.io';
 import { LobbyMember } from './lobbyMember';
-import { MAKE_MOVE, GAME_START } from 'APIInterfaces/socketSignals';
+import { MAKE_MOVE, GAME_START } from '../../APIInterfaces/socketSignals';
 import { LobbyStateValue } from './lobbyStateValue';
 import uuidv4 from 'uuid/v4';
 

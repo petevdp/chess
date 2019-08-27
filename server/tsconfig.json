@@ -2,7 +2,6 @@
   "compileOnSave": false,
   "compilerOptions": {
     "types": ["node", "jest"],
-    "baseUrl": "../",
     "outDir": "./dist",
     "sourceMap": true,
     "declaration": false,
@@ -25,9 +24,9 @@
   "include": [
     "src/**/*.ts",
     "../APIInterfaces/**/*.ts",
-    "node_modules/@types"
   ],
   "exclude": [
+    "node_modules",
     "**/*.spec.ts"
   ]
 }

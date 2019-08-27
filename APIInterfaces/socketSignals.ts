@@ -1,21 +1,12 @@
-// received by server
+export const serverSignals = {
+  updateLobbyDetails: () => 'update lobby state',
+  requestChallengeResponse: () => 'request challenge response',
+  resolveChallenge: (id) => `resolve challenge ${id}`,
+  joinGame: id => `join game ${id}`,
+};
 
-// LobbyMember
-// - server
-export const HOST_ROOM = 'host_room';
-export const JOIN_ROOM = 'join_room';
-export const CHALLENGE_PLAYER = 'challenge_player';
-export const CHALLENGE_RESPONSE = 'accept_challenge';
-export const UPDATE_PLAYER_INDEX = 'update_player_index';
-
-// - client
-export const CHALLENGED = 'challenged';
-export const INIT_GAME = 'init_game';
-
-// Player
-// - server
-export const MAKE_MOVE = 'MAKE_MOVE';
-
-// - client
-export const GAME_START = 'game_start';
-export const MOVE_MADE = 'move_made';
+export const clientSignals = {
+  postChallenge: () => 'post challenge',
+  postChallengeResponse: (id: string) => `post challenge response ${id}`,
+  postChallengeResolution: (id: string) => `post challenge resolution ${id}`,
+}

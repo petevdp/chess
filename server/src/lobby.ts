@@ -1,12 +1,12 @@
-import SocketIO, { Socket } from 'socket.io';
+import * as io from 'socket.io';
 import { LobbyMember, MemberState } from './lobbyMember';
-import { ClientChallenge, User, SocketChannel, LobbyMemberDetails, Map } from 'APIInterfaces/types';
+import { ClientChallenge, User, LobbyMemberDetails, Map } from '../../APIInterfaces/types';
 import * as http from 'http';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ChallengeStatus, Challenge, LobbyChallengesObservable } from './challenge';
+import { Challenge } from './challenge';
 import { Game } from './game';
-import { GAME_START } from 'APIInterfaces/socketSignals';
+import { serverSignals, clientSignals } from '../../APIInterfaces/socketSignals';
 import { LobbyStateValue } from './lobbyStateValue';
 
 
@@ -17,7 +17,7 @@ interface LobbyState {
 
 export class Lobby {
 
-  private io: SocketIO  ;
+  private io: io.Server;
 
   // for changes to state that affect the lobby client interface
   stateSubject: BehaviorSubject<LobbyState>;
@@ -26,15 +26,13 @@ export class Lobby {
   private lobbyClientChallengeSubject: Subject<ClientChallenge>;
 
   constructor(httpServer: http.Server) {
-    this.io = SocketIO({
-      httpServer
-    });
+    this.io = io(httpServer);
 
     this.initStateSubject();
 
 
     this.lobbyClientChallengeSubject = new Subject();
-    this.io.on('connection', (socket: Socket) => {
+    this.io.on('connection', (socket: io.Socket) => {
       // TODO verify player and get userId, username, etc, and make sure there are no duplicate users
       const user = {
         id: 'placeholderID',
@@ -50,7 +48,7 @@ export class Lobby {
     this.lobbyChallengeObserver.subscribe(this.handleChallenge);
   }
 
-  private addMember(user: User, socket: Socket) {
+  private addMember(user: User, socket: io.Socket) {
     const member = new LobbyMember(
       user,
       socket,
@@ -64,6 +62,13 @@ export class Lobby {
     });
   }
 
+  close() {
+    return new Promise((resolve) => {
+      this.lobbyClientChallengeSubject.complete();
+      this.stateSubject.complete();
+      this.io.close(() => resolve());
+    });
+  }
 
   deleteStateValue(category, id: string) {
       const {
@@ -111,7 +116,7 @@ export class Lobby {
     });
 
     this.stateSubject.subscribe(state => {
-      this.io.emit('lobby update' as SocketChannel, state);
+      this.io.emit(serverSignals.updateLobbyDetails(), state);
     });
   }
 
@@ -132,11 +137,11 @@ export class Lobby {
 
     challenge.subject.subscribe(outcome => {
       if (outcome === 'accepted') {
-        const game = new Game([challenger, receiver]);
-        [receiver, challenger].forEach(member => {
-          member.stateSubject.next({ currentGame: game });
-        });
-        this.addStateValue('game', game);
+        // const game = new Game([challenger, receiver]);
+        // [receiver, challenger].forEach(member => {
+        //   member.stateSubject.next({ currentGame: game });
+        // });
+        // this.addStateValue('game', game);
       }
     });
   }
