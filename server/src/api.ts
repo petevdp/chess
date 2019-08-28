@@ -8,7 +8,7 @@ import * as Moment from 'moment';
 import { Validator, ValidationError } from 'express-json-validator-middleware';
 
 import { JWT_SECRET_PATH } from './constants';
-import { UserLogin, SessionDetails } from 'APIInterfaces/types';
+import { UserLogin, SessionDetails, User } from '../../APIInterfaces/types';
 
 export const api = express();
 
@@ -49,26 +49,27 @@ api.put('/login', validate({body: loginSchema}), (req, res) => {
 
   const userId = username + password as string;
 
-  const expireHours = 3;
-  const currTime = Date.now();
+  const expiresIn = '3h';
 
   // currently not secure, sent over http
   const jwtBearerToken = jwt.sign({}, RSA_PRIVATE_KEY, {
     algorithm: 'RS256',
-    expiresIn: `${expireHours}h`,
+    expiresIn: `3h`,
     subject: userId,
   });
 
-  const expireTime = Moment.unix(currTime).add(expireHours, 'hours').valueOf();
-  const sessionDetails = {
+  const userDetails = {
     username,
-    userId,
-    expireTime
-  } as SessionDetails;
+    id: userId,
+    expiresIn,
+  } as User;
 
   res
-    .cookie(process.env.JWT_COOKIE_NAME, jwtBearerToken, {httpOnly: true})
-    .json(sessionDetails);
+    .status(200)
+    .json({
+      userDetails,
+      idToken: jwtBearerToken,
+    });
 });
 
 // handling validation errors

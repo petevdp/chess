@@ -5,6 +5,7 @@
 export const environment = {
   production: false,
   API_ROUTE: 'http://localhost:3000/api',
+  domain: 'http:/localhost:3000',
 };
 
 /*

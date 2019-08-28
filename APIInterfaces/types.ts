@@ -13,9 +13,10 @@ export interface User {
   id: string;
 }
 
-
-export interface SessionDetails extends User {
-  expireTime: number;
+export interface AuthPayload {
+  user: User;
+  idToken: string;
+  expiresIn: string;
 }
 
 export interface LobbyMemberDetails extends User {
