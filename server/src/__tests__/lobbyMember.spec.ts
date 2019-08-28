@@ -11,7 +11,7 @@ import {
 } from '../../../APIInterfaces/types';
 import { Challenge } from '../challenge';
 import { filter } from 'rxjs/operators';
-import { serverSignals, clientSignals } from '../../../APIInterfaces/socketSignals';
+import { lobbyServerSignals, lobbyClientSignals } from '../../../APIInterfaces/socketSignals';
 
 
 let httpServer: http.Server;
@@ -97,7 +97,7 @@ describe('challenges', () => {
       }
     });
 
-    clientSocket.emit(clientSignals.postChallenge(), clientChallenge1);
+    clientSocket.emit(lobbyClientSignals.postChallenge(), clientChallenge1);
   });
 
   test('sends challenge to client, client responds', async (done) => {
@@ -113,9 +113,9 @@ describe('challenges', () => {
         done();
       });
 
-    clientSocket.on(serverSignals.requestChallengeResponse(), (clientChallenge: ClientChallenge) => {
+    clientSocket.on(lobbyServerSignals.requestChallengeResponse(), (clientChallenge: ClientChallenge) => {
       expect(clientChallenge).toEqual(challenge.clientChallenge);
-      clientSocket.emit(clientSignals.postChallengeResponse(clientChallenge.id), true);
+      clientSocket.emit(lobbyClientSignals.postChallengeResponse(clientChallenge.id), true);
     });
   });
 });
@@ -126,7 +126,7 @@ test('updatePlayerIndex sends new player index to client', (done) => {
     ...user1,
   }] as LobbyMemberDetails[];
 
-  clientSocket.on(serverSignals.updateLobbyDetails(), receivedDetails => {
+  clientSocket.on(lobbyServerSignals.updateLobbyDetails(), receivedDetails => {
     expect(receivedDetails).toEqual(details);
     done();
   });

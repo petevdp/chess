@@ -6,7 +6,7 @@ import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Challenge } from './challenge';
 import { Game } from './game';
-import { serverSignals, clientSignals } from '../../APIInterfaces/socketSignals';
+import { lobbyServerSignals, lobbyClientSignals } from '../../APIInterfaces/socketSignals';
 import { LobbyStateValue } from './lobbyStateValue';
 
 
@@ -116,7 +116,7 @@ export class Lobby {
     });
 
     this.stateSubject.subscribe(state => {
-      this.io.emit(serverSignals.updateLobbyDetails(), state);
+      this.io.emit(lobbyServerSignals.updateLobbyDetails(), state);
     });
   }
 
