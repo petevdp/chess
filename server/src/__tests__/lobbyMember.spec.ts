@@ -5,7 +5,7 @@ import * as IOClient from 'socket.io-client';
 import { LobbyMember } from '../lobbyMember';
 import { Subject } from 'rxjs';
 import {
-  ClientChallenge,
+  ChallengeDetails,
   User,
   LobbyMemberDetails
 } from '../../../APIInterfaces/types';
@@ -32,9 +32,9 @@ const clientChallenge1 = {
   challengerId: 'id1',
   receiverId: 'id2',
   id: '1'
-} as ClientChallenge;
+} as ChallengeDetails;
 
-let lobbyChallengeSubject: Subject<ClientChallenge>;
+let lobbyChallengeSubject: Subject<ChallengeDetails>;
 let lobbyMember: LobbyMember;
 let clientSocket: SocketIOClient.Socket;
 
@@ -113,7 +113,7 @@ describe('challenges', () => {
         done();
       });
 
-    clientSocket.on(lobbyServerSignals.requestChallengeResponse(), (clientChallenge: ClientChallenge) => {
+    clientSocket.on(lobbyServerSignals.requestChallengeResponse(), (clientChallenge: ChallengeDetails) => {
       expect(clientChallenge).toEqual(challenge.clientChallenge);
       clientSocket.emit(lobbyClientSignals.postChallengeResponse(clientChallenge.id), true);
     });
@@ -122,7 +122,7 @@ describe('challenges', () => {
 
 test('updatePlayerIndex sends new player index to client', (done) => {
   const details = [{
-    inGame: 'game1',
+    currentGame: 'game1',
     ...user1,
   }] as LobbyMemberDetails[];
 

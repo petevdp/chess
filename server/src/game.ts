@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
-import { Observable, Subject, merge } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { ClientMove, GameConfig, Colour, GameDetails } from '../../APIInterfaces/types';
+import { MoveDetails, Colour, GameDetails } from '../../APIInterfaces/types';
 import { Server, Socket } from 'socket.io';
 import { LobbyMember } from './lobbyMember';
 // import {  } from '../../APIInterfaces/socketSignals';
@@ -10,24 +10,32 @@ import * as Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player } from './player';
 
-export class Game implements LobbyStateValue {
-  gameConfig: GameDetails;
+export class Game implements LobbyStateValue<GameStatus> {
   private players: Player[];
   id: string;
   private chess = new Chess();
+  private gameDetails: GameDetails;
 
   constructor(
     private lobbyMembers: LobbyMember[]
   ) {
+
     this.id = uuidv4();
+    const colours = ['b', 'w'] as Colour[];
+    this.playerDetails = _.zip(lobbyMembers, _.shuffle(colours))
+      .map(([member, colour]) => ({
+        user: member.user,
+        colour,
+      }));
+
+    this.gameDetails = {
+      id: this.id,
+      players: lobbyMembers.map((member) => ({}))
+    }
 
     if (this.lobbyMembers.length !== 2) {
       throw new Error('wrong number of players: ' + this.lobbyMembers.length);
     }
-    const colours = ['b', 'w'] as Colour[];
-    const moveSubjects = _.times(2)
-      .map(this.generateMoveSubject) as Subject<ClientMove>[];
-
 
     this.players = _.zip(_.shuffle(colours), this.lobbyMembers, moveSubjects)
       .map(([colour, lobbyMember, moveSubject]) => (
@@ -39,20 +47,16 @@ export class Game implements LobbyStateValue {
         )
       ));
 
-    // allow players to see each others moves
-    this.players[0].opponentMoveObservable = this.opponentMoveObservableFactory(this.players[1]);
-    this.players[1].opponentMoveObservable = this.opponentMoveObservableFactory(this.players[0]);
-
-    // TODO transform this into a holistic gamestate
 
     this.startGameWhenPlayersReady();
   }
+
 
   cleanup() {
     throw new Error('not implemented!');
   }
 
-  gameDetails = () => {
+  getDetails = () => {
     return {
       id: this.id,
       players: this.players.map(p => p.details),
@@ -68,15 +72,7 @@ export class Game implements LobbyStateValue {
     return allReady;
   }
 
-  private generateMoveSubject() {
-    return new Subject<ClientMove>();
-  }
-
-  private opponentMoveObservableFactory(opponent: Player) {
-    return opponent.moveObservable.pipe(filter(this.validateMove));
-  }
-
-  private validateMove = (clientMove: ClientMove): boolean => {
+  private validateMove = (clientMove: MoveDetails): boolean => {
     const { colour, ...move } = clientMove;
     if ( this.chess.turn() !== colour
       && this.chess.move(move)

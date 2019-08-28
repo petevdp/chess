@@ -2,6 +2,7 @@ export const lobbyServerSignals = {
   updateLobbyDetails: () => 'update lobby state',
   requestChallengeResponse: () => 'request challenge response',
   resolveChallenge: (id) => `resolve challenge ${id}`,
+  joinGame: () => 'join game',
 };
 
 export const lobbyClientSignals = {
@@ -11,15 +12,10 @@ export const lobbyClientSignals = {
 };
 
 export const gameServerSignals = {
-  start: () => 'start game',
-  newOpponentMove: () => 'new opponent move',
-  end: () => 'end game'
+  gameUpdate: () => 'game update',
 };
 
 export const gameClientSignals = {
-  joinGame: () => 'join game',
   ready: () => 'game ready',
-  newMove: () => 'game move',
-  leave: () => 'leave game',
-  surrender: () => 'surrender game',
+  takeAction: () => 'take game action',
 };

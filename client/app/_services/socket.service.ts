@@ -3,7 +3,7 @@ import * as io from 'socket.io-client';
 import { Observable, ReplaySubject, Subject, BehaviorSubject } from 'rxjs';
 import { LobbyDetails } from 'APIInterfaces/types';
 import { AuthService } from './auth.service';
-import { serverSignals } from 'APIInterfaces/socketSignals';
+import { lobbyServerSignals } from 'APIInterfaces/socketSignals';
 import { shareReplay } from 'rxjs/operators';
 
 
@@ -27,7 +27,7 @@ export class SocketService {
 
   initLobbyDetailsObservable() {
     this.lobbyDetailsObservable = new Observable<LobbyDetails>(subscriber => {
-      this.socket.on(serverSignals.updateLobbyDetails(), (details: LobbyDetails) => {
+      this.socket.on(lobbyServerSignals.updateLobbyDetails(), (details: LobbyDetails) => {
         subscriber.next(details);
       });
     }).pipe(shareReplay(1));

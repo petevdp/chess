@@ -1,12 +1,30 @@
 import { ShortMove } from 'chess.js';
 import { ExecFileOptionsWithOtherEncoding } from 'child_process';
 
-export interface ClientMove extends ShortMove {
-  colour: string;
+export interface MoveDetails extends ShortMove {
+  playerId: string;
 }
 
 
+
 export type Colour = 'b' | 'w';
+
+export interface EndState {
+  winner: string|null;
+  reason: 'checkmate' | 'resigned' | 'disconnected' | 'cancelled';
+}
+export interface GameUpdate {
+  type: 'new' | 'start' | 'move' | 'end';
+  new?: GameDetails;
+  start?: any;
+  move?: ShortMove;
+  end?: EndState;
+}
+
+export interface ClientGameAction {
+  move?: ShortMove;
+  action: 'move' | 'resign' | 'cancel';
+}
 
 export interface User {
   username: string;
@@ -20,9 +38,9 @@ export interface AuthPayload {
 }
 
 export interface LobbyMemberDetails extends User {
-  inGame: null|string;
   username: string;
   id: string;
+  currentGameId: null|string;
 }
 
 export interface PlayerDetails {
@@ -37,7 +55,7 @@ export interface UserLogin {
   username: string;
   password: string;
 }
-export interface ClientChallenge {
+export interface ChallengeDetails {
   id: string;
   challengerId: string;
   receiverId: string;

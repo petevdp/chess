@@ -1,10 +1,10 @@
 import * as io from 'socket.io';
 import { LobbyMember, MemberState } from './lobbyMember';
-import { ClientChallenge, User, LobbyMemberDetails, Map } from '../../APIInterfaces/types';
+import { ChallengeDetails, User, LobbyMemberDetails, Map, LobbyDetails } from '../../APIInterfaces/types';
 import * as http from 'http';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Challenge } from './challenge';
+import { map, shareReplay } from 'rxjs/operators';
+import { Challenge } from './lobbyMember';
 import { Game } from './game';
 import { lobbyServerSignals, lobbyClientSignals } from '../../APIInterfaces/socketSignals';
 import { LobbyStateValue } from './lobbyStateValue';
@@ -21,14 +21,15 @@ export class Lobby {
 
   // for changes to state that affect the lobby client interface
   stateSubject: BehaviorSubject<LobbyState>;
+  lobbyDetailsObservable: Observable<LobbyDetails>;
 
-  lobbyChallengeObserver: Observable<Challenge>;
-  private lobbyClientChallengeSubject: Subject<ClientChallenge>;
+  lobbyChallengeObservable: Observable<Challenge>;
+  private lobbyClientChallengeSubject: Subject<ChallengeDetails>;
 
   constructor(httpServer: http.Server) {
     this.io = io(httpServer);
 
-    this.initStateSubject();
+    this.initState();
 
 
     this.lobbyClientChallengeSubject = new Subject();
@@ -41,11 +42,7 @@ export class Lobby {
       this.addMember(user, socket);
     });
 
-
-    this.lobbyChallengeObserver = this.lobbyClientChallengeSubject
-      .pipe(map((clientChallenge) => new Challenge(clientChallenge)));
-
-    this.lobbyChallengeObserver.subscribe(this.handleChallenge);
+    this.lobbyClientChallengeSubject.subscribe(this.handleChallenge);
   }
 
   private addMember(user: User, socket: io.Socket) {
@@ -71,15 +68,15 @@ export class Lobby {
   }
 
   deleteStateValue(category, id: string) {
-      const {
-        [id]: removed,
-        ...challengableMembers
-      } = this.state[category];
+    const {
+      [id]: removed,
+      ...challengableMembers
+    } = this.state[category];
 
-      this.setState({
-        ...this.state,
-        [category]: challengableMembers,
-      });
+    this.setState({
+      ...this.state,
+      [category]: challengableMembers,
+    });
   }
   /**
    * adds a new value to the lobby state in the given category
@@ -109,40 +106,54 @@ export class Lobby {
   /**
    * initialize state subject, and emit stream to client
    */
-  private initStateSubject(): void {
+  private initState(): void {
     this.stateSubject = new BehaviorSubject({
       members: {},
       games: {},
     });
 
-    this.stateSubject.subscribe(state => {
-      this.io.emit(lobbyServerSignals.updateLobbyDetails(), state);
-    });
+
+    const getCategoryDetails = (category: any) => (
+      Object.values(category).map((obj: any) => obj.getDetails())
+    );
+
+    const lobbyStateToDetails = (state: LobbyState) => {
+      return {
+        members: getCategoryDetails(state.members),
+        games: getCategoryDetails(state.games),
+      };
+    };
+
+    // send state details to client
+    this.lobbyDetailsObservable = this.stateSubject
+      .pipe(
+        map(lobbyStateToDetails),
+        shareReplay(1)
+      );
+
+    this.lobbyChallengeObservable.subscribe({
+        next: (details) => {
+          this.io.emit(lobbyServerSignals.updateLobbyDetails(), details);
+        }
+      });
   }
 
   /**
    * Asks lobby members to resolve input challenge, and creates a game if it's accepted.
    */
-  private handleChallenge = (challenge: Challenge): void => {
-    const challenger = this.state.members[challenge.challengerId];
-    const receiver = this.state.members[challenge.receiverId];
+  private handleChallenge = async (challenge: Challenge): void => {
+    const { details, isCancelled } = challenge;
+    const challenger = this.state.members[details.challengerId];
+    const receiver = this.state.members[details.receiverId];
 
-    // TODO change to Promise.race possibly
-    receiver.challenge(challenge);
-    challenger.queryCancelChallenge(challenge);
-
-    challenge.subject.subscribe(outcome => {
-      console.log('outcome: ', outcome);
-    });
-
-    challenge.subject.subscribe(outcome => {
-      if (outcome === 'accepted') {
-        // const game = new Game([challenger, receiver]);
-        // [receiver, challenger].forEach(member => {
-        //   member.stateSubject.next({ currentGame: game });
-        // });
-        // this.addStateValue('game', game);
-      }
-    });
+    const outcome = await Promise.race([
+      receiver.challenge(details),
+      isCancelled
+    ]);
+    if (outcome) {
+      this.addStateValue('game', new Game([receiver, challenger]));
+      return;
+    }
+    console.log('cancelled');
   }
 }

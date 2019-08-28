@@ -2,57 +2,46 @@ import { Socket } from 'socket.io';
 
 import { Observable, Subject } from 'rxjs';
 
-import { ClientMove, GameConfig, GameDetails, PlayerDetails, User } from '../../APIInterfaces/types';
+import { MoveDetails, GameDetails, PlayerDetails, User, GameUpdate, ClientGameAction, } from '../../APIInterfaces/types';
 
-import { gameClientSignals, gameServerSignals } from '../../APIInterfaces/socketSignals';
+import { gameClientSignals, gameServerSignals, lobbyServerSignals } from '../../APIInterfaces/socketSignals';
 
 import { LobbyMember } from './lobbyMember';
 import { promises } from 'fs';
+import { takeUntil, filter } from 'rxjs/operators';
 
 // has one game associated with it.
 export class Player {
 
   socket: Socket;
   user: User;
-  opponentMoveObservable: Observable<ClientMove>;
-  moveObservable: Observable<ClientMove>;
+  playerActionObservable: Observable<ClientGameAction>;
   ready: Promise<void>;
 
   constructor(
     lobbyMember: LobbyMember,
-    private gameDetails: () => GameDetails,
+    private gameDetails: GameDetails,
     public colour: string,
-    moveSubject: Subject<ClientMove>,
+    private gameObservable: Observable<GameUpdate>
   ) {
+
     this.socket = lobbyMember.socket;
     this.user = lobbyMember.user;
 
-
-    this.socket.on(gameClientSignals.newMove(), (clientMove: ClientMove) => {
-      moveSubject.next(clientMove);
+    this.playerActionObservable = new Observable(subscriber => {
+      this.socket.on(gameClientSignals.takeAction(), subscriber.next);
     });
-    this.moveObservable = moveSubject.asObservable();
 
     // returns promise which asks the client if they're ready,
     // and resolving or rejecting depending on the response.
-    this.ready = new Promise<void>((resolve, reject) => {
-      this.socket.emit(gameClientSignals.joinGame(), this.gameDetails());
-      this.socket.on(gameClientSignals.ready(), isReady => {
-        if (isReady) {
-          resolve();
-        } else {
-          reject('player not ready');
-        }
-        this.socket.removeAllListeners(gameClientSignals.ready());
-      });
-    });
-
-  }
-
-  startGame() {
-    this.socket.emit(gameServerSignals.start(), {
-      gameConfig: this.gameDetails,
-      colour: this.colour
+    this.gameObservable
+      // don't send players own moves back to him
+      .pipe(filter((gameUpdate: GameUpdate) => (
+        !gameUpdate.move
+        || gameUpdate.move.details.playerId !== this.playerId
+      )))
+      .subscribe(gameUpdate => {
+      this.socket.emit(gameServerSignals.gameUpdate());
     });
   }
 
@@ -61,5 +50,9 @@ export class Player {
       user: this.user,
       colour: this.colour,
     };
+  }
+
+  get playerId() {
+    return this.user.id;
   }
 }
