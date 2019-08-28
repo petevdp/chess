@@ -1,12 +1,12 @@
 import { ShortMove } from 'chess.js';
+import { ExecFileOptionsWithOtherEncoding } from 'child_process';
 
 export interface ClientMove extends ShortMove {
   colour: string;
 }
 
 
-export interface GameConfig {
-}
+export type Colour = 'b' | 'w';
 
 export interface User {
   username: string;
@@ -25,9 +25,13 @@ export interface LobbyMemberDetails extends User {
   id: string;
 }
 
+export interface PlayerDetails {
+  user: User;
+  colour: string;
+}
 export interface GameDetails {
-  player1Id: string;
-  player2Id: string;
+  id: string;
+  players: PlayerDetails[];
 }
 export interface UserLogin {
   username: string;
