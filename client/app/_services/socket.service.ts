@@ -4,6 +4,7 @@ import { Observable, ReplaySubject, Subject, BehaviorSubject } from 'rxjs';
 import { LobbyDetails } from 'APIInterfaces/types';
 import { AuthService } from './auth.service';
 import { serverSignals } from 'APIInterfaces/socketSignals';
+import { shareReplay } from 'rxjs/operators';
 
 
 @Injectable({
@@ -21,12 +22,14 @@ export class SocketService {
   constructor(
     private authService: AuthService
   ) {
+    this.initLobbyDetailsObservable();
   }
 
   initLobbyDetailsObservable() {
-    this.socket.on(serverSignals.updateLobbyDetails(), details => {
-      this.lobbyDetailsSubject.next(details);
-    });
-    this.lobbyDetailsObservable = this.lobbyDetailsSubject.asObservable();
+    this.lobbyDetailsObservable = new Observable<LobbyDetails>(subscriber => {
+      this.socket.on(serverSignals.updateLobbyDetails(), (details: LobbyDetails) => {
+        subscriber.next(details);
+      });
+    }).pipe(shareReplay(1));
   }
  }

@@ -39,7 +39,7 @@ export class AuthService {
       return !this.isLoggedIn();
   }
 
-  getExpiration() {
+  getExpiration() {h
       const expiration = localStorage.getItem('expires_at');
       const expiresAt = JSON.parse(expiration);
       return moment(expiresAt);

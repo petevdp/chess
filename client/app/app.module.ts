@@ -7,7 +7,6 @@ import { AppRoutingModule } from './app.routing';
 import { AppComponent } from './_components/app/app.component';
 import { NavBarComponent } from './_components/nav-bar/nav-bar.component';
 import { BoardComponent } from './_components/board/board.component';
-import { RoomIndexComponent } from './_components/room-index/room-index.component';
 import { LoginComponent } from './_components/login/login.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
@@ -18,7 +17,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     AppComponent,
     NavBarComponent,
     BoardComponent,
-    RoomIndexComponent,
     LoginComponent,
   ],
   imports: [
