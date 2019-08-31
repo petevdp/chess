@@ -1,27 +1,67 @@
 import * as io from 'socket.io';
 import { LobbyMember, MemberState } from './lobbyMember';
-import { ChallengeDetails, User, LobbyMemberDetails, Map, LobbyDetails } from '../../APIInterfaces/types';
+import { ChallengeDetails, User, LobbyMemberDetails, Map, LobbyDetails, GameDetails } from '../../APIInterfaces/types';
 import * as http from 'http';
-import { Subject, Observable, BehaviorSubject } from 'rxjs';
+import { Subject, Observable, BehaviorSubject, observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { Challenge } from './lobbyMember';
 import { Game } from './game';
 import { lobbyServerSignals, lobbyClientSignals } from '../../APIInterfaces/socketSignals';
-import { LobbyStateValue } from './lobbyStateValue';
+import { StateComponent, LobbyCategoryState as LobbyCategory } from './lobbyStateValue';
 
+// challengableMembers
 
-interface LobbyState {
-  members: Map<LobbyMember>;
-  games: Map<Game>;
+interface ConnectedUser {
+  socket: io.Socket;
+  user: User;
 }
+export class NewLobby {
+    detailsObservable: Observable<LobbyDetails>;
+    private members: LobbyCategory<LobbyMember>;
+    private games: LobbyCategory<Game>;
+    private lobbyChallengeSubject: Subject<ChallengeDetails>;
 
+  constructor() {
+    this.members = new LobbyCategory<LobbyMemberDetails>();
+    this.games = new LobbyCategory<GameDetails>();
+    this.lobbyChallengeSubject = new Subject();
+
+    this.lobbyChallengeSubject.subscribe({
+      next: (challengeDetails) => {
+        const {challengerId, receiverId, id} = challengeDetails;
+        const resolutionSubject = new Subject();
+        const receiver = this.members.components[receiverId];
+        const challenger = this.members.components[challengerId];
+
+        // ask involved members to resolve the challenge
+        receiver.resolveChallenge(challengeDetails, resolutionSubject);
+        challenger.resolveChallenge(challengeDetails, resolutionSubject);
+
+        resolutionSubject.subscribe({
+          next: isAccepted => {
+            // complete after only one value
+            resolutionSubject.complete();
+          }
+        });
+      }
+    });
+  }
+
+  addLobbyMember(user: User, socket: io.Socket) {
+    const member = new LobbyMember(user, socket);
+    this.members.addStateComponent(member);
+    member.challengeObservable.subscribe({
+      next: this.lobbyChallengeSubject.next
+    });
+  }
+
+  private resolveChallenge = (challengeDetails: ChallengeDetails) => {
+  }
+}
 export class Lobby {
-
   private io: io.Server;
 
-  // for changes to state that affect the lobby client interface
-  stateSubject: BehaviorSubject<LobbyState>;
-  lobbyDetailsObservable: Observable<LobbyDetails>;
+  gamesObservable: Observable<Game>;
 
   lobbyChallengeObservable: Observable<Challenge>;
   private lobbyClientChallengeSubject: Subject<ChallengeDetails>;
@@ -81,7 +121,7 @@ export class Lobby {
   /**
    * adds a new value to the lobby state in the given category
    */
-  addStateValue(category: 'game' | 'member', value: LobbyStateValue): void {
+  addStateValue(category: 'game' | 'member', value: StateComponent): void {
     const state = this.state;
     this.setState({
       [category]: {
@@ -91,7 +131,7 @@ export class Lobby {
     });
   }
 
-  get state(): LobbyState {
+  get state(): StateComponent {
     return this.stateSubject.getValue();
   }
   /**
@@ -117,7 +157,7 @@ export class Lobby {
       Object.values(category).map((obj: any) => obj.getDetails())
     );
 
-    const lobbyStateToDetails = (state: LobbyState) => {
+    const lobbyStateToDetails = (state: StateComponent) => {
       return {
         members: getCategoryDetails(state.members),
         games: getCategoryDetails(state.games),

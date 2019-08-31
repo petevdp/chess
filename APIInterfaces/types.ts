@@ -6,12 +6,20 @@ export interface MoveDetails extends ShortMove {
 }
 
 
+export interface User {
+  username: string;
+  id: string;
+}
 
 export type Colour = 'b' | 'w';
 
 export interface EndState {
   winner: string|null;
   reason: 'checkmate' | 'resigned' | 'disconnected' | 'cancelled';
+}
+
+export interface LobbyMemberDetails extends User {
+  currentGame: string|null;
 }
 export interface GameUpdate {
   type: 'new' | 'start' | 'move' | 'end';
@@ -25,22 +33,10 @@ export interface ClientGameAction {
   move?: ShortMove;
   action: 'move' | 'resign' | 'cancel';
 }
-
-export interface User {
-  username: string;
-  id: string;
-}
-
 export interface AuthPayload {
   user: User;
   idToken: string;
   expiresIn: string;
-}
-
-export interface LobbyMemberDetails extends User {
-  username: string;
-  id: string;
-  currentGameId: null|string;
 }
 
 export interface PlayerDetails {

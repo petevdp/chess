@@ -5,12 +5,12 @@ import { MoveDetails, Colour, GameDetails } from '../../APIInterfaces/types';
 import { Server, Socket } from 'socket.io';
 import { LobbyMember } from './lobbyMember';
 // import {  } from '../../APIInterfaces/socketSignals';
-import { LobbyStateValue } from './lobbyStateValue';
+import { StateComponent } from './lobbyStateValue';
 import * as Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player } from './player';
 
-export class Game implements LobbyStateValue<GameStatus> {
+export class Game implements StateComponent<GameStatus> {
   private players: Player[];
   id: string;
   private chess = new Chess();

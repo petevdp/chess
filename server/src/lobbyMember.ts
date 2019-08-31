@@ -1,85 +1,88 @@
 import { Socket } from 'socket.io';
-import { Subject, BehaviorSubject } from 'rxjs';
-import { ChallengeDetails, User, LobbyMemberDetails } from '../../APIInterfaces/types';
+import { Subject, BehaviorSubject, Observable } from 'rxjs';
+import { ChallengeDetails, User, LobbyMemberDetails, LobbyDetails, GameDetails } from '../../APIInterfaces/types';
 import { Game } from './game';
-import { LobbyStateValue } from './lobbyStateValue';
+import { StateComponent, LobbyState } from './lobbyStateValue';
 import { lobbyServerSignals, lobbyClientSignals } from '../../APIInterfaces/socketSignals';
-
-export interface MemberState {
-  currentGame: Game|null;
-}
+import { map } from 'rxjs/operators';
+import { Player } from './player';
+import { rejects } from 'assert';
 
 export interface Challenge {
   isCancelled: Promise<boolean>;
   details: ChallengeDetails;
 }
 
-export class LobbyMember implements LobbyStateValue<LobbyMemberDetails> {
-  public stateSubject = new BehaviorSubject<MemberState>({ currentGame: null });
+interface MemberState {
+  currentGame: string|null;
+}
+
+export class LobbyMember implements LobbyState<LobbyMemberDetails> {
+  challengeObservable: Observable<ChallengeDetails>;
+  detailsStateComponent: StateComponent<LobbyMemberDetails>;
+
+  private stateSubject: BehaviorSubject<MemberState>;
 
   constructor(
-    public user: User,
-    public socket: Socket,
-    lobbyChallengeSubject: Subject<ChallengeDetails>,
+    private user: User,
+    private socket: Socket,
   ) {
-    this.socket.on(
-      lobbyClientSignals.postChallenge(),
-      (clientChallenge: ChallengeDetails) => {
-        lobbyChallengeSubject.next(clientChallenge);
-      }
-    );
+    this.challengeObservable = new Observable(subscriber => {
+      this.socket.on(
+        lobbyClientSignals.postChallenge(),
+        subscriber.next
+      );
+      this.socket.on('disconnect', subscriber.complete);
+    });
+
+    this.stateSubject = new BehaviorSubject({currentGame: null});
+
+    this.detailsStateComponent = {
+      id: this.id,
+      detailsObservable: this.stateSubject.pipe(map((memberState: MemberState) => ({
+        ...memberState,
+        ...user,
+      }))),
+    } as StateComponent<LobbyMemberDetails>;
   }
 
   get id() {
     return this.user.id;
   }
 
-  getCurrentGameId = (): string|null => (
-    this.stateSubject.getValue().currentGame.id
-  )
-
-  getDetails() {
-    return {
-      ...this.user,
-      currentGameId: this.getCurrentGameId(),
-    };
+  joinGame(gameDetails: GameDetails) {
+    // new Player()
   }
 
-  cleanup() {
-    this.stateSubject.complete();
-    this.socket.disconnect();
-  }
+  challenge(challengeDetails: ChallengeDetails, resolutionSubject: Subject<boolean>) {
+    const { id, challengerId } = challengeDetails;
 
+    // issue response request
+    this.socket.emit(lobbyServerSignals.requestChallengeResponse(), challengeDetails);
 
-  queryCancelChallenge(challenge: Challenge): void {
-    const { id, subject } = challenge;
-    this.socket.on(lobbyClientSignals.postChallengeResponse(id), () => {
-      challenge.subject.next('cancelled');
+    // listen for responses
+    this.socket.on(lobbyClientSignals.postChallengeResponse(id), (isAccepted: boolean) => {
+
+      // you can't confirm your own challenge
+      if (challengerId === this.id && isAccepted) {
+        console.log('client attempted to accept own challenge');
+        return;
+      }
+      resolutionSubject.next(isAccepted);
     });
-    subject.subscribe({
+
+    // respond to resolution
+    resolutionSubject.subscribe({
+      next: isAccepted => {
+        this.socket.emit(lobbyServerSignals.resolveChallenge(id), isAccepted);
+      },
       complete: () => {
         this.socket.removeAllListeners(lobbyClientSignals.postChallengeResponse(id));
-        this.socket.emit(
-          lobbyServerSignals.resolveChallenge(id),
-          subject.getValue());
       }
     });
   }
 
-  challenge(challengeDetails: ChallengeDetails) {
-    const response = new Promise((resolve) => {
-      this.socket.emit(lobbyServerSignals.requestChallengeResponse(), challengeDetails);
-      this.socket.on(
-        lobbyClientSignals.postChallengeResponse(challengeDetails.id),
-        resolve
-      );
-    });
-    response.finally(() => {
-      this.socket.removeAllListeners(lobbyClientSignals.postChallengeResponse(challengeDetails.id));
-    });
-  }
-
-  updateLobbyDetails = (lobbyDetails: LobbyMemberDetails[]) => {
+  updateLobbyDetails = (lobbyDetails: LobbyDetails) => {
     this.socket.emit(lobbyServerSignals.updateLobbyDetails(), lobbyDetails);
   }
 }
