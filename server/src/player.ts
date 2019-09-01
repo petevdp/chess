@@ -1,16 +1,8 @@
-import { Socket } from 'socket.io';
+import { Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 
-import { Observable, Subject } from 'rxjs';
-
-import { GameDetails, PlayerDetails, User, ClientPlayerAction, Colour, GameUpdate, } from '../../APIInterfaces/types';
-
-import { gameClientSignals, gameServerSignals, lobbyServerSignals } from '../../APIInterfaces/socketSignals';
-
-import { LobbyMember } from './lobbyMember';
-import { promises } from 'fs';
-import { takeUntil, filter, map } from 'rxjs/operators';
 import { ClientConnection } from './clientSocketConnetions';
-
+import { PlayerDetails, ClientPlayerAction, Colour, GameUpdate, } from '../../APIInterfaces/types';
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
   colour: Colour;
@@ -35,7 +27,7 @@ export class Player {
     return this.connection.user;
   }
 
-  get id(){
+  get id() {
     return this.user.id;
   }
 
@@ -44,9 +36,6 @@ export class Player {
       user: this.user,
       colour: this.colour,
     };
-  }
-
-  startGame(gameDetails: GameDetails) {
   }
 
   updateGame(gameUpdate: GameUpdate) {

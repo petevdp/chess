@@ -2,16 +2,14 @@ import * as http from 'http';
 import * as SocketIO from 'socket.io';
 import * as IOClient from 'socket.io-client';
 
-import { LobbyMember } from '../lobbyMember';
 import { Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import {
   ChallengeDetails,
   User,
   LobbyMemberDetails
 } from '../../../APIInterfaces/types';
-import { filter } from 'rxjs/operators';
-import { lobbyServerSignals, lobbyClientSignals } from '../../../APIInterfaces/socketSignals';
-
+import { LobbyMember } from '../lobbyMember';
 
 let httpServer: http.Server;
 let serverAddr;

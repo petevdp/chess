@@ -1,14 +1,12 @@
 import * as _ from 'lodash';
 import { Observable, Subject, merge } from 'rxjs';
-import { filter, map, shareReplay, takeWhile } from 'rxjs/operators';
-import { MoveDetails, Colour, GameDetails, User, PlayerDetails, ClientPlayerAction, GameState, GameStateType, GameEndReason, GameUpdate } from '../../APIInterfaces/types';
-import { Server, Socket } from 'socket.io';
-import { LobbyMember } from './lobbyMember';
-// import {  } from '../../APIInterfaces/socketSignals';
+import { filter, map, shareReplay, takeWhile, startWith } from 'rxjs/operators';
+import { Colour, GameDetails, GameUpdate } from '../../APIInterfaces/types';
 import { StateComponent } from './lobbyCategory';
 import * as Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
+import { ClientConnection } from './clientSocketConnetions';
 
 export interface GameActions {
   temp: () => void;
@@ -20,68 +18,63 @@ export class Game implements StateComponent<GameDetails, GameActions> {
   // TODO make type for gamestate
   detailsObservable: Observable<GameDetails>;
   actions = { temp: () => { } } as GameActions;
-  gameStateSubject: Subject<string>;
   gameUpdateObservable: Observable<GameUpdate>;
-  unusedColours = _.shuffle(['b', 'w']) as Colour[];
+
+  requiredPlayerCount = 2;
 
   private chess: Chess;
-  private gameDetails: GameDetails;
 
-  constructor() {
+  constructor(
+    playerConnections: ClientConnection[]
+  ) {
     this.id = uuidv4();
-  }
 
-  addPlayer(user: User, socket: Socket) {
-    if (this.players.length >= 2) {
-      throw new Error('game full!');
-      return;
-    }
-    const player = new Player(this.id, user, socket, this.unusedColours.pop());
-    this.players.push(player);
-    if (this.players.length === 2) {
-      this.startGame();
-    }
-  }
+    const colours = _.shuffle(['b', 'w']) as Colour[];
 
-  private startGame() {
+    this.chess =  Chess();
+
+    if (playerConnections.length !== 2) {
+      throw new Error(`wrong number of players! should be: ${this.requiredPlayerCount}`);
+    }
+
+    this.players = _.zip(playerConnections, colours)
+      .map(([connection, colour]) => new Player(connection, colour));
+
+    const playerDetails = this.players.map(({details}) => details);
+    const gameDetails = {
+      id: this.id,
+      playerDetails,
+      state: this.chess.fen(),
+    } as GameDetails;
+
 
     this.gameUpdateObservable = merge(
       ...this.players.map(p => p.playerActionObservable)
     ).pipe(
         filter(this.isValidPlayerAction),
         map(this.getGameUpdateFromAction),
+        startWith({ start: gameDetails } as GameUpdate),
 
         // take until and including an update ending the game is issued
-        takeWhile(({end}) => !end, true)
+        takeWhile(({end}) => !end, true),
+        shareReplay(1)
       );
 
-    const playerDetails = this.players.map(({details}) => details);
 
     this.players.forEach(player => {
-      player.startGame({
-        id: this.id,
-        playerDetails,
-      });
-
       this.gameUpdateObservable.subscribe(player.updateGame);
     });
 
+
     this.detailsObservable = this.gameUpdateObservable.pipe(
-      map(({state}) => ({ id: this.id, playerDetails, state })),
+      map(({state}) => ({ ...gameDetails, state })),
       shareReplay(1)
     );
   }
 
-  private findPlayerByColour(searchColour: Colour) {
-    if (this.players.length !== 2) {
-      throw new Error('not all players joined');
-    }
-    return this.players.find(({ colour }) => searchColour === colour);
-  }
 
-  private findOpponentByColour = (playerColour: Colour) => {
-    const colours = ['w', 'b'] as Colour[];
-    return this.findPlayerByColour(colours.find(c => c !== playerColour));
+  private findOpponent = (playerId: string) => {
+    return this.players.find(p => p.id !== playerId);
   }
 
   private isInvalidMove(move, colour) {
@@ -94,21 +87,21 @@ export class Game implements StateComponent<GameDetails, GameActions> {
     return !(move && this.isInvalidMove(move, colour));
   }
 
-  private getGameUpdateFromAction(playerAction: PlayerAction): GameState {
-    const { move, colour } = playerAction;
+  private getGameUpdateFromAction(playerAction: PlayerAction): GameUpdate {
+    const { move, playerId } = playerAction;
     const actions = {
       move: () => {
         this.chess.move(playerAction.move);
-        const state = this.chess.fen();
+        const state = this.chess.fen() as string;
         if (this.chess.in_checkmate()) {
           return {
             end: {
-              winnerId: this.findOpponentByColour(colour).id,
+              winnerId: this.findOpponent(playerId).id,
               reason: 'checkmate',
             },
             move,
             state,
-          };
+          } as GameUpdate;
         }
 
         if (this.chess.in_stalemate()) {
@@ -119,18 +112,18 @@ export class Game implements StateComponent<GameDetails, GameActions> {
             },
             move,
             state,
-          };
+          } as GameUpdate;
         }
 
         if (this.chess.in_threefold_repitiion()) {
           return {
             end: {
               winnerId: null,
-              reason: 'threefold repitiion',
+              reason: 'threefold repitition',
             },
             move,
             state,
-          };
+          } as GameUpdate;
         }
 
         if (this.chess.in_draw()) {
@@ -141,41 +134,41 @@ export class Game implements StateComponent<GameDetails, GameActions> {
             },
             move,
             state,
-          };
+          } as GameUpdate;
         }
 
         return {
           type: 'ongoing',
           move,
           state,
-        };
+        } as GameUpdate;
       },
 
       resign: () => {
         return {
           end: {
-            winnerId: this.findOpponentByColour(colour).id,
+            winnerId: this.findOpponent(playerId).id,
             reason: 'resigned',
           },
-          state: this.chess.fen(),
-        };
+          state: this.chess.fen() as string,
+        } as GameUpdate;
       },
 
       disconnect: () => {
         return {
           end: {
-            winnerId: this.findOpponentByColour(colour).id,
+            winnerId: this.findOpponent(playerId).id,
             reason: 'disconnected',
           },
-          state: this.chess.fen(),
-        };
+          state: this.chess.fen() as string,
+        } as GameUpdate;
       },
 
       offerDraw: () => {
         return {
           message: 'offer draw',
-          state: this.chess.fen(),
-        };
+          state: this.chess.fen() as string,
+        } as GameUpdate;
       }
     };
 

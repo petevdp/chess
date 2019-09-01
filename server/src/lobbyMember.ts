@@ -1,12 +1,7 @@
-import { Socket } from 'socket.io';
-import { Subject, BehaviorSubject, Observable } from 'rxjs';
-import { ChallengeDetails, User, LobbyMemberDetails, LobbyDetails, GameDetails, ChallengeResolution, ChallengeOutcome } from '../../APIInterfaces/types';
-import { Game } from './game';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { ChallengeDetails, LobbyMemberDetails, LobbyDetails, ChallengeResolution, ChallengeOutcome } from '../../APIInterfaces/types';
 import { StateComponent } from './lobbyCategory';
-import { lobbyServerSignals, lobbyClientSignals } from '../../APIInterfaces/socketSignals';
-import { map, filter, takeUntil, tap, first } from 'rxjs/operators';
-import { Player } from './player';
-import { rejects } from 'assert';
+import { map, filter, first } from 'rxjs/operators';
 import { ClientConnection } from './clientSocketConnetions';
 
 export interface Challenge {
@@ -21,10 +16,10 @@ interface MemberState {
 export interface LobbyMemberActions {
   resolveChallenge: (
     challengeDetails: ChallengeDetails,
-    resolutionObservable: Observable<ChallengeResolution>
+    resolutionObservable: Observable<ChallengeResolution>,
   ) => Observable<ChallengeResolution>;
 
-  joinGame: (game: Game) => void;
+  connection: ClientConnection;
 
   updateLobbyDetails: (details: LobbyDetails) => void;
 }
@@ -53,10 +48,10 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
     })));
 
     this.actions = {
-      joinGame: this.joinGame,
       resolveChallenge: this.challenge,
       updateLobbyDetails: this.updateLobbyDetails,
-    };
+      connection: this.connection,
+    } as LobbyMemberActions;
   }
 
   get user() {
@@ -67,13 +62,8 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
     return this.user.id;
   }
 
-  joinGame = (game: Game) => {
-    this.stateSubject.next({ currentGame: game.id });
-    game.addPlayer(this.connection);
-  }
-
   challenge = (challengeDetails: ChallengeDetails, resolutionObservable: Observable<ChallengeResolution>) => {
-    const { id, challengerId } = challengeDetails;
+    const { id } = challengeDetails;
     const { messageObservable, sendMessage } = this.connection;
 
     const isOwnChallenge = () => (

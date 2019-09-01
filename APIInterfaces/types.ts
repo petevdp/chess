@@ -19,6 +19,7 @@ export type Colour = 'b' | 'w';
 export type GameEndReason =
   'checkmate'
   | 'stalemate'
+  | 'draw'
   | 'resigned'
   | 'disconnected'
   | 'threefold repitition';
@@ -33,9 +34,10 @@ export interface LobbyMemberDetails extends User {
   currentGame: string|null;
 }
 export interface GameUpdate {
+  start?: GameDetails;
   move?: ShortMove;
   end?: EndState;
-  message?: 'offer draw';
+  message?: string;
   state: string;
 }
 

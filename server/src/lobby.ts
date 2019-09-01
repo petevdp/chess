@@ -47,6 +47,7 @@ export class Lobby {
           next: isAccepted => {
             // complete after only one value
             resolutionSubject.complete();
+            this.createGame([receiver, challenger]);
           }
         });
       }
@@ -59,14 +60,14 @@ export class Lobby {
     member.challengeObservable.subscribe({
       next: this.lobbyChallengeSubject.next
     });
+
+    this.detailsObservable.subscribe({
+      next: member.updateLobbyDetails
+    });
   }
 
   private createGame(members: LobbyMemberActions[]) {
-    const game = new Game();
-    members.forEach(p => p.joinGame(game));
+    const game = new Game(members.map(m => m.connection));
     this.games.addComponent(game);
-  }
-
-  private resolveChallenge = (challengeDetails: ChallengeDetails) => {
   }
 }

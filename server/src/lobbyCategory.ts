@@ -1,6 +1,6 @@
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { Map } from '../../APIInterfaces/types';
-import { merge, reduce, takeUntil, tap, map } from 'rxjs/operators';
+import { merge, reduce, takeUntil, tap, map, shareReplay } from 'rxjs/operators';
 
 export interface StateComponent<D, A> {
   id: string;
@@ -69,6 +69,7 @@ export class LobbyCategory<D, A> {
         }
       }),
         reduce(addToState),
+        shareReplay(1)
     );
   }
 
