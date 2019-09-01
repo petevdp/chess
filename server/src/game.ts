@@ -1,11 +1,11 @@
 import * as _ from 'lodash';
 import { Observable, Subject, merge } from 'rxjs';
-import { filter, map, shareReplay } from 'rxjs/operators';
-import { MoveDetails, Colour, GameDetails, User, PlayerDetails, ClientPlayerAction, GameState } from '../../APIInterfaces/types';
+import { filter, map, shareReplay, takeWhile } from 'rxjs/operators';
+import { MoveDetails, Colour, GameDetails, User, PlayerDetails, ClientPlayerAction, GameState, GameStateType, GameEndReason, GameUpdate } from '../../APIInterfaces/types';
 import { Server, Socket } from 'socket.io';
 import { LobbyMember } from './lobbyMember';
 // import {  } from '../../APIInterfaces/socketSignals';
-import { StateComponent } from './lobbyStateValue';
+import { StateComponent } from './lobbyCategory';
 import * as Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
@@ -21,7 +21,7 @@ export class Game implements StateComponent<GameDetails, GameActions> {
   detailsObservable: Observable<GameDetails>;
   actions = { temp: () => { } } as GameActions;
   gameStateSubject: Subject<string>;
-  gameStateObservable: Observable<GameState>;
+  gameUpdateObservable: Observable<GameUpdate>;
   unusedColours = _.shuffle(['b', 'w']) as Colour[];
 
   private chess: Chess;
@@ -29,7 +29,6 @@ export class Game implements StateComponent<GameDetails, GameActions> {
 
   constructor() {
     this.id = uuidv4();
-
   }
 
   addPlayer(user: User, socket: Socket) {
@@ -45,43 +44,32 @@ export class Game implements StateComponent<GameDetails, GameActions> {
   }
 
   private startGame() {
-    const playerDetails = _.zip(
-      _.shuffle(colours),
-      this.players
-    )
-      .map(([colour, player]) => ({
-        user: player.user,
-        colour,
-      })) as PlayerDetails[];
 
-    this.chess = new Chess();
+    this.gameUpdateObservable = merge(
+      ...this.players.map(p => p.playerActionObservable)
+    ).pipe(
+        filter(this.isValidPlayerAction),
+        map(this.getGameUpdateFromAction),
 
+        // take until and including an update ending the game is issued
+        takeWhile(({end}) => !end, true)
+      );
 
-    const initialState = this.chess.fen();
-    this.gameStateObservable = new Observable(subscriber => {
-      this.players.forEach(player => {
-        player.playerActionObservable.subscribe(subscriber.next);
-      });
-    }).pipe(
-      filter(this.isInvalidAction),
-      map(this.getGameStateFromAction)
-    );
-
+    const playerDetails = this.players.map(({details}) => details);
 
     this.players.forEach(player => {
       player.startGame({
         id: this.id,
-        state: initialState,
         playerDetails,
       });
+
+      this.gameUpdateObservable.subscribe(player.updateGame);
     });
 
-    this.detailsObservable = this.gameStateSubject.pipe(
-      map((state) => ({ id: this.id, playerDetails, state })),
+    this.detailsObservable = this.gameUpdateObservable.pipe(
+      map(({state}) => ({ id: this.id, playerDetails, state })),
       shareReplay(1)
     );
-
-    this.gameStateSubject.next(this.chess.fen());
   }
 
   private findPlayerByColour(searchColour: Colour) {
@@ -94,7 +82,7 @@ export class Game implements StateComponent<GameDetails, GameActions> {
   private findOpponentByColour = (playerColour: Colour) => {
     const colours = ['w', 'b'] as Colour[];
     return this.findPlayerByColour(colours.find(c => c !== playerColour));
-  };
+  }
 
   private isInvalidMove(move, colour) {
     return this.chess.turn() !== colour
@@ -102,80 +90,95 @@ export class Game implements StateComponent<GameDetails, GameActions> {
     || this.chess.moves({ square: move.from }).includes(move.to);
   }
 
-  private isInvalidAction = ({ type, move, colour }: PlayerAction) => {
-    return type === 'move' && this.isInvalidMove(move, colour);
+  private isValidPlayerAction = ({ move, colour }: PlayerAction) => {
+    return !(move && this.isInvalidMove(move, colour));
   }
 
-  private getGameStateFromAction(playerAction: PlayerAction): GameState {
+  private getGameUpdateFromAction(playerAction: PlayerAction): GameState {
+    const { move, colour } = playerAction;
     const actions = {
       move: () => {
         this.chess.move(playerAction.move);
+        const state = this.chess.fen();
         if (this.chess.in_checkmate()) {
           return {
-            type: 'end',
             end: {
-              winnerId: this.findOpponentByColour(playerAction.colour),
+              winnerId: this.findOpponentByColour(colour).id,
               reason: 'checkmate',
             },
-            move: playerAction.move,
+            move,
+            state,
           };
         }
 
         if (this.chess.in_stalemate()) {
           return {
-            type: 'end',
             end: {
               winnerId: null,
               reason: 'stalemate',
             },
-            move: playerAction.move,
+            move,
+            state,
           };
         }
 
         if (this.chess.in_threefold_repitiion()) {
           return {
-            type: 'end',
             end: {
               winnerId: null,
               reason: 'threefold repitiion',
             },
-            move: playerAction.move,
+            move,
+            state,
           };
         }
 
         if (this.chess.in_draw()) {
           return {
-            type: 'end',
             end: {
               winnerId: null,
               reason: 'draw',
             },
-            move: playerAction.move,
+            move,
+            state,
           };
         }
+
+        return {
+          type: 'ongoing',
+          move,
+          state,
+        };
       },
 
       resign: () => {
         return {
-          type: 'end',
           end: {
-            winnerId: this.findOpponentByColour(playerAction.colour),
-            reason: 'resign',
-          }
+            winnerId: this.findOpponentByColour(colour).id,
+            reason: 'resigned',
+          },
+          state: this.chess.fen(),
         };
       },
 
       disconnect: () => {
         return {
-          type: 'end',
           end: {
-            winnerId: this.findOpponentByColour(playerAction.colour),
-            reason: 'disconnect',
-          }
+            winnerId: this.findOpponentByColour(colour).id,
+            reason: 'disconnected',
+          },
+          state: this.chess.fen(),
+        };
+      },
+
+      offerDraw: () => {
+        return {
+          message: 'offer draw',
+          state: this.chess.fen(),
         };
       }
     };
 
-    return actions[playerAction.type];
+    return  actions[playerAction.type]();
   }
 }

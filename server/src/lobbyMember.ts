@@ -2,7 +2,7 @@ import { Socket } from 'socket.io';
 import { Subject, BehaviorSubject, Observable } from 'rxjs';
 import { ChallengeDetails, User, LobbyMemberDetails, LobbyDetails, GameDetails } from '../../APIInterfaces/types';
 import { Game } from './game';
-import { StateComponent } from './lobbyStateValue';
+import { StateComponent } from './lobbyCategory';
 import { lobbyServerSignals, lobbyClientSignals } from '../../APIInterfaces/socketSignals';
 import { map } from 'rxjs/operators';
 import { Player } from './player';
@@ -19,7 +19,7 @@ interface MemberState {
 
 export interface LobbyMemberActions {
   resolveChallenge: (challengeDetails: ChallengeDetails, resolutionSubject: Subject<boolean>) => void;
-  joinGame: (gameDetails: GameDetails) => void;
+  joinGame: (game: Game) => void;
   updateLobbyDetails: (details: LobbyDetails) => void;
 }
 // TODO: switch from socket.io to bare ws + observables.

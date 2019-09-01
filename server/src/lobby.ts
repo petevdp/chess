@@ -3,13 +3,13 @@ import { LobbyMember, LobbyMemberActions } from './lobbyMember';
 import { ChallengeDetails, User, LobbyMemberDetails, Map, LobbyDetails, GameDetails } from '../../APIInterfaces/types';
 import { Subject, Observable } from 'rxjs';
 import { Game, GameActions } from './game';
-import { LobbyCategory } from './lobbyStateValue';
+import { LobbyCategory } from './lobbyCategory';
 
 export class Lobby {
-    detailsObservable: Observable<LobbyDetails>;
-    private members: LobbyCategory<LobbyMemberDetails, LobbyMemberActions>;
-    private games: LobbyCategory<GameDetails, GameActions>;
-    private lobbyChallengeSubject: Subject<ChallengeDetails>;
+  detailsObservable: Observable<LobbyDetails>;
+  private members: LobbyCategory<LobbyMemberDetails, LobbyMemberActions>;
+  private games: LobbyCategory<GameDetails, GameActions>;
+  private lobbyChallengeSubject: Subject<ChallengeDetails>;
 
   constructor() {
     this.members = new LobbyCategory<LobbyMemberDetails, LobbyMemberActions>();
@@ -19,7 +19,7 @@ export class Lobby {
     // resolve incoming challenges
     this.lobbyChallengeSubject.subscribe({
       next: (challengeDetails) => {
-        const {challengerId, receiverId, id} = challengeDetails;
+        const { challengerId, receiverId, id } = challengeDetails;
         const resolutionSubject = new Subject<boolean>();
 
         const receiver = this.members.componentActions[receiverId];
@@ -41,11 +41,6 @@ export class Lobby {
           next: isAccepted => {
             // complete after only one value
             resolutionSubject.complete();
-            const game = new Game();
-
-            receiver.joinGame(game);
-            challenger.joinGame(game);
-            this.games.addComponent(game);
           }
         });
       }
@@ -54,10 +49,16 @@ export class Lobby {
 
   addLobbyMember(user: User, socket: io.Socket) {
     const member = new LobbyMember(user, socket);
-    this.members.addStateComponent(member);
+    this.members.addComponent(member);
     member.challengeObservable.subscribe({
       next: this.lobbyChallengeSubject.next
     });
+  }
+
+  private createGame(members: LobbyMemberActions[]) {
+    const game = new Game();
+    members.forEach(p => p.joinGame(game));
+    this.games.addComponent(game);
   }
 
   private resolveChallenge = (challengeDetails: ChallengeDetails) => {

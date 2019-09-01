@@ -16,30 +16,34 @@ export interface User {
 
 export type Colour = 'b' | 'w';
 
+export type GameEndReason =
+  'checkmate'
+  | 'stalemate'
+  | 'resigned'
+  | 'disconnected'
+  | 'threefold repitition';
+
+
 export interface EndState {
-  winner: string|null;
-  reason:
-    'checkmate'
-    | 'resigned'
-    | 'disconnected'
-    | 'cancelled'
-    | 'threefold repitition';
+  winnerId: string|null;
+  reason: GameEndReason;
 }
 
 export interface LobbyMemberDetails extends User {
   currentGame: string|null;
 }
-export interface GameState {
-  type: 'start' | 'move' | 'end';
-  new?: GameDetails;
-  start?: any;
+
+
+export interface GameUpdate {
   move?: ShortMove;
   end?: EndState;
+  message?: 'offer draw';
+  state: string;
 }
 
 export interface ClientPlayerAction {
   move?: ShortMove;
-  type: 'move' | 'resign' | 'disconnect';
+  type: 'move' | 'resign' | 'disconnect'| 'offerDraw';
 }
 
 
@@ -57,7 +61,6 @@ export interface PlayerDetails {
 export interface GameDetails {
   id: string;
   playerDetails: PlayerDetails[];
-  state: string;
 }
 export interface UserLogin {
   username: string;

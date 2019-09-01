@@ -28,9 +28,6 @@ export class Player {
 
     this.playerActionObservable = new Observable(subscriber => {
       this.socket.on(gameClientSignals.takeAction(), (clientAction: ClientPlayerAction) => {
-        if (clientAction.type === 'resign') {
-          subscriber.complete();
-        }
         subscriber.next({
           ...clientAction,
           colour,
@@ -47,8 +44,14 @@ export class Player {
     return this.user.id;
   }
 
-  startGame(gameDetails: GameDetails) {
+  get details(): PlayerDetails {
+    return {
+      user: this.user,
+      colour: this.colour,
+    };
+  }
 
+  startGame(gameDetails: GameDetails) {
   }
   updateGame(gameUpdate: GameState) {}
 }
