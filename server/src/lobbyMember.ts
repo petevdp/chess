@@ -2,7 +2,7 @@ import { Socket } from 'socket.io';
 import { Subject, BehaviorSubject, Observable } from 'rxjs';
 import { ChallengeDetails, User, LobbyMemberDetails, LobbyDetails, GameDetails } from '../../APIInterfaces/types';
 import { Game } from './game';
-import { StateComponent, LobbyState } from './lobbyStateValue';
+import { StateComponent } from './lobbyStateValue';
 import { lobbyServerSignals, lobbyClientSignals } from '../../APIInterfaces/socketSignals';
 import { map } from 'rxjs/operators';
 import { Player } from './player';
@@ -14,12 +14,19 @@ export interface Challenge {
 }
 
 interface MemberState {
-  currentGame: string|null;
+  currentGame: string | null;
 }
 
-export class LobbyMember implements LobbyState<LobbyMemberDetails> {
+export interface LobbyMemberActions {
+  resolveChallenge: (challengeDetails: ChallengeDetails, resolutionSubject: Subject<boolean>) => void;
+  joinGame: (gameDetails: GameDetails) => void;
+  updateLobbyDetails: (details: LobbyDetails) => void;
+}
+// TODO: switch from socket.io to bare ws + observables.
+export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemberActions> {
   challengeObservable: Observable<ChallengeDetails>;
-  detailsStateComponent: StateComponent<LobbyMemberDetails>;
+  detailsObservable: Observable<LobbyMemberDetails>;
+  actions: LobbyMemberActions;
 
   private stateSubject: BehaviorSubject<MemberState>;
 
@@ -35,26 +42,31 @@ export class LobbyMember implements LobbyState<LobbyMemberDetails> {
       this.socket.on('disconnect', subscriber.complete);
     });
 
-    this.stateSubject = new BehaviorSubject({currentGame: null});
+    this.stateSubject = new BehaviorSubject({ currentGame: null });
 
-    this.detailsStateComponent = {
-      id: this.id,
-      detailsObservable: this.stateSubject.pipe(map((memberState: MemberState) => ({
-        ...memberState,
-        ...user,
-      }))),
-    } as StateComponent<LobbyMemberDetails>;
+    this.detailsObservable = this.stateSubject.pipe(map((memberState: MemberState) => ({
+      ...memberState,
+      ...user,
+    })));
+
+    this.actions = {
+      joinGame: this.joinGame,
+      resolveChallenge: this.challenge,
+      updateLobbyDetails: this.updateLobbyDetails,
+    };
   }
+
 
   get id() {
     return this.user.id;
   }
 
-  joinGame(gameDetails: GameDetails) {
-    // new Player()
+  joinGame = (game: Game) => {
+    this.stateSubject.next({ currentGame: game.id });
+    game.addPlayer(this.user, this.socket);
   }
 
-  challenge(challengeDetails: ChallengeDetails, resolutionSubject: Subject<boolean>) {
+  challenge = (challengeDetails: ChallengeDetails, resolutionSubject: Subject<boolean>) => {
     const { id, challengerId } = challengeDetails;
 
     // issue response request

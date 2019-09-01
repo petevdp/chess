@@ -1,85 +1,181 @@
 import * as _ from 'lodash';
-import { Observable, Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { MoveDetails, Colour, GameDetails } from '../../APIInterfaces/types';
+import { Observable, Subject, merge } from 'rxjs';
+import { filter, map, shareReplay } from 'rxjs/operators';
+import { MoveDetails, Colour, GameDetails, User, PlayerDetails, ClientPlayerAction, GameState } from '../../APIInterfaces/types';
 import { Server, Socket } from 'socket.io';
 import { LobbyMember } from './lobbyMember';
 // import {  } from '../../APIInterfaces/socketSignals';
 import { StateComponent } from './lobbyStateValue';
 import * as Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
-import { Player } from './player';
+import { Player, PlayerAction } from './player';
 
-export class Game implements StateComponent<GameStatus> {
+export interface GameActions {
+  temp: () => void;
+}
+export class Game implements StateComponent<GameDetails, GameActions> {
   private players: Player[];
   id: string;
-  private chess = new Chess();
+
+  // TODO make type for gamestate
+  detailsObservable: Observable<GameDetails>;
+  actions = { temp: () => { } } as GameActions;
+  gameStateSubject: Subject<string>;
+  gameStateObservable: Observable<GameState>;
+  unusedColours = _.shuffle(['b', 'w']) as Colour[];
+
+  private chess: Chess;
   private gameDetails: GameDetails;
 
-  constructor(
-    private lobbyMembers: LobbyMember[]
-  ) {
-
+  constructor() {
     this.id = uuidv4();
-    const colours = ['b', 'w'] as Colour[];
-    this.playerDetails = _.zip(lobbyMembers, _.shuffle(colours))
-      .map(([member, colour]) => ({
-        user: member.user,
+
+  }
+
+  addPlayer(user: User, socket: Socket) {
+    if (this.players.length >= 2) {
+      throw new Error('game full!');
+      return;
+    }
+    const player = new Player(this.id, user, socket, this.unusedColours.pop());
+    this.players.push(player);
+    if (this.players.length === 2) {
+      this.startGame();
+    }
+  }
+
+  private startGame() {
+    const playerDetails = _.zip(
+      _.shuffle(colours),
+      this.players
+    )
+      .map(([colour, player]) => ({
+        user: player.user,
         colour,
-      }));
+      })) as PlayerDetails[];
 
-    this.gameDetails = {
-      id: this.id,
-      players: lobbyMembers.map((member) => ({}))
-    }
-
-    if (this.lobbyMembers.length !== 2) {
-      throw new Error('wrong number of players: ' + this.lobbyMembers.length);
-    }
-
-    this.players = _.zip(_.shuffle(colours), this.lobbyMembers, moveSubjects)
-      .map(([colour, lobbyMember, moveSubject]) => (
-        new Player(
-          lobbyMember,
-          this.gameDetails,
-          colour,
-          moveSubject,
-        )
-      ));
+    this.chess = new Chess();
 
 
-    this.startGameWhenPlayersReady();
+    const initialState = this.chess.fen();
+    this.gameStateObservable = new Observable(subscriber => {
+      this.players.forEach(player => {
+        player.playerActionObservable.subscribe(subscriber.next);
+      });
+    }).pipe(
+      filter(this.isInvalidAction),
+      map(this.getGameStateFromAction)
+    );
+
+
+    this.players.forEach(player => {
+      player.startGame({
+        id: this.id,
+        state: initialState,
+        playerDetails,
+      });
+    });
+
+    this.detailsObservable = this.gameStateSubject.pipe(
+      map((state) => ({ id: this.id, playerDetails, state })),
+      shareReplay(1)
+    );
+
+    this.gameStateSubject.next(this.chess.fen());
   }
 
-
-  cleanup() {
-    throw new Error('not implemented!');
+  private findPlayerByColour(searchColour: Colour) {
+    if (this.players.length !== 2) {
+      throw new Error('not all players joined');
+    }
+    return this.players.find(({ colour }) => searchColour === colour);
   }
 
-  getDetails = () => {
-    return {
-      id: this.id,
-      players: this.players.map(p => p.details),
+  private findOpponentByColour = (playerColour: Colour) => {
+    const colours = ['w', 'b'] as Colour[];
+    return this.findPlayerByColour(colours.find(c => c !== playerColour));
+  };
+
+  private isInvalidMove(move, colour) {
+    return this.chess.turn() !== colour
+    || !move
+    || this.chess.moves({ square: move.from }).includes(move.to);
+  }
+
+  private isInvalidAction = ({ type, move, colour }: PlayerAction) => {
+    return type === 'move' && this.isInvalidMove(move, colour);
+  }
+
+  private getGameStateFromAction(playerAction: PlayerAction): GameState {
+    const actions = {
+      move: () => {
+        this.chess.move(playerAction.move);
+        if (this.chess.in_checkmate()) {
+          return {
+            type: 'end',
+            end: {
+              winnerId: this.findOpponentByColour(playerAction.colour),
+              reason: 'checkmate',
+            },
+            move: playerAction.move,
+          };
+        }
+
+        if (this.chess.in_stalemate()) {
+          return {
+            type: 'end',
+            end: {
+              winnerId: null,
+              reason: 'stalemate',
+            },
+            move: playerAction.move,
+          };
+        }
+
+        if (this.chess.in_threefold_repitiion()) {
+          return {
+            type: 'end',
+            end: {
+              winnerId: null,
+              reason: 'threefold repitiion',
+            },
+            move: playerAction.move,
+          };
+        }
+
+        if (this.chess.in_draw()) {
+          return {
+            type: 'end',
+            end: {
+              winnerId: null,
+              reason: 'draw',
+            },
+            move: playerAction.move,
+          };
+        }
+      },
+
+      resign: () => {
+        return {
+          type: 'end',
+          end: {
+            winnerId: this.findOpponentByColour(playerAction.colour),
+            reason: 'resign',
+          }
+        };
+      },
+
+      disconnect: () => {
+        return {
+          type: 'end',
+          end: {
+            winnerId: this.findOpponentByColour(playerAction.colour),
+            reason: 'disconnect',
+          }
+        };
+      }
     };
-  }
 
-  private async startGameWhenPlayersReady() {
-    // Wait for all payers to be ready, then start game.
-    const allReady = Promise.all(this.players.map((player: Player) => player.ready))
-      .then(() => this.players.forEach(player => player.startGame))
-      // TODO add recovery for ready up failure.
-      .catch(() => console.log('game failed!'));
-    return allReady;
-  }
-
-  private validateMove = (clientMove: MoveDetails): boolean => {
-    const { colour, ...move } = clientMove;
-    if ( this.chess.turn() !== colour
-      && this.chess.move(move)
-    ) {
-      console.log('invalid move: ', clientMove);
-      return null;
-    }
-    return true;
+    return actions[playerAction.type];
   }
 }

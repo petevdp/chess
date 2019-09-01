@@ -1,7 +1,10 @@
 import { ShortMove } from 'chess.js';
 import { ExecFileOptionsWithOtherEncoding } from 'child_process';
+import { Square } from './board';
 
-export interface MoveDetails extends ShortMove {
+export interface ShortMove {
+  from: Square;
+  to: Square;
   playerId: string;
 }
 
@@ -15,24 +18,32 @@ export type Colour = 'b' | 'w';
 
 export interface EndState {
   winner: string|null;
-  reason: 'checkmate' | 'resigned' | 'disconnected' | 'cancelled';
+  reason:
+    'checkmate'
+    | 'resigned'
+    | 'disconnected'
+    | 'cancelled'
+    | 'threefold repitition';
 }
 
 export interface LobbyMemberDetails extends User {
   currentGame: string|null;
 }
-export interface GameUpdate {
-  type: 'new' | 'start' | 'move' | 'end';
+export interface GameState {
+  type: 'start' | 'move' | 'end';
   new?: GameDetails;
   start?: any;
   move?: ShortMove;
   end?: EndState;
 }
 
-export interface ClientGameAction {
+export interface ClientPlayerAction {
   move?: ShortMove;
-  action: 'move' | 'resign' | 'cancel';
+  type: 'move' | 'resign' | 'disconnect';
 }
+
+
+
 export interface AuthPayload {
   user: User;
   idToken: string;
@@ -41,11 +52,12 @@ export interface AuthPayload {
 
 export interface PlayerDetails {
   user: User;
-  colour: string;
+  colour: Colour;
 }
 export interface GameDetails {
   id: string;
-  players: PlayerDetails[];
+  playerDetails: PlayerDetails[];
+  state: string;
 }
 export interface UserLogin {
   username: string;

@@ -1,15 +1,15 @@
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { Map } from '../../APIInterfaces/types';
-import { merge, reduce, takeUntil, tap } from 'rxjs/operators';
+import { merge, reduce, takeUntil, tap, map } from 'rxjs/operators';
 
-export interface StateComponent<D> {
+export interface StateComponent<D, A> {
   id: string;
-  detailsObservable: Subject<D>;
-  cleanup: () => void;
-}
 
-export interface LobbyState<D> {
-  detailsStateComponent: StateComponent<D>;
+  // state relevant to client
+  detailsObservable: Observable<D>;
+
+  // methods accessable by lobby based on id
+  actions: A;
 }
 
 interface StateUpdate<D> {
@@ -17,21 +17,22 @@ interface StateUpdate<D> {
   value: D | null;
 }
 
-export class LobbyCategoryDetails<D> {
+export class LobbyCategory<D, A> {
 
-  // detailSubjects: Map<BehaviorSubject<Details>>;
+  // complete state of details
   detailsObservable: Observable<Map<D>>;
-  componentObservable: Observable<Map<StateComponent<D>>>;
-  components = {} as Map<StateComponent<D>>;
 
-  private detailsUpdateSubject: Subject<StateUpdate<D>>;
-  private componentsUpdateSubject: Subject<StateUpdate<StateComponent<D>>>;
+  // snapshot of current components
+  componentActions = {} as Map<A>;
+
+  private componentsUpdateSubject: Subject<StateUpdate<StateComponent<D, A>>>;
 
   constructor() {
-    this.detailsUpdateSubject = new Subject<StateUpdate<D>>();
-    this.componentsUpdateSubject = new Subject<StateUpdate<StateComponent<D>>>();
+    const detailsUpdateSubject = new Subject<StateUpdate<D>>();
+    this.componentsUpdateSubject = new Subject<StateUpdate<StateComponent<D, A>>>();
 
-    const addToState = (state: Map<any>, { id, value }) => {
+    // helper method to reduce updates into key/value store
+    const addToState = (state: Map<any>, { id, value }: StateUpdate<any>) => {
       if (!value) {
         const { [id]: toDelete, ...rest } = state;
         return rest;
@@ -39,29 +40,39 @@ export class LobbyCategoryDetails<D> {
       return { ...state, [id]: value };
     };
 
-    this.detailsObservable = this.detailsUpdateSubject.pipe(
-        reduce(addToState)
-    );
-
-    this.componentObservable = this.componentsUpdateSubject.pipe(
-      tap(({ id, value }) => {
+    this.componentsUpdateSubject.pipe(
+      tap(({id, value}) => {
         if (!value) {
-          this.components[id].detailsObservable.complete();
+          return;
         }
         value.detailsObservable.subscribe({
-          next: (details) => this.detailsUpdateSubject.next
+          // forward details to correct observable
+          next: (details) => detailsUpdateSubject.next({id, value: details}),
+          // if completed, remove those details from current state
+          complete: () => detailsUpdateSubject.next({id, value: null})
         });
       }),
+
+      // map to actions, turn into map, and set as componentActions
+      map(({id, value}) => ({id, value: value.actions})),
       reduce(addToState),
+      tap(components => this.componentActions = components)
+    );
+
+    this.detailsObservable = detailsUpdateSubject.pipe(
+      tap(({ id, value }) => {
+        if (!value) {
+
+          // delete from component actions if details are no longer being provided
+          this.componentActions = addToState(this.componentActions, {id, value: null});
+          return;
+        }
+      }),
+        reduce(addToState),
     );
   }
 
-  addComponent(component: StateComponent<D>) {
+  addComponent(component: StateComponent<D, A>) {
     this.componentsUpdateSubject.next({id: component.id, value: component});
   }
-
-  deleteComponent(id) {
-    this.componentsUpdateSubject.next({id, value: null});
-  }
 }
-
