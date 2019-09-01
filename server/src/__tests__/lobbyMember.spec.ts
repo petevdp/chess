@@ -9,7 +9,6 @@ import {
   User,
   LobbyMemberDetails
 } from '../../../APIInterfaces/types';
-import { Challenge } from '../challenge';
 import { filter } from 'rxjs/operators';
 import { lobbyServerSignals, lobbyClientSignals } from '../../../APIInterfaces/socketSignals';
 
@@ -50,7 +49,7 @@ const getSocketPair = () => {
 const createLobbyMember = async (user: User, challengeSubject) => {
   const pair = await getSocketPair();
   return {
-    member: new LobbyMember(user, pair.server, challengeSubject),
+    member: new LobbyMember(user, pair.server),
     clientSocket: pair.client,
   };
 };

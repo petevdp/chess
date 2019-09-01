@@ -1,12 +1,13 @@
 import { Socket } from 'socket.io';
 import { Subject, BehaviorSubject, Observable } from 'rxjs';
-import { ChallengeDetails, User, LobbyMemberDetails, LobbyDetails, GameDetails } from '../../APIInterfaces/types';
+import { ChallengeDetails, User, LobbyMemberDetails, LobbyDetails, GameDetails, ChallengeResolution, ChallengeOutcome } from '../../APIInterfaces/types';
 import { Game } from './game';
 import { StateComponent } from './lobbyCategory';
 import { lobbyServerSignals, lobbyClientSignals } from '../../APIInterfaces/socketSignals';
-import { map } from 'rxjs/operators';
+import { map, filter, takeUntil, tap, first } from 'rxjs/operators';
 import { Player } from './player';
 import { rejects } from 'assert';
+import { ClientConnection } from './clientSocketConnetions';
 
 export interface Challenge {
   isCancelled: Promise<boolean>;
@@ -18,8 +19,13 @@ interface MemberState {
 }
 
 export interface LobbyMemberActions {
-  resolveChallenge: (challengeDetails: ChallengeDetails, resolutionSubject: Subject<boolean>) => void;
+  resolveChallenge: (
+    challengeDetails: ChallengeDetails,
+    resolutionObservable: Observable<ChallengeResolution>
+  ) => Observable<ChallengeResolution>;
+
   joinGame: (game: Game) => void;
+
   updateLobbyDetails: (details: LobbyDetails) => void;
 }
 // TODO: switch from socket.io to bare ws + observables.
@@ -31,22 +37,19 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
   private stateSubject: BehaviorSubject<MemberState>;
 
   constructor(
-    private user: User,
-    private socket: Socket,
+    private clientConnection: ClientConnection
   ) {
-    this.challengeObservable = new Observable(subscriber => {
-      this.socket.on(
-        lobbyClientSignals.postChallenge(),
-        subscriber.next
-      );
-      this.socket.on('disconnect', subscriber.complete);
-    });
+    const { messageObservable } = clientConnection;
+    this.challengeObservable = messageObservable.pipe(
+      filter(msg => !!msg.challenge),
+      map(msg => msg.challenge)
+    );
 
     this.stateSubject = new BehaviorSubject({ currentGame: null });
 
     this.detailsObservable = this.stateSubject.pipe(map((memberState: MemberState) => ({
       ...memberState,
-      ...user,
+      ...this.user,
     })));
 
     this.actions = {
@@ -56,6 +59,9 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
     };
   }
 
+  get user() {
+    return this.clientConnection.user;
+  }
 
   get id() {
     return this.user.id;
@@ -63,38 +69,74 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
 
   joinGame = (game: Game) => {
     this.stateSubject.next({ currentGame: game.id });
-    game.addPlayer(this.user, this.socket);
+    game.addPlayer(this.clientConnection);
   }
 
-  challenge = (challengeDetails: ChallengeDetails, resolutionSubject: Subject<boolean>) => {
+  challenge = (challengeDetails: ChallengeDetails, resolutionObservable: Observable<ChallengeResolution>) => {
     const { id, challengerId } = challengeDetails;
+    const { messageObservable, sendMessage } = this.clientConnection;
+
+    const isOwnChallenge = () => (
+      challengeDetails.challengerId === this.id
+    );
+
+    // give resolutionSubject valid responses
+    const memberResolutionObservable = messageObservable.pipe(
+      // complete when resolutionSubject completes
+      filter(msg => (
+        !!msg.challengeResponse
+
+        // is correct challenge
+        && msg.challengeResponse.id === id
+        && (
+          // you can't accept your own challenge
+          msg.challengeResponse.response
+          && isOwnChallenge()
+        )
+      )),
+      map((msg): ChallengeResolution => {
+        const { response } = msg.challengeResponse;
+
+        // client can't accept own challenge, so only option is cancelled
+        let outcome: ChallengeOutcome;
+
+        if (isOwnChallenge()) {
+          outcome = 'cancelled';
+        } else {
+          outcome = response
+            ? 'accepted'
+            : 'declined';
+        }
+
+        return { id, outcome };
+      }),
+      first(),
+    );
 
     // issue response request
-    this.socket.emit(lobbyServerSignals.requestChallengeResponse(), challengeDetails);
-
-    // listen for responses
-    this.socket.on(lobbyClientSignals.postChallengeResponse(id), (isAccepted: boolean) => {
-
-      // you can't confirm your own challenge
-      if (challengerId === this.id && isAccepted) {
-        console.log('client attempted to accept own challenge');
-        return;
+    sendMessage({
+      lobby: {
+        requestChallengeResponse: challengeDetails,
       }
-      resolutionSubject.next(isAccepted);
     });
 
     // respond to resolution
-    resolutionSubject.subscribe({
-      next: isAccepted => {
-        this.socket.emit(lobbyServerSignals.resolveChallenge(id), isAccepted);
-      },
-      complete: () => {
-        this.socket.removeAllListeners(lobbyClientSignals.postChallengeResponse(id));
-      }
+    resolutionObservable.subscribe({
+      next: resolution => sendMessage({
+        lobby: {
+          resolveChallenge: resolution,
+        }
+      })
     });
+
+    return memberResolutionObservable;
   }
 
   updateLobbyDetails = (lobbyDetails: LobbyDetails) => {
-    this.socket.emit(lobbyServerSignals.updateLobbyDetails(), lobbyDetails);
+    this.clientConnection.sendMessage({
+      lobby: {
+        updateLobbyDetails: lobbyDetails,
+      }
+    });
   }
 }

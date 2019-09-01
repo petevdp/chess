@@ -32,8 +32,6 @@ export interface EndState {
 export interface LobbyMemberDetails extends User {
   currentGame: string|null;
 }
-
-
 export interface GameUpdate {
   move?: ShortMove;
   end?: EndState;
@@ -86,3 +84,31 @@ export interface LobbyDetails {
 }
 
 export type SocketChannel = 'challenge' | 'lobby update';
+
+
+export type ChallengeOutcome = 'accepted' | 'declined' | 'cancelled';
+
+export interface ChallengeResolution {
+  id: string;
+  outcome: ChallengeOutcome;
+}
+
+export interface ChallengeResponse {
+  id: string;
+  response: boolean;
+}
+
+export interface SocketServerMessage {
+  game?: GameUpdate;
+  lobby?: {
+    updateLobbyDetails?: LobbyDetails;
+    requestChallengeResponse?: ChallengeDetails;
+    resolveChallenge?: ChallengeResolution;
+    joinGame?: GameDetails;
+  };
+}
+export interface SocketClientMessage {
+  game?: ClientPlayerAction;
+  challenge?: ChallengeDetails;
+  challengeResponse?: ChallengeResponse;
+}

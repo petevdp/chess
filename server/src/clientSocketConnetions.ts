@@ -2,6 +2,7 @@ import * as IO from 'socket.io';
 import * as uuidv4 from 'uuid/v4';
 import { SocketClientMessage, SocketServerMessage } from '../../APIInterfaces/types';
 import { Observable } from 'rxjs';
+import * as HTTP from 'http';
 
 // TODO websocket user auth
 export class ClientConnection {
@@ -31,18 +32,21 @@ export class ClientConnection {
   }
 }
 
-export default http => {
-  const io = IO(http);
+export class SocketServer {
+  clientConnectionsObservable: Observable<ClientConnection>;
+  io: IO.Server;
 
-  const clientConnectionsObservable = new Observable(subscriber => {
-    io.on('connection', socket => {
-      subscriber.next(new ClientConnection(socket));
+  constructor(http: HTTP.Server) {
+    this.io = IO(http);
+
+    this.clientConnectionsObservable = new Observable(subscriber => {
+      this.io.on('connection', socket => {
+        subscriber.next(new ClientConnection(socket));
+      });
     });
-  });
-
-
-  return {
-    clientConnectionsObservable,
-    broadcast: (options => io.emit(options)),
   }
-};
+
+  broadcast = options => {
+    this.io.emit(options);
+  }
+}

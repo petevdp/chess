@@ -1,9 +1,10 @@
 import * as io from 'socket.io';
 import { LobbyMember, LobbyMemberActions } from './lobbyMember';
-import { ChallengeDetails, User, LobbyMemberDetails, Map, LobbyDetails, GameDetails } from '../../APIInterfaces/types';
+import { ChallengeDetails, User, LobbyMemberDetails, Map, LobbyDetails, GameDetails, ChallengeResolution } from '../../APIInterfaces/types';
 import { Subject, Observable } from 'rxjs';
 import { Game, GameActions } from './game';
 import { LobbyCategory } from './lobbyCategory';
+import { ClientConnection } from './clientSocketConnetions';
 
 export class Lobby {
   detailsObservable: Observable<LobbyDetails>;
@@ -20,7 +21,7 @@ export class Lobby {
     this.lobbyChallengeSubject.subscribe({
       next: (challengeDetails) => {
         const { challengerId, receiverId, id } = challengeDetails;
-        const resolutionSubject = new Subject<boolean>();
+        const resolutionSubject = new Subject<ChallengeResolution>();
 
         const receiver = this.members.componentActions[receiverId];
         if (!receiver) {
@@ -33,10 +34,15 @@ export class Lobby {
 
         // ask involved members to resolve the challenge.
         // The receiver can accept or decline, and the challenger can cancel.
-        receiver.resolveChallenge(challengeDetails, resolutionSubject);
-        challenger.resolveChallenge(challengeDetails, resolutionSubject);
+        [receiver, challenger].forEach(mem => {
+          const memberResolutionObservable = mem.resolveChallenge(
+            challengeDetails,
+            resolutionSubject.asObservable()
+          );
 
-        // Resolution is handled by the members.
+          memberResolutionObservable.subscribe(resolutionSubject.next);
+        });
+
         resolutionSubject.subscribe({
           next: isAccepted => {
             // complete after only one value
@@ -47,8 +53,8 @@ export class Lobby {
     });
   }
 
-  addLobbyMember(user: User, socket: io.Socket) {
-    const member = new LobbyMember(user, socket);
+  addLobbyMember(client: ClientConnection) {
+    const member = new LobbyMember(client);
     this.members.addComponent(member);
     member.challengeObservable.subscribe({
       next: this.lobbyChallengeSubject.next
