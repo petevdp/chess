@@ -37,9 +37,9 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
   private stateSubject: BehaviorSubject<MemberState>;
 
   constructor(
-    private clientConnection: ClientConnection
+    private connection: ClientConnection
   ) {
-    const { messageObservable } = clientConnection;
+    const { messageObservable } = connection;
     this.challengeObservable = messageObservable.pipe(
       filter(msg => !!msg.challenge),
       map(msg => msg.challenge)
@@ -60,7 +60,7 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
   }
 
   get user() {
-    return this.clientConnection.user;
+    return this.connection.user;
   }
 
   get id() {
@@ -69,12 +69,12 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
 
   joinGame = (game: Game) => {
     this.stateSubject.next({ currentGame: game.id });
-    game.addPlayer(this.clientConnection);
+    game.addPlayer(this.connection);
   }
 
   challenge = (challengeDetails: ChallengeDetails, resolutionObservable: Observable<ChallengeResolution>) => {
     const { id, challengerId } = challengeDetails;
-    const { messageObservable, sendMessage } = this.clientConnection;
+    const { messageObservable, sendMessage } = this.connection;
 
     const isOwnChallenge = () => (
       challengeDetails.challengerId === this.id
@@ -133,7 +133,7 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
   }
 
   updateLobbyDetails = (lobbyDetails: LobbyDetails) => {
-    this.clientConnection.sendMessage({
+    this.connection.sendMessage({
       lobby: {
         updateLobbyDetails: lobbyDetails,
       }

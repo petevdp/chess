@@ -42,6 +42,7 @@ export interface GameUpdate {
 export interface ClientPlayerAction {
   move?: ShortMove;
   type: 'move' | 'resign' | 'disconnect'| 'offerDraw';
+  playerId: string;
 }
 
 

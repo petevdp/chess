@@ -2,13 +2,14 @@ import { Socket } from 'socket.io';
 
 import { Observable, Subject } from 'rxjs';
 
-import { MoveDetails, GameDetails, PlayerDetails, User, GameState, ClientPlayerAction, Colour, } from '../../APIInterfaces/types';
+import { GameDetails, PlayerDetails, User, ClientPlayerAction, Colour, GameUpdate, } from '../../APIInterfaces/types';
 
 import { gameClientSignals, gameServerSignals, lobbyServerSignals } from '../../APIInterfaces/socketSignals';
 
 import { LobbyMember } from './lobbyMember';
 import { promises } from 'fs';
-import { takeUntil, filter } from 'rxjs/operators';
+import { takeUntil, filter, map } from 'rxjs/operators';
+import { ClientConnection } from './clientSocketConnetions';
 
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
@@ -20,24 +21,18 @@ export class Player {
   ready: Promise<void>;
 
   constructor(
-    gameId: string,
-    public user: User,
-    private socket: Socket,
+    private connection: ClientConnection,
     public colour: Colour
   ) {
 
-    this.playerActionObservable = new Observable(subscriber => {
-      this.socket.on(gameClientSignals.takeAction(), (clientAction: ClientPlayerAction) => {
-        subscriber.next({
-          ...clientAction,
-          colour,
-        });
-      });
-      this.socket.on('disconnect', () => {
-        subscriber.next({ type: 'disconnect', colour });
-        subscriber.complete();
-      });
-    });
+    this.playerActionObservable = connection.messageObservable.pipe(
+      filter(msg => !!msg.game),
+      map(({game}) => ({...game, colour, playerId: this.id}))
+    );
+  }
+
+  get user() {
+    return this.connection.user;
   }
 
   get id(){
@@ -53,5 +48,10 @@ export class Player {
 
   startGame(gameDetails: GameDetails) {
   }
-  updateGame(gameUpdate: GameState) {}
+
+  updateGame(gameUpdate: GameUpdate) {
+    this.connection.sendMessage({
+      game: gameUpdate,
+    });
+  }
 }
