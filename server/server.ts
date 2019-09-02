@@ -2,6 +2,7 @@ import express from 'express';
 import  path from 'path';
 import  dotenv from 'dotenv';
 import  HttpServer from 'http';
+import config from './server.config';
 
 // middleware
 
@@ -14,7 +15,6 @@ dotenv.config({path: path.resolve('../.env')});
 
 const app = express();
 const http = HttpServer.createServer(app);
-const { PORT } = process.env;
 
 const lobby = new Lobby();
 const socketServer = new SocketServer(http);
@@ -25,6 +25,6 @@ socketServer.clientConnectionsObservable.subscribe({
 
 app.use('/api', api);
 
-http.listen(PORT, () => {
-  console.log(`Listening on ${PORT}`);
+http.listen(config.PORT, () => {
+  console.log(`Listening on ${config.PORT}`);
 });

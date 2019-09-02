@@ -10,7 +10,7 @@ export interface UserDetails {
   username: string;
   id: string;
 }
-export interface SessionDetails {
+export interface SessionDetails extends UserDetails {
   idToken: string;
 }
 

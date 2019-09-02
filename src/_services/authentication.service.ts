@@ -1,39 +1,35 @@
-import { BehaviorSubject } from 'rxjs';/api
-import  dotenv from 'dotenv';
+import { BehaviorSubject } from 'rxjs';
+import axios from 'axios';
 
-import { handleResponse } from '@/_helpers';
+import config from '../app.config';
+import { UserLogin, SessionDetails, UserDetails } from '../../common/types';
 
-dotenv.config({path: path.resolve('../.env')});
+const currentUserSubject = new BehaviorSubject<UserDetails|null>(getExistingSession());
 
-const currentUserSubject = new BehaviorSubject(JSON.parse(localStorage.getItem('currentUser')));
+const { HOST, PORT, API_ROUTE } = config;
 
-export const authenticationService = {
-    login,
-    logout,
-    currentUser: currentUserSubject.asObservable(),
-    get currentUserValue () { return currentUserSubject.value }
-};
+const loginRoute = `http://${HOST}:${PORT}${API_ROUTE}/login`;
 
-function login(username, password) {
-    const requestOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    };
-
-    return fetch(`${config.apiUrl}/users/authenticate`, requestOptions)
-        .then(handleResponse)
-        .then(user => {
-            // store user details and jwt token in local storage to keep user logged in between page refreshes
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            currentUserSubject.next(user);
-
-            return user;
-        });
+export async function login(userLogin: UserLogin) {
+  const session = (await axios.post(loginRoute, userLogin)).data as SessionDetails;
+  localStorage.setItem('session', JSON.stringify(session));
+  const { idToken, ...user} = session;
+  currentUserSubject.next(user);
 }
 
-function logout() {
+export function logout() {
     // remove user from local storage to log user out
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('session');
     currentUserSubject.next(null);
 }
+
+function getExistingSession(): SessionDetails|null {
+  const session = localStorage.getItem('session');
+  if (!session) {
+    return null;
+  }
+  return JSON.parse(session);
+}
+
+export function currentUserValue () { return currentUserSubject.value }
+
