@@ -1,5 +1,5 @@
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { Map } from '../../APIInterfaces/types';
+import { Map } from '../../common/types';
 import { merge, reduce, takeUntil, tap, map, shareReplay } from 'rxjs/operators';
 
 export interface StateComponent<D, A> {

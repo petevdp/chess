@@ -1,14 +1,14 @@
 import * as fs from 'fs';
 import * as express from 'express';
 import * as jwt from 'jsonwebtoken';
-// import * as cors from 'cors';
-import * as bodyParser from 'body-parser';
-import * as Moment from 'moment';
+// import  cors from 'cors';
+import  bodyParser from 'body-parser';
+import  Moment from 'moment';
 
 import { Validator, ValidationError } from 'express-json-validator-middleware';
 
 import { JWT_SECRET_PATH } from './constants';
-import { UserLogin, SessionDetails, User } from '../../APIInterfaces/types';
+import { UserLogin, UserDetails } from '../../common/types';
 
 export const api = express();
 
@@ -62,12 +62,12 @@ api.put('/login', validate({body: loginSchema}), (req, res) => {
     username,
     id: userId,
     expiresIn,
-  } as User;
+  } as UserDetails;
 
   res
     .status(200)
     .json({
-      userDetails,
+      ...userDetails,
       idToken: jwtBearerToken,
     });
 });

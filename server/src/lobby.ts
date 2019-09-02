@@ -1,6 +1,6 @@
-import * as io from 'socket.io';
+import  io from 'socket.io';
 import { LobbyMember, LobbyMemberActions } from './lobbyMember';
-import { ChallengeDetails, User, LobbyMemberDetails, Map, LobbyDetails, GameDetails, ChallengeResolution } from '../../APIInterfaces/types';
+import { ChallengeDetails, UserDetails, LobbyMemberDetails, Map, LobbyDetails, GameDetails, ChallengeResolution } from '../../common/types';
 import { Subject, Observable } from 'rxjs';
 import { Game, GameActions } from './game';
 import { LobbyCategory } from './lobbyCategory';

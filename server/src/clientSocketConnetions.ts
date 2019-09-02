@@ -1,8 +1,8 @@
-import * as IO from 'socket.io';
-import * as uuidv4 from 'uuid/v4';
-import { SocketClientMessage, SocketServerMessage } from '../../APIInterfaces/types';
+import  IO from 'socket.io';
+import  uuidv4 from 'uuid/v4';
+import { SocketClientMessage, SocketServerMessage } from '../../common/types';
 import { Observable } from 'rxjs';
-import * as HTTP from 'http';
+import  HTTP from 'http';
 
 // TODO websocket user auth
 export class ClientConnection {

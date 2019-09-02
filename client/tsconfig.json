@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist/out-tsc",
+    "isolatedModules": true,
+    "jsx": "react",
+    "target": "es2015",
+    "allowJs": true,
+    "noEmit": true
+  },
+  "include": [
+    "src"
+  ]
+}

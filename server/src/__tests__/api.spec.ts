@@ -1,8 +1,8 @@
-import * as request from 'supertest';
-import * as express from 'express';
+import  request from 'supertest';
+import  express from 'express';
 
 import { api } from '../api';
-import { UserLogin } from '../../../APIInterfaces/types';
+import { UserLogin } from '../../../common/types';
 
 function initApp () {
   const app = express();

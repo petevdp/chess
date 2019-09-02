@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { ClientConnection } from './clientSocketConnetions';
-import { PlayerDetails, ClientPlayerAction, Colour, GameUpdate, } from '../../APIInterfaces/types';
+import { PlayerDetails, ClientPlayerAction, Colour, GameUpdate, } from '../../common/types';
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
   colour: Colour;

@@ -1,7 +1,7 @@
-import * as express from 'express';
-import * as path from 'path';
-import * as dotenv from 'dotenv';
-import * as HttpServer from 'http';
+import express from 'express';
+import  path from 'path';
+import  dotenv from 'dotenv';
+import  HttpServer from 'http';
 
 // middleware
 

@@ -1,4 +1,4 @@
-import * as p from 'path';
+import  p from 'path';
 
 
 export const ROOT_DIR = p.resolve(__dirname, '../../');

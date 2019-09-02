@@ -1,9 +1,9 @@
-import * as _ from 'lodash';
+import  _ from 'lodash';
 import { Observable, Subject, merge } from 'rxjs';
 import { filter, map, shareReplay, takeWhile, startWith } from 'rxjs/operators';
-import { Colour, GameDetails, GameUpdate } from '../../APIInterfaces/types';
+import { Colour, GameDetails, GameUpdate } from '../../common/types';
 import { StateComponent } from './lobbyCategory';
-import * as Chess from 'chess.js';
+import  Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
 import { ClientConnection } from './clientSocketConnetions';

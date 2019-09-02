@@ -1,14 +1,14 @@
-import * as http from 'http';
-import * as SocketIO from 'socket.io';
-import * as IOClient from 'socket.io-client';
+import  http from 'http';
+import  SocketIO from 'socket.io';
+import  IOClient from 'socket.io-client';
 
 import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import {
   ChallengeDetails,
-  User,
+  UserDetails,
   LobbyMemberDetails
-} from '../../../APIInterfaces/types';
+} from '../../../common/types';
 import { LobbyMember } from '../lobbyMember';
 
 let httpServer: http.Server;
@@ -44,7 +44,7 @@ const getSocketPair = () => {
   });
 };
 
-const createLobbyMember = async (user: User, challengeSubject) => {
+const createLobbyMember = async (user: UserDetails, challengeSubject) => {
   const pair = await getSocketPair();
   return {
     member: new LobbyMember(user, pair.server),

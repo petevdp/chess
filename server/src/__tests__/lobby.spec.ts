@@ -1,9 +1,9 @@
-import * as http from 'http';
-import * as IOClient from 'socket.io-client';
+import  http from 'http';
+import  IOClient from 'socket.io-client';
 import { create } from 'domain';
 import { Lobby } from '../lobby';
 import { LobbyMember } from '../lobbyMember';
-import { User } from '../../../APIInterfaces/types';
+import { UserDetails } from '../../../common/types';
 
 let httpServer: http.Server;
 let serverAddr;

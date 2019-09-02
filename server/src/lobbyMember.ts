@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ChallengeDetails, LobbyMemberDetails, LobbyDetails, ChallengeResolution, ChallengeOutcome } from '../../APIInterfaces/types';
+import { ChallengeDetails, LobbyMemberDetails, LobbyDetails, ChallengeResolution, ChallengeOutcome } from '../../common/types';
 import { StateComponent } from './lobbyCategory';
 import { map, filter, first } from 'rxjs/operators';
 import { ClientConnection } from './clientSocketConnetions';
