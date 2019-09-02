@@ -2,7 +2,7 @@ import  request from 'supertest';
 import  express from 'express';
 
 import { api } from '../api';
-import { UserLogin } from '../../../common/types';
+import { UserLogin } from '../../common/types';
 
 function initApp () {
   const app = express();

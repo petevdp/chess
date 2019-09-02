@@ -6,10 +6,17 @@ export const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    auth.login({username, password});
+  }
+
   return (
     <div id="login">
       <h1 className="login__title">Log In</h1>
-      <Form onSubmit={() => auth.login({username, password})}>
+      <Form
+        onSubmit={handleSubmit}
+      >
         <Form.Item>
           <Input
             prefix={<Icon type="user"/>}
