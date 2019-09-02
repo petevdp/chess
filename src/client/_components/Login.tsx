@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import * as auth from '../_services/authentication.service';
 import { Form, Icon, Input, Button } from 'antd';
 
-export const Login: React.FC = () => {
+export const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   return (
     <div id="login">
       <h1 className="login__title">Log In</h1>
-      <Form onSubmit={alert}>
+      <Form onSubmit={() => auth.login({username, password})}>
         <Form.Item>
           <Input
             prefix={<Icon type="user"/>}

@@ -1,6 +1,6 @@
 import React from 'react';
 import '../styles/App.css';
-import { Login } from './Login';
+import { LoginForm } from './Login';
 import { Layout, Row, Col } from 'antd';
 
 const { Header, Footer, Content } = Layout;
@@ -17,7 +17,7 @@ const App: React.FC = () => {
             {/* <Col span={8}>
             </Col> */}
             <Col>
-              <Login></Login>
+              <LoginForm></LoginForm>
             </Col>
             {/* <Col span={8}>
             </Col> */}
