@@ -1,29 +1,11 @@
 {
-  "extends": "../tsconfig.json",
-  "compileOnSave": false,
   "compilerOptions": {
-    "types": ["node", "jest"],
     "module": "commonjs",
-    "outDir": "./dist",
-    "allowJs": true,
-    // "esModuleInterop": true,
+    "esModuleInterop": true,
+    "target": "es6",
     "moduleResolution": "node",
-    "target": "es2019",
-    "typeRoots": [
-      "./node_modules/@types",
-      "./typings"
-    ],
-    "lib": [
-      "es2018",
-      "dom"
-    ],
+    "noUnusedLocals": false
   },
-  "include": [
-    "src/**/*.ts",
-    "../common/**/*.ts",
-  ],
-  "exclude": [
-    "node_modules",
-    "**/*.spec.ts"
-  ]
+  "include": ["./**/*"],
+  "exclude": ["./*/**/__tests__/**/*"]
 }

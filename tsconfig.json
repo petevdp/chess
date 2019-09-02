@@ -1,23 +1,27 @@
 {
-  "compileOnSave": false,
   "compilerOptions": {
-    "sourceMap": true,
-    "strict": true,
-    "declaration": false,
-    "downlevelIteration": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "allowSyntheticDefaultImports": true,
-    "module": "esnext",
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
-    "importHelpers": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-  }
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve"
+  },
+  "include": [
+    // includes everything, even files we only want to be linted
+    "src",
+    "server/**/*"
+  ],
+  "exclude": [
+    // Now exclude what we do not want in our project
+    "server/**/*"
+  ]
 }

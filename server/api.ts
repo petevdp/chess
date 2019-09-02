@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import * as express from 'express';
+import express from 'express';
 import * as jwt from 'jsonwebtoken';
 // import  cors from 'cors';
 import  bodyParser from 'body-parser';
@@ -8,7 +8,7 @@ import  Moment from 'moment';
 import { Validator, ValidationError } from 'express-json-validator-middleware';
 
 import { JWT_SECRET_PATH } from './constants';
-import { UserLogin, UserDetails } from '../../common/types';
+import { UserLogin, UserDetails } from '../common/types';
 
 export const api = express();
 
