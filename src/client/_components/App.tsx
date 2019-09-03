@@ -1,35 +1,49 @@
-import React from 'react';
-import '../styles/App.css';
-import { LoginForm } from './Login';
-import { Layout, Row, Col } from 'antd';
+import React from "react";
+import "../styles/App.css";
+import { Login } from "./Login";
+import { Nav } from "./Nav";
+import { Layout, Row, Col } from "antd";
+import { AuthService } from "../_services/auth.service";
 
+import {
+  BrowserRouter as Router,
+  Route,
+  Link,
+  RouteComponentProps,
+  Redirect,
+} from 'react-router-dom';
+import { Lobby } from "./Lobby";
 const { Header, Footer, Content } = Layout;
 
 const App: React.FC = () => {
+  const authService = new AuthService();
+
   return (
     <div className="App">
-      <Layout>
-        <Header>
-        </Header>
-        <Content>
-          <Row></Row>
-          <Row type="flex" justify="center" align="middle">
-            {/* <Col span={8}>
-            </Col> */}
-            <Col>
-              <LoginForm></LoginForm>
-            </Col>
-            {/* <Col span={8}>
-            </Col> */}
-          </Row>
-          <Row></Row>
-        </Content>
-        <Footer>
+      <Router>
+        <Layout>
+          <Header>
+            <Nav {...{ authService }}></Nav>
+          </Header>
+          <Content>
+            <Route
+              path="/login"
+              exact
+              component={() => <Login authService={authService} />}
+            />
+            <Route
+              path="/lobby"
+              exact
+              component={() => <Lobby {...{ authService }} />}
+            />
 
-        </Footer>
-      </Layout>
+            <Redirect to="login" path="/" />
+          </Content>
+          <Footer></Footer>
+        </Layout>
+      </Router>
     </div>
   );
-}
+};
 
 export default App;

@@ -102,7 +102,8 @@ export interface ChallengeResponse {
 }
 
 export interface LobbyMessage {
-  updateLobbyDetails?: LobbyDetails;
+  updateLobbyMemberDetails?: LobbyMemberDetails;
+  updateGameDetails?: GameDetails;
   requestChallengeResponse?: ChallengeDetails;
   resolveChallenge?: ChallengeResolution;
   joinGame?: GameDetails;

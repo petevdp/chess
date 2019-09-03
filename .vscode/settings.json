@@ -1,4 +1,10 @@
 {
   "cSpell.enabled": false,
-  "javascript.validate.enable": false
+  "eslint.enable": true,
+  "tslint.jsEnable": false,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+  ]
 }
