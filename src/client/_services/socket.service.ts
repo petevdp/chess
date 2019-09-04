@@ -1,7 +1,7 @@
 import IOClient from 'socket.io-client';
-import { Observable } from 'rxjs';
+import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { LobbyMessage, LobbyDetails, GameUpdate } from '../../common/types';
+import { LobbyMessage, LobbyDetails, GameUpdate, SocketServerMessage, SessionDetails } from '../../common/types';
 
 import config from '../app.config';
 import { ConfigAPI } from '@babel/core';
@@ -10,26 +10,26 @@ import { routeBy } from '../../common/helpers';
 import { AuthService } from './auth.service';
 
 export class SocketService {
-  message$: Observable<LobbyMessage>;
-  private socket: SocketIOClient.Socket;
-  lobbyMessage$: Observable<LobbyMessage>;
-  gameUpdate$: Observable<GameUpdate>;
+  message$: BehaviorSubject<SocketServerMessage>;
+  private socket: SocketIOClient.Socket|undefined;
+  // gameUpdate$: Observable<GameUpdate>;
+
   constructor(authService: AuthService) {
-    this.socket = IOClient({
-      query: { token: authService.token },
+    this.message$ = new BehaviorSubject({});
+    authService.currentSession$.subscribe(session => {
+      session && this.initSocket(session.idToken);
     });
+  }
 
-    this.message$ = new Observable(subscriber => {
-      this.socket.on('message', subscriber.next);
-      console.log('new message!')
+  initSocket(token: string) {
+    this.socket = IOClient('http://localhost:3000', {
+      query: { token },
     });
+    this.socket.on('message', this.message$.next);
+  }
 
-    this.lobbyMessage$ = this.message$.pipe(
-      routeBy('lobby')
-    )
-
-    this.gameUpdate$ = this.message$.pipe(
-      routeBy('game')
-    );
+  complete() {
+    this.message$.complete();
+    this.socket && this.socket.disconnect();
   }
 }

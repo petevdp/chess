@@ -14,7 +14,6 @@ const useSignUpForm = (authService: AuthService) => {
     }
   }
   const handleInputChange = (event: any) => {
-    console.log(event);
     event.persist();
     const { name, value } = event.target;
     setInputs(inputs => ({ ...inputs, [name]: value }));

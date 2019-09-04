@@ -16,7 +16,7 @@ export const authGuard = (
     <Route
       {...rest}
       render={props => {
-        return authService.isLoggedIn
+        return authService && authService.isLoggedIn
           ? <Component {...props} />
           : <Redirect to={redirectRoute} />
       }}

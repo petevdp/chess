@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useObservable } from 'rxjs-hooks';
 import { Nav, Button, Navbar } from 'react-bootstrap';
@@ -9,13 +9,20 @@ interface MyNavBarProps {
 }
 
 const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
-  const session = useObservable(() => authService.currentSession$)
-  console.log('session', session);
+  const [ session, setSession] = useState();
+
+  useEffect(() => {
+    if (!authService) {
+      return;
+    }
+    authService.currentSession$.subscribe(setSession);
+  }, [authService]);
+
   return (
     <Navbar
       bg="light" expand="lg"
     >
-      <Nav.Item key="lobby" as={Link} to="login">
+      <Nav.Item key="lobby" as={Link} to="lobby">
         Lobby
       </Nav.Item>
       { session

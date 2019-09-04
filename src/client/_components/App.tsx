@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "../App.scss";
 import {
   BrowserRouter as Router,
@@ -18,12 +18,27 @@ import { Login } from "./Login";
 import NavBar from "./Nav";
 import { authGuard } from "../__helpers/AuthGuard";
 
-const App: React.FC = () => {
-  const authService = new AuthService();
-  const socketService = new SocketService(authService);
-  const lobbyService = new LobbyService(socketService);
-  const PrivateRoute = authGuard(authService, '/login');
+interface AppWideServices {
+  authService: AuthService;
+  socketService: SocketService;
+}
 
+const App: React.FC = () => {
+  const [services, setServices] = useState({} as AppWideServices);
+
+  // initialize global services
+  useEffect(() => {
+    const authService = new AuthService();
+    const socketService = new SocketService(authService);
+    setServices({authService, socketService});
+    return () => {
+      socketService.complete();
+      authService.complete();
+    }
+  }, []);
+  const { authService, socketService } = services;
+
+  const PrivateRoute = authGuard(authService, '/login');
   return (
     <div className="App">
       <Router>
@@ -36,7 +51,7 @@ const App: React.FC = () => {
           />
           <PrivateRoute
             exact path="/lobby"
-            guardedComponent={() => <Lobby {...{ authService, lobbyService }} />}
+            guardedComponent={() => <Lobby {...{ authService, socketService }} />}
           />
 
           <Redirect to="login" path="/" />
@@ -44,6 +59,6 @@ const App: React.FC = () => {
       </Router>
     </div>
   );
-};
+ };
 
 export default App;

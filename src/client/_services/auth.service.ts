@@ -1,4 +1,4 @@
-import { BehaviorSubject, Subscription, Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import axios from 'axios';
 
 import config from '../app.config';
@@ -17,6 +17,10 @@ export class AuthService {
     this.currentSession$ = this.currentSessionSubject.asObservable();
   }
 
+  complete() {
+    this.currentSessionSubject.complete();
+  }
+
   get isLoggedIn() {
     return !!this.currentSessionSubject.value
   }
@@ -28,8 +32,6 @@ export class AuthService {
   async login(userLogin: UserLogin) {
     const session = (await axios.put(this.loginRoute, userLogin)).data as SessionDetails;
     localStorage.setItem('session', JSON.stringify(session));
-    console.log('session: ', session);
-
     this.currentSessionSubject.next(session);
   }
 
