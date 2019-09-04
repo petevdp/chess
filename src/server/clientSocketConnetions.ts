@@ -3,6 +3,7 @@ import  uuidv4 from 'uuid/v4';
 import { SocketClientMessage, SocketServerMessage } from '../common/types';
 import { Observable } from 'rxjs';
 import  HTTP from 'http';
+import { SocketIoSharedSessionMiddleware } from 'express-socket.io-session';
 
 // TODO websocket user auth
 export class ClientConnection {
@@ -36,13 +37,15 @@ export class SocketServer {
   clientConnectionsObservable: Observable<ClientConnection>;
   io: IO.Server;
 
-  constructor(http: HTTP.Server) {
+  constructor(http: HTTP.Server, sharedSession: SocketIoSharedSessionMiddleware) {
     this.io = IO(http);
 
-    // this.io.use((socket, next) => {
-    //   console.log(socket.handshake.query);
-    //   next();
-    // });
+    this.io.use(sharedSession)
+
+    this.io.use((socket, next) => {
+      console.log('session: ', socket.handshake.session);
+      next();
+    });
 
     this.clientConnectionsObservable = new Observable(subscriber => {
       this.io.on('connection', socket => {
