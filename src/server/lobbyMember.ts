@@ -3,6 +3,7 @@ import { ChallengeDetails, LobbyMemberDetails, LobbyDetails, ChallengeResolution
 import { StateComponent } from './lobbyCategory';
 import { map, filter, first } from 'rxjs/operators';
 import { ClientConnection } from './clientSocketConnetions';
+import { LobbyMemberDetails, GameDetails, LobbyMemberDetails } from '../common/types';
 
 export interface Challenge {
   isCancelled: Promise<boolean>;
@@ -21,7 +22,8 @@ export interface LobbyMemberActions {
 
   connection: ClientConnection;
 
-  updateLobbyDetails: (details: LobbyDetails) => void;
+  updateGameDetails: (details: GameDetails[]) => void;
+  updateLobbymemberDetails: (details: LobbyMemberDetails[]) => void;
 }
 // TODO: switch from socket.io to bare ws + observables.
 export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemberActions> {
@@ -49,7 +51,8 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
 
     this.actions = {
       resolveChallenge: this.challenge,
-      updateLobbyDetails: this.updateLobbyDetails,
+      updateLobbymemberDetails: this.updateLobbyMemberDetails,
+      updateGameDetails: this.updateGameDetails,
       connection: this.connection,
     } as LobbyMemberActions;
   }
@@ -122,11 +125,19 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
     return memberResolutionObservable;
   }
 
-  updateLobbyDetails = (lobbyDetails: LobbyDetails) => {
+  updateLobbyMemberDetails = (details: LobbyMemberDetails[]) => {
     this.connection.sendMessage({
       lobby: {
-        updateLobbyDetails: lobbyDetails,
+        updateLObbyMemberDetails: details
       }
-    });
+    })
+  }
+
+  updateGameDetails = (details: GameDetails[]) => {
+    this.connection.sendMessage({
+      lobby: {
+        updateGameDetails: details
+      }
+    })
   }
 }

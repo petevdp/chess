@@ -1,6 +1,6 @@
 import  io from 'socket.io';
 import { LobbyMember, LobbyMemberActions } from './lobbyMember';
-import { ChallengeDetails, UserDetails, LobbyMemberDetails, Map, LobbyDetails, GameDetails, ChallengeResolution } from '../../common/types';
+import { ChallengeDetails, UserDetails, LobbyMemberDetails, Map, LobbyDetails, GameDetails, ChallengeResolution } from '../common/types';
 import { Subject, Observable } from 'rxjs';
 import { Game, GameActions } from './game';
 import { LobbyCategory } from './lobbyCategory';
@@ -54,15 +54,19 @@ export class Lobby {
     });
   }
 
-  addLobbyMember(client: ClientConnection) {
+  addLobbyMember = (client: ClientConnection) => {
     const member = new LobbyMember(client);
     this.members.addComponent(member);
     member.challengeObservable.subscribe({
       next: this.lobbyChallengeSubject.next
     });
 
-    this.detailsObservable.subscribe({
-      next: member.updateLobbyDetails
+    this.members.detailsObservable.subscribe({
+      next: member.updateLobbyMemberDetails
+    });
+
+    this.games.detailsObservable.subscribe({
+      next: member.updateGameDetails
     });
   }
 

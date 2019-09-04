@@ -1,24 +1,34 @@
 import React from 'react';
-import { AuthProp } from "./Login";
-import { Menu, Button } from 'antd';
 import { Link } from 'react-router-dom';
+import { useObservable } from 'rxjs-hooks';
+import { Nav, Button, Navbar } from 'react-bootstrap';
+import { AuthService } from '../_services/auth.service';
 
-export const Nav: React.FC<AuthProp> = ({ authService }) => {
+interface MyNavBarProps {
+  authService: AuthService;
+}
+
+const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
+  const session = useObservable(() => authService.currentSession$)
+  console.log('session', session);
   return (
-    <Menu
-      theme="dark"
-      mode="horizontal"
+    <Navbar
+      bg="light" expand="lg"
     >
-      <Menu.Item key="login">
-        <Link to="/login">
-          Log In
-        </Link>
-      </Menu.Item>
-      <Menu.Item key="lobby">
-        <Link to="/lobby">
-          Lobby
-        </Link>
-      </Menu.Item>
-    </Menu>
+      <Nav.Item key="lobby" as={Link} to="login">
+        Lobby
+      </Nav.Item>
+      { session
+        ? <Nav.Item key="logout">
+            Logged in as {session.username}
+            <Button onClick={() => authService.logout()}>Log out</Button>
+          </Nav.Item>
+        : <Nav.Item key="login" as={Link} to="login">
+            Log In
+          </Nav.Item>
+      }
+    </Navbar>
   );
 }
+
+export default MyNavBar;

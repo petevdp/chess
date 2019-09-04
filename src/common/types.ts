@@ -97,14 +97,14 @@ export interface ChallengeResolution {
 }
 
 export interface ChallengeResponse {
-  id: string;
+  challengeId: string;
   response: boolean;
 }
 
 export interface LobbyMessage {
-  updateLobbyMemberDetails?: LobbyMemberDetails;
-  updateGameDetails?: GameDetails;
-  requestChallengeResponse?: ChallengeDetails;
+  updateLobbyMemberDetails?: LobbyMemberDetails[];
+  updateGameDetails?: GameDetails[];
+  requestChallengeResponse?: ChallengeDetails[];
   resolveChallenge?: ChallengeResolution;
   joinGame?: GameDetails;
 }

@@ -13,7 +13,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "typeRoots": [
+      "./node_modules/@types",
+      "src/common/typing"
+    ]
   },
   "include": [
     // includes everything, even files we only want to be linted
@@ -22,5 +26,5 @@
   "exclude": [
     // Now exclude what we do not want in our project
     "src/server/**/*"
-  ]
+  ],
 }

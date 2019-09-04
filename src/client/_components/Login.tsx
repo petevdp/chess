@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { AuthService } from '../_services/auth.service';
-import { Form, Icon, Input, Button, Row, Col } from 'antd';
 import { UserLogin } from '../../common/types';
+import { Form, Row, Col } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 
 const useSignUpForm = (authService: AuthService) => {
-  const [inputs, setInputs] = useState({} as UserLogin);
+  const [inputs, setInputs] = useState({username: '', password: ''} as UserLogin);
   const handleSubmit = (event: React.FormEvent) => {
     if (event) {
       event.preventDefault();
       authService.login(inputs);
     }
   }
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: any) => {
+    console.log(event);
     event.persist();
     const { name, value } = event.target;
     setInputs(inputs => ({ ...inputs, [name]: value }));
@@ -24,44 +26,40 @@ const useSignUpForm = (authService: AuthService) => {
   };
 }
 
-export interface AuthProp {
+interface LoginFormProps {
   authService: AuthService;
 }
-
-const LoginForm: React.FC<AuthProp> = ({ authService }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
   const { handleSubmit, handleInputChange, inputs } = useSignUpForm(authService);
   const { username, password } = inputs;
 
   return (
     <div id="login">
-      <h1 className="login__title">Log In</h1>
+      <h1>Log In</h1>
       <Form
         onSubmit={handleSubmit}
       >
-        <Form.Item>
-          <Input
-            prefix={<Icon type="user" />}
-            placeholder="Username"
-            name='username'
-            value={username}
+        <Form.Group>
+          <Form.Label>Username</Form.Label>
+          <Form.Control
+            type="username"
+            placeholder="Enter Username"
             onChange={handleInputChange}
-          ></Input>
-        </Form.Item>
-        <Form.Item>
-          <Input
-            prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+            name="username"
+            value={username}
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Password</Form.Label>
+          <Form.Control
             type="password"
-            placeholder="Password"
-            name='password'
+            placeholder="Enter Password"
+            name="password"
             value={password}
             onChange={handleInputChange}
           />
-        </Form.Item>
-        <Form.Item>
-          <Button type="primary" htmlType="submit">
-            Log in
-            </Button>
-        </Form.Item>
+        </Form.Group>
+        <Button type="submit">Submit</Button>
       </Form>
     </div>
   )
@@ -70,7 +68,7 @@ const LoginForm: React.FC<AuthProp> = ({ authService }) => {
 const LoginWrapper: React.FC = ({ children }) => (
   <React.Fragment>
     <Row></Row>
-      <Row type="flex" justify="center" align="middle">
+      <Row>
         <Col>
           {children}
         </Col>
@@ -79,7 +77,7 @@ const LoginWrapper: React.FC = ({ children }) => (
   </React.Fragment>
 );
 
-export const Login: React.FC<AuthProp> = (props) =>
+export const Login: React.FC<LoginFormProps> = (props) =>
   <LoginWrapper>
     <LoginForm { ...props } />
   </LoginWrapper>

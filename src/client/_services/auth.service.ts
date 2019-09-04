@@ -1,28 +1,28 @@
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription, Observable } from 'rxjs';
 import axios from 'axios';
 
 import config from '../app.config';
 import { UserLogin, SessionDetails, UserDetails } from '../../common/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 const { API_ROUTE } = config;
 
 export class AuthService {
   private sessionStorageKey = 'session';
   private loginRoute = `${API_ROUTE}/login`;
 
-  private currentUserSubject = new BehaviorSubject<UserDetails | null>(this.getExistingSession());
+  private currentSessionSubject = new BehaviorSubject<SessionDetails | null>(this.getExistingSession());
+  currentSession$: Observable<SessionDetails | null>;
 
   constructor() {
+    this.currentSession$ = this.currentSessionSubject.asObservable();
   }
 
-  useCurrentUser() {
-    const [userDetails, setUserDetails] = useState(this.currentUserSubject.value);
+  get isLoggedIn() {
+    return !!this.currentSessionSubject.value
+  }
 
-    this.currentUserSubject.subscribe({
-      next: setUserDetails,
-    });
-
-    return userDetails;
+  get token() {
+    return this.currentSessionSubject.value && this.currentSessionSubject.value.idToken
   }
 
   async login(userLogin: UserLogin) {
@@ -30,17 +30,17 @@ export class AuthService {
     localStorage.setItem('session', JSON.stringify(session));
     console.log('session: ', session);
 
-    const { idToken, ...user } = session;
-    this.currentUserSubject.next(user);
+    this.currentSessionSubject.next(session);
   }
 
   logout() {
     // remove user from local storage to log user out
     localStorage.removeItem(this.sessionStorageKey);
-    this.currentUserSubject.next(null);
+    this.currentSessionSubject.next(null);
   }
 
-  getExistingSession() {
+
+  private getExistingSession() {
     const session = localStorage.getItem(this.sessionStorageKey);
     if (!session) {
       return null;

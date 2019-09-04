@@ -39,6 +39,11 @@ export class SocketServer {
   constructor(http: HTTP.Server) {
     this.io = IO(http);
 
+    this.io.use((socket, next) => {
+      console.log(socket.handshake.query);
+      next();
+    });
+
     this.clientConnectionsObservable = new Observable(subscriber => {
       this.io.on('connection', socket => {
         subscriber.next(new ClientConnection(socket));
