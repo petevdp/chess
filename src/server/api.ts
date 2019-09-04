@@ -50,19 +50,31 @@ export default (dbQueries: DBQueries) => {
     const id = uuidv4();
     await dbQueries.addUser({username, id})
     req.session.userId = id;
-    res.send(id);
+    res.json({username, id});
   });
 
   api.put('/login', validate({ body: loginSchema }), async (req, res) => {
     const { username, password } = req.body;
-    const { fields } = await dbQueries.getUser('username', username);
-    res.json(fields).send(200);
+    console.log('username: ', username);
+    const userMatches = (await dbQueries.getUserByUsername(username)).rows
+    if (userMatches.length === 1) {
+      const user = userMatches[0] as UserDetails;
+      req.session.userId = user.id;
+      res.json(user);
+    } else {
+      console.log('authorization error')
+      res.json(401);
+    }
+  });
+
+  api.put('/logout', (req, res) => {
+    req.session.destroy(() => res.sendStatus(200));
   });
 
   // handling validation errors
   api.use((err, req, res, next) => {
     if (err instanceof ValidationError) {
-      res.status(400).send('invalid');
+      res.status(400).sendStatus('invalid');
       next();
       return;
     }

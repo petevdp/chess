@@ -22,9 +22,9 @@ export class DBQueries {
     })
   }
 
-  getUser(key: string, value: any) {
+  getUserByUsername(value: any) {
     return this.singleQuery(sql`
-      SELECT * FROM users WHERE ${key} = ${value}
+      SELECT * FROM users WHERE username = ${value}
     `);
   };
 

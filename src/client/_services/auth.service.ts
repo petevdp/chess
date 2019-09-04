@@ -4,49 +4,39 @@ import axios from 'axios';
 import config from '../app.config';
 import { UserLogin, SessionDetails, UserDetails } from '../../common/types';
 import { useState, useEffect } from 'react';
+import { useObservable } from 'rxjs-hooks';
 const { API_ROUTE } = config;
 
 export class AuthService {
-  private sessionStorageKey = 'session';
   private loginRoute = `${API_ROUTE}/login`;
 
-  private currentSessionSubject = new BehaviorSubject<SessionDetails | null>(this.getExistingSession());
-  currentSession$: Observable<SessionDetails | null>;
+  currentUserSubject = new BehaviorSubject<UserDetails | null>(null);
+  currentUser$: Observable<UserDetails | null>;
 
   constructor() {
-    this.currentSession$ = this.currentSessionSubject.asObservable();
+    this.currentUser$ = this.currentUserSubject.asObservable();
   }
 
   complete() {
-    this.currentSessionSubject.complete();
-  }
-
-  get isLoggedIn() {
-    return !!this.currentSessionSubject.value
-  }
-
-  get token() {
-    return this.currentSessionSubject.value && this.currentSessionSubject.value.idToken
+    this.currentUserSubject.complete();
   }
 
   async login(userLogin: UserLogin) {
-    const session = (await axios.put(this.loginRoute, userLogin)).data as SessionDetails;
-    localStorage.setItem('session', JSON.stringify(session));
-    this.currentSessionSubject.next(session);
+    const res = await axios.put(this.loginRoute, userLogin);
+    const user = res.status === 200
+    ? res.data
+    : null as UserDetails | null;
+
+    this.currentUserSubject.next(user);
+    return user
   }
 
-  logout() {
-    // remove user from local storage to log user out
-    localStorage.removeItem(this.sessionStorageKey);
-    this.currentSessionSubject.next(null);
+  async logout() {
+    const res = await axios.put(`${API_ROUTE}/logout`)
+    return res.status === 200;
   }
 
-
-  private getExistingSession() {
-    const session = localStorage.getItem(this.sessionStorageKey);
-    if (!session) {
-      return null;
-    }
-    return JSON.parse(session);
+  useCurrentUser() {
+    return useObservable(() => this.currentUser$, null);
   }
 }

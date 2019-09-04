@@ -5,12 +5,12 @@ import { Form, Row, Col } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 
 
-const useSignUpForm = (authService: AuthService) => {
+const useSignUpForm = (authService: AuthService|null) => {
   const [inputs, setInputs] = useState({username: '', password: ''} as UserLogin);
   const handleSubmit = (event: React.FormEvent) => {
     if (event) {
       event.preventDefault();
-      authService.login(inputs);
+      authService && authService.login(inputs);
     }
   }
   const handleInputChange = (event: any) => {

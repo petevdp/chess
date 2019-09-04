@@ -16,7 +16,7 @@ import { SocketService } from "../_services/socket.service";
 import { Lobby } from "./Lobby";
 import { Login } from "./Login";
 import NavBar from "./Nav";
-import { authGuard } from "../__helpers/AuthGuard";
+import { useAuthGuard } from "../__helpers/AuthGuard";
 
 interface AppWideServices {
   authService: AuthService;
@@ -37,8 +37,8 @@ const App: React.FC = () => {
     }
   }, []);
   const { authService, socketService } = services;
+  const PrivateRoute = useAuthGuard(authService, '/login');
 
-  const PrivateRoute = authGuard(authService, '/login');
   return (
     <div className="App">
       <Router>

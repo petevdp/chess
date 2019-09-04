@@ -1,12 +1,7 @@
 import IOClient from 'socket.io-client';
-import { Observable, Subject, BehaviorSubject } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { LobbyMessage, LobbyDetails, GameUpdate, SocketServerMessage, SessionDetails } from '../../common/types';
+import { BehaviorSubject } from 'rxjs';
+import { SocketServerMessage } from '../../common/types';
 
-import config from '../app.config';
-import { ConfigAPI } from '@babel/core';
-import { useState } from 'react';
-import { routeBy } from '../../common/helpers';
 import { AuthService } from './auth.service';
 
 export class SocketService {
@@ -16,15 +11,13 @@ export class SocketService {
 
   constructor(authService: AuthService) {
     this.message$ = new BehaviorSubject({});
-    authService.currentSession$.subscribe(session => {
-      session && this.initSocket(session.idToken);
+    authService.currentUser$.subscribe(user => {
+      user && this.initSocket();
     });
   }
 
-  initSocket(token: string) {
-    this.socket = IOClient('http://localhost:3000', {
-      query: { token },
-    });
+  initSocket() {
+    this.socket = IOClient('http://localhost:3000');
     this.socket.on('message', this.message$.next);
   }
 

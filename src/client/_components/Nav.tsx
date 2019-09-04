@@ -3,21 +3,15 @@ import { Link } from 'react-router-dom';
 import { useObservable } from 'rxjs-hooks';
 import { Nav, Button, Navbar } from 'react-bootstrap';
 import { AuthService } from '../_services/auth.service';
+import { useStatefulObservable } from '../__helpers/useStatefulObservable';
 
 interface MyNavBarProps {
-  authService: AuthService;
+  authService: AuthService | null;
 }
 
 const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
-  const [ session, setSession] = useState();
-
-  useEffect(() => {
-    if (!authService) {
-      return;
-    }
-    authService.currentSession$.subscribe(setSession);
-  }, [authService]);
-
+  const currentUser = useStatefulObservable(authService && authService.currentUser$, null)
+  console.log('currentuser', currentUser);
   return (
     <Navbar
       bg="light" expand="lg"
@@ -25,10 +19,10 @@ const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
       <Nav.Item key="lobby" as={Link} to="lobby">
         Lobby
       </Nav.Item>
-      { session
+      { currentUser
         ? <Nav.Item key="logout">
-            Logged in as {session.username}
-            <Button onClick={() => authService.logout()}>Log out</Button>
+            Logged in as {currentUser.username}
+            <Button onClick={() => authService && authService.logout()}>Log out</Button>
           </Nav.Item>
         : <Nav.Item key="login" as={Link} to="login">
             Log In
