@@ -1,6 +1,6 @@
 import  IO from 'socket.io';
 import  uuidv4 from 'uuid/v4';
-import { SocketClientMessage, SocketServerMessage } from '../../common/types';
+import { SocketClientMessage, SocketServerMessage } from '../common/types';
 import { Observable } from 'rxjs';
 import  HTTP from 'http';
 
