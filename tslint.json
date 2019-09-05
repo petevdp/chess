@@ -1,3 +1,6 @@
 {
-  "extends": ["tslint-config-airbnb", "tslint-react"]
+  "extends": ["tslint-config-airbnb", "tslint-react"],
+  "linterOptions": {
+    "exclude": ["node_modules/**"]
+  }
 }
