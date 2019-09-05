@@ -3,8 +3,6 @@ import { AuthService, useCurrentUser } from '../_services/auth.service';
 import { UserLogin } from '../../common/types';
 import { Form, Row, Col } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
-import { useEventCallback } from 'rxjs-hooks';
-import { reject } from 'q';
 import { Redirect } from 'react-router';
 
 interface LoginFormState extends UserLogin {
@@ -75,7 +73,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
           />
         </Form.Group>
         <Button type="submit">Submit</Button>
-        { (status === 'rejected') && 'rejected!'}
+        {(status === 'rejected') && 'rejected!'}
       </Form>
     </div>
   )
@@ -83,17 +81,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
 
 const LoginWrapper: React.FC = ({ children }) => (
   <React.Fragment>
-    <Row></Row>
+    <Row/>
       <Row>
         <Col>
           {children}
         </Col>
       </Row>
-    <Row></Row>
+    <Row/>
   </React.Fragment>
 );
 
-export const Login: React.FC<LoginFormProps> = (props) =>
+export const Login: React.FC<LoginFormProps> = (props) => (
   <LoginWrapper>
-    <LoginForm { ...props } />
+    <LoginForm {...props} />
   </LoginWrapper>
+);

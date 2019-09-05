@@ -1,6 +1,12 @@
 {
-  "extends": ["tslint-config-airbnb", "tslint-react"],
+  "extends": ["gts/tslint.json", "tslint-react"],
   "linterOptions": {
-    "exclude": ["node_modules/**"]
+    "exclude": [
+      "**/*.json",
+      "node_modules/*"
+    ]
+  },
+  "rules": {
+    "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"]
   }
 }
