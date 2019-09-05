@@ -1,23 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { AuthService } from '../_services/auth.service';
-import { LobbyService } from '../_services/lobby.service';
+import { LobbyService, useLobbyMemberDetails } from '../_services/lobby.service';
 import { LobbyMemberDetails } from '../../common/types';
 import { SocketService } from '../_services/socket.service';
 
 interface LobbyProps {
-  authService: AuthService;
-  socketService: SocketService;
+  authService: AuthService|null;
+  socketService: SocketService|null;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ authService, socketService }) => {
-  const [memberDetails, setMemberDetails] = useState([] as LobbyMemberDetails[]);
-  useEffect(() => {
-    const lobbyService = new LobbyService(socketService);
-    lobbyService.lobbyMemberDetails$.subscribe(setMemberDetails);
-    return () => lobbyService.complete();
-  }, [socketService]);
-
-  console.log('lobby!')
+export const Lobby: React.FC<LobbyProps> = ({ socketService }) => {
+  const memberDetails = useLobbyMemberDetails(socketService);
   return (
     <React.Fragment>
       <div>hello lobby</div>

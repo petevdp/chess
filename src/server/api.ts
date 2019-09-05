@@ -63,7 +63,7 @@ export default (dbQueries: DBQueries) => {
       res.json(user);
     } else {
       console.log('authorization error')
-      res.json(401);
+      res.sendStatus(401);
     }
   });
 
@@ -74,7 +74,7 @@ export default (dbQueries: DBQueries) => {
   // handling validation errors
   api.use((err, req, res, next) => {
     if (err instanceof ValidationError) {
-      res.status(400).sendStatus('invalid');
+      res.sendStatus(400)
       next();
       return;
     }

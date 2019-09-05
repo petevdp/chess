@@ -6,10 +6,12 @@ import { AuthService } from './auth.service';
 
 export class SocketService {
   message$: BehaviorSubject<SocketServerMessage>;
-  private socket: SocketIOClient.Socket|undefined;
+  private socket: SocketIOClient.Socket|null;
   // gameUpdate$: Observable<GameUpdate>;
 
   constructor(authService: AuthService) {
+    // not assigning socket till init
+    this.socket = null;
     this.message$ = new BehaviorSubject({});
     authService.currentUser$.subscribe(user => {
       user && this.initSocket();

@@ -9,24 +9,23 @@ import {
 } from 'react-router-dom';
 import { Container } from 'react-bootstrap';
 
-import { AuthService } from "../_services/auth.service";
+import { AuthService, useCurrentUser } from "../_services/auth.service";
 import { LobbyService } from '../_services/lobby.service'
 import { SocketService } from "../_services/socket.service";
 
 import { Lobby } from "./Lobby";
 import { Login } from "./Login";
 import NavBar from "./Nav";
-import { useAuthGuard } from "../__helpers/AuthGuard";
+import { PrivateRoute } from "../__helpers/AuthGuard";
+import { UserDetails } from "../../common/types";
 
 interface AppWideServices {
-  authService: AuthService;
-  socketService: SocketService;
+  authService: AuthService|null;
+  socketService: SocketService|null;
 }
 
-const App: React.FC = () => {
-  const [services, setServices] = useState({} as AppWideServices);
-
-  // initialize global services
+const useAppWideServices = () => {
+  const [services, setServices] = useState({authService: null, socketService: null} as AppWideServices);
   useEffect(() => {
     const authService = new AuthService();
     const socketService = new SocketService(authService);
@@ -36,8 +35,16 @@ const App: React.FC = () => {
       authService.complete();
     }
   }, []);
+  return services;
+}
+
+const App: React.FC = () => {
+  const services = useAppWideServices();
+  const currentUser = useCurrentUser(services.authService);
+
+  // initialize global services
   const { authService, socketService } = services;
-  const PrivateRoute = useAuthGuard(authService, '/login');
+  const authGuardRedirectRoute = 'login';
 
   return (
     <div className="App">
@@ -51,7 +58,8 @@ const App: React.FC = () => {
           />
           <PrivateRoute
             exact path="/lobby"
-            guardedComponent={() => <Lobby {...{ authService, socketService }} />}
+            {...{currentUser, redirectRoute: authGuardRedirectRoute}}
+            GuardedComponent={() => <Lobby {...{ authService, socketService }} />}
           />
 
           <Redirect to="login" path="/" />

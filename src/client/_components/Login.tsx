@@ -3,14 +3,25 @@ import { AuthService } from '../_services/auth.service';
 import { UserLogin } from '../../common/types';
 import { Form, Row, Col } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
+import { useEventCallback } from 'rxjs-hooks';
+import { reject } from 'q';
+import { Redirect } from 'react-router';
 
+interface LoginFormState extends UserLogin {
+  status: 'clean' | 'rejected' | 'authenticated';
+}
 
-const useSignUpForm = (authService: AuthService|null) => {
-  const [inputs, setInputs] = useState({username: '', password: ''} as UserLogin);
-  const handleSubmit = (event: React.FormEvent) => {
-    if (event) {
-      event.preventDefault();
-      authService && authService.login(inputs);
+const useLoginForm = (authService: AuthService|null) => {
+  const [inputs, setInputs] = useState({username: '', password: '', status: 'clean'} as LoginFormState);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!authService) {
+      return;
+    }
+    const { status, ...userLogin} = inputs;
+    const out = await authService.login(userLogin);
+    if (!out) {
+      return setInputs({...inputs, status: 'rejected'});
     }
   }
   const handleInputChange = (event: any) => {
@@ -26,11 +37,14 @@ const useSignUpForm = (authService: AuthService|null) => {
 }
 
 interface LoginFormProps {
-  authService: AuthService;
+  authService: AuthService|null;
 }
 const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
-  const { handleSubmit, handleInputChange, inputs } = useSignUpForm(authService);
-  const { username, password } = inputs;
+  const { handleSubmit, handleInputChange, inputs } = useLoginForm(authService);
+  const { username, password, status } = inputs;
+  if (status === 'authenticated') {
+    return  <Redirect to="lobby" />;
+  }
 
   return (
     <div id="login">
@@ -59,6 +73,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
           />
         </Form.Group>
         <Button type="submit">Submit</Button>
+        { (status === 'rejected') && 'rejected!'}
       </Form>
     </div>
   )

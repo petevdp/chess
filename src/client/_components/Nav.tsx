@@ -4,14 +4,24 @@ import { useObservable } from 'rxjs-hooks';
 import { Nav, Button, Navbar } from 'react-bootstrap';
 import { AuthService } from '../_services/auth.service';
 import { useStatefulObservable } from '../__helpers/useStatefulObservable';
+import { UserDetails } from '../../common/types';
+import { Subscription } from 'rxjs';
 
 interface MyNavBarProps {
   authService: AuthService | null;
 }
 
 const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
-  const currentUser = useStatefulObservable(authService && authService.currentUser$, null)
-  console.log('currentuser', currentUser);
+  const [currentUser, setCurrentUser] = useState(null as UserDetails | null);
+  useEffect(() => {
+    const subscriptions = new Subscription();
+    authService && subscriptions.add(authService.currentUser$.subscribe(details => {
+      console.log('details: ', details);
+      setCurrentUser(details);
+    }));
+    console.log('hmm', currentUser);
+    return () => subscriptions.unsubscribe();
+  }, [authService]);
   return (
     <Navbar
       bg="light" expand="lg"
