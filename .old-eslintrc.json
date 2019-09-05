@@ -20,6 +20,5 @@
       "pragma": "React",
       "version": "detect"
     }
-  },
-  // "parser": "@typescript-eslint/parser"
+  }
 }
