@@ -1,10 +1,10 @@
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import axios from 'axios';
 
 import config from '../app.config';
-import { UserLogin, SessionDetails, UserDetails } from '../../common/types';
+import { UserLogin, UserDetails } from '../../common/types';
 import { useState, useEffect } from 'react';
-import { useObservable } from 'rxjs-hooks';
+import { tap } from 'rxjs/operators';
 const { API_ROUTE } = config;
 
 export class AuthService {
@@ -14,7 +14,7 @@ export class AuthService {
   currentUser$: Observable<UserDetails | null>;
 
   constructor() {
-    this.currentUser$ = this.currentUserSubject.asObservable();
+    this.currentUser$ = this.currentUserSubject.pipe(tap(v => console.log('u: ', v)));
   }
 
   complete() {
@@ -22,19 +22,10 @@ export class AuthService {
   }
 
   async login(userLogin: UserLogin) {
-    return new Promise<UserDetails|false>((resolve, reject) => {
-      axios.put(this.loginRoute, userLogin)
-        .then(({data}) => {
-          resolve(data)
-          this.currentUserSubject.next(data);
-          console.log('data: ', data);
-        })
-        .catch(error => {
-          console.log('errod: ', error)
-          resolve(error);
-        });
-      ;
-    });
+    const { data } = await axios.put(this.loginRoute, userLogin);
+    this.currentUserSubject.next(data);
+    console.log('data: ', data);
+    return data;
   }
 
   async logout() {
@@ -51,9 +42,12 @@ export const useCurrentUser = (authService: AuthService|null) => {
       setCurrentUser(null);
       return;
     }
-    const subscription = authService.currentUser$.subscribe(setCurrentUser);
+    console.log('subscribing to currentuser');
+    const subscription = authService.currentUser$.subscribe(user => {
+      console.log('setting current user');
+      setCurrentUser(user);
+    });
     return () => subscription.unsubscribe();
   }, [authService])
-  console.log('curruser', currentUser);
   return currentUser;
 }

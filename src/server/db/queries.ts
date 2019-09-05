@@ -22,7 +22,13 @@ export class DBQueries {
     })
   }
 
-  getUserByUsername(value: any) {
+  getUserById(value: string) {
+    return this.singleQuery(sql`
+      SELECT * FROM users WHERE id = ${value}
+    `);
+  };
+
+  getUserByUsername(value: string) {
     return this.singleQuery(sql`
       SELECT * FROM users WHERE username = ${value}
     `);

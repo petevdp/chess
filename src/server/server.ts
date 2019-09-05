@@ -31,16 +31,16 @@ const http = HttpServer.createServer(app);
 
 app.use(session);
 
-
-const lobby = new Lobby();
-const socketServer = new SocketServer(http, sharedSession(session));
-
-socketServer.clientConnectionsObservable.subscribe({
-  next: lobby.addLobbyMember
-});
-
 (async () => {
   const queries = new DBQueries();
+
+  const lobby = new Lobby();
+  const socketServer = new SocketServer(http, sharedSession(session), queries);
+
+  socketServer.clientConnectionsObservable.subscribe({
+    next: lobby.addLobbyMember
+  });
+
 
   app.use('/api', api(queries));
 

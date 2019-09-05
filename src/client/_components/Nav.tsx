@@ -19,7 +19,6 @@ const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
       console.log('details: ', details);
       setCurrentUser(details);
     }));
-    console.log('hmm', currentUser);
     return () => subscriptions.unsubscribe();
   }, [authService]);
   return (

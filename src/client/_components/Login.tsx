@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuthService } from '../_services/auth.service';
+import { AuthService, useCurrentUser } from '../_services/auth.service';
 import { UserLogin } from '../../common/types';
 import { Form, Row, Col } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
@@ -13,16 +13,15 @@ interface LoginFormState extends UserLogin {
 
 const useLoginForm = (authService: AuthService|null) => {
   const [inputs, setInputs] = useState({username: '', password: '', status: 'clean'} as LoginFormState);
-  const handleSubmit = async (event: React.FormEvent) => {
+
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!authService) {
       return;
     }
     const { status, ...userLogin} = inputs;
-    const out = await authService.login(userLogin);
-    if (!out) {
-      return setInputs({...inputs, status: 'rejected'});
-    }
+    authService.login(userLogin)
+      .catch(() => setInputs({...inputs, status: 'rejected'}));
   }
   const handleInputChange = (event: any) => {
     event.persist();
@@ -32,7 +31,7 @@ const useLoginForm = (authService: AuthService|null) => {
   return {
     handleSubmit,
     handleInputChange,
-    inputs
+    inputs,
   };
 }
 
@@ -41,8 +40,11 @@ interface LoginFormProps {
 }
 const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
   const { handleSubmit, handleInputChange, inputs } = useLoginForm(authService);
+  const currentUser = useCurrentUser(authService);
+
   const { username, password, status } = inputs;
-  if (status === 'authenticated') {
+
+  if (currentUser) {
     return  <Redirect to="lobby" />;
   }
 

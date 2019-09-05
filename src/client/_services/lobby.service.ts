@@ -1,5 +1,5 @@
-import { ChallengeDetails, LobbyMemberDetails, LobbyMessage, GameDetails, ChallengeResolution, ChallengeResponse } from '../../common/types';
-import { Observable, Subscription } from 'rxjs';
+import { LobbyMemberDetails, LobbyMessage } from '../../common/types';
+import { Observable } from 'rxjs';
 import { SocketService } from './socket.service';
 import { useState, useEffect } from 'react';
 import { routeBy } from '../../common/helpers';

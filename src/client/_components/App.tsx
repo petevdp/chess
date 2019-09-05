@@ -31,6 +31,7 @@ const useAppWideServices = () => {
     const socketService = new SocketService(authService);
     setServices({authService, socketService});
     return () => {
+      console.log('ded');
       socketService.complete();
       authService.complete();
     }
@@ -42,6 +43,7 @@ const App: React.FC = () => {
   const services = useAppWideServices();
   const currentUser = useCurrentUser(services.authService);
 
+  console.log('current user: ', currentUser);
   // initialize global services
   const { authService, socketService } = services;
   const authGuardRedirectRoute = 'login';

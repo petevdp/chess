@@ -1,19 +1,16 @@
 import  IO from 'socket.io';
 import  uuidv4 from 'uuid/v4';
-import { SocketClientMessage, SocketServerMessage } from '../common/types';
+import { SocketClientMessage, SocketServerMessage, UserDetails } from '../common/types';
 import { Observable } from 'rxjs';
 import  HTTP from 'http';
 import { SocketIoSharedSessionMiddleware } from 'express-socket.io-session';
+import { DBQueries } from './db/queries';
 
 // TODO websocket user auth
 export class ClientConnection {
   messageObservable: Observable<SocketClientMessage>;
-  user = {
-    id: uuidv4(),
-    username: 'placeholder',
-  };
 
-  constructor(private socket: IO.Socket) {
+  constructor(private socket: IO.Socket, public user: UserDetails) {
     this.messageObservable = new Observable(subscriber => {
       socket
         .on('message', subscriber.next)
@@ -37,7 +34,11 @@ export class SocketServer {
   clientConnectionsObservable: Observable<ClientConnection>;
   io: IO.Server;
 
-  constructor(http: HTTP.Server, sharedSession: SocketIoSharedSessionMiddleware) {
+  constructor(
+    http: HTTP.Server,
+    sharedSession: SocketIoSharedSessionMiddleware,
+    queries: DBQueries
+  ) {
     this.io = IO(http);
 
     this.io.use(sharedSession)
@@ -48,9 +49,14 @@ export class SocketServer {
     });
 
     this.clientConnectionsObservable = new Observable(subscriber => {
-      this.io.on('connection', socket => {
+      this.io.on('connection', async (socket) => {
+        const { userId } = socket.handshake.session;
+        console.log('userid: ', userId);
+        const { rows } = await queries.getUserById(userId);
+        const user = rows[0] as UserDetails;
+        console.log('socket found user', user);
         console.log('new connection');
-        subscriber.next(new ClientConnection(socket));
+        subscriber.next(new ClientConnection(socket, user));
       });
     });
   }
