@@ -17,9 +17,9 @@ const session = ExpressSessionFactory({
   genid: uuidv4,
 });
 
-import api from './api';
+import { api } from './api';
 import { Lobby } from './lobby';
-import { SocketServer } from './clientSocketConnetions';
+import { SocketServer } from './socketServer';
 
 
 // loads .env file into process.env
@@ -37,7 +37,7 @@ app.use(session);
   const lobby = new Lobby();
   const socketServer = new SocketServer(http, sharedSession(session), queries);
 
-  socketServer.clientConnectionsObservable.subscribe({
+  socketServer.clientConnections$.subscribe({
     next: lobby.addLobbyMember
   });
 

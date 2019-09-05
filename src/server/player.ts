@@ -1,8 +1,13 @@
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-import { ClientConnection } from './clientSocketConnetions';
-import { PlayerDetails, ClientPlayerAction, Colour, GameUpdate, } from '../../common/types';
+import { ClientConnection } from './socketServer';
+import {
+  PlayerDetails,
+  ClientPlayerAction,
+  Colour,
+  GameUpdate,
+} from '../common/types';
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
   colour: Colour;
@@ -17,7 +22,7 @@ export class Player {
     public colour: Colour
   ) {
 
-    this.playerActionObservable = connection.messageObservable.pipe(
+    this.playerActionObservable = connection.clientMessage$.pipe(
       filter(msg => !!msg.game),
       map(({game}) => ({...game, colour, playerId: this.id}))
     );

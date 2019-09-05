@@ -4,7 +4,7 @@ import { ChallengeDetails, UserDetails, LobbyMemberDetails, Map, LobbyDetails, G
 import { Subject, Observable } from 'rxjs';
 import { Game, GameActions } from './game';
 import { LobbyCategory } from './lobbyCategory';
-import { ClientConnection } from './clientSocketConnetions';
+import { ClientConnection } from './socketServer';
 
 export class Lobby {
   detailsObservable: Observable<LobbyDetails>;
@@ -55,19 +55,24 @@ export class Lobby {
   }
 
   addLobbyMember = (client: ClientConnection) => {
+    console.log('adding lobby member');
     const member = new LobbyMember(client);
-    this.members.addComponent(member);
     member.challengeObservable.subscribe({
       next: this.lobbyChallengeSubject.next
     });
 
     this.members.detailsObservable.subscribe({
-      next: member.updateLobbyMemberDetails
+      next: details => {
+        console.log('updating details!', details);
+        member.updateLobbyMemberDetails(details);
+      }
     });
 
     this.games.detailsObservable.subscribe({
       next: member.updateGameDetails
     });
+
+    this.members.addComponent(member);
   }
 
   private createGame(members: LobbyMemberActions[]) {

@@ -1,17 +1,21 @@
 import  IO from 'socket.io';
-import  uuidv4 from 'uuid/v4';
 import { SocketClientMessage, SocketServerMessage, UserDetails } from '../common/types';
 import { Observable } from 'rxjs';
 import  HTTP from 'http';
 import { SocketIoSharedSessionMiddleware } from 'express-socket.io-session';
 import { DBQueries } from './db/queries';
 
-// TODO websocket user auth
-export class ClientConnection {
-  messageObservable: Observable<SocketClientMessage>;
+export interface ClientConnectionInterface {
+  clientMessage$: Observable<SocketClientMessage>;
+  sendMessage: (SocketServerMessage) => void;
+  isActive: boolean;
+  user: UserDetails;
+}
+export class ClientConnection implements ClientConnectionInterface {
+  clientMessage$: Observable<SocketClientMessage>;
 
   constructor(private socket: IO.Socket, public user: UserDetails) {
-    this.messageObservable = new Observable(subscriber => {
+    this.clientMessage$ = new Observable(subscriber => {
       socket
         .on('message', subscriber.next)
         .on('disconnect', () => subscriber.complete());
@@ -31,7 +35,7 @@ export class ClientConnection {
 }
 
 export class SocketServer {
-  clientConnectionsObservable: Observable<ClientConnection>;
+  clientConnections$: Observable<ClientConnection>;
   io: IO.Server;
 
   constructor(
@@ -48,9 +52,13 @@ export class SocketServer {
       next();
     });
 
-    this.clientConnectionsObservable = new Observable(subscriber => {
+    this.clientConnections$ = new Observable(subscriber => {
       this.io.on('connection', async (socket) => {
         const { userId } = socket.handshake.session;
+        if (!userId) {
+          console.log('no userid, disconnecting!');
+          return socket.disconnect();
+        }
         console.log('userid: ', userId);
         const { rows } = await queries.getUserById(userId);
         const user = rows[0] as UserDetails;

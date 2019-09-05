@@ -1,13 +1,11 @@
 import * as fs from 'fs';
 import express from 'express';
-import * as jwt from 'jsonwebtoken';
-import { IQueries, DBQueries } from './db/queries';
+import { QueriesInterface, DBQueries } from './db/queries';
 // import  cors from 'cors';
 import uuidv4 from 'uuid/v4';
 import bodyParser from 'body-parser';
 import Moment from 'moment';
-
-import { Validator, ValidationError } from 'express-json-validator-middleware';
+import { check, validationResult } from 'express-validator';
 
 import { JWT_SECRET_PATH } from './constants';
 import { UserLogin, UserDetails } from '../common/types';
@@ -15,7 +13,7 @@ import { UserLogin, UserDetails } from '../common/types';
 
 const RSA_PRIVATE_KEY = fs.readFileSync(JWT_SECRET_PATH);
 
-export default (dbQueries: DBQueries) => {
+export const api = (dbQueries: DBQueries) => {
 
   const api = express();
 
@@ -27,25 +25,31 @@ export default (dbQueries: DBQueries) => {
   //   credentials: true,
   // }));
 
-  const validator = new Validator({ allErrors: true });
 
-  const validate = validator.validate;
 
   const loginSchema = {
     type: 'object',
     required: ['username', 'password'],
     properties: {
       username: {
-        type: 'string'
+        type: 'string',
       },
       password: {
-        type: 'string'
+        type: 'string',
       }
     }
   };
 
-  api.put('/signup', validate({ body: loginSchema }), async (req, res) => {
-    console.log('signup')
+  const userLoginSchema = [
+    check('username').isLength({ min: 2 }),
+    check('password').isLength({ min: 2 }),
+  ]
+
+  api.put('/signup', userLoginSchema, async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.sendStatus(422).json({errors: errors.array()});
+    }
     const { username, password } = req.body;
     const id = uuidv4();
     await dbQueries.addUser({username, id})
@@ -53,7 +57,11 @@ export default (dbQueries: DBQueries) => {
     res.json({username, id});
   });
 
-  api.put('/login', validate({ body: loginSchema }), async (req, res) => {
+  api.put('/login', userLoginSchema, async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.sendStatus(422).json({errors: errors.array()});
+    }
     const { username, password } = req.body;
     console.log('username: ', username);
     const userMatches = (await dbQueries.getUserByUsername(username)).rows
@@ -69,16 +77,6 @@ export default (dbQueries: DBQueries) => {
 
   api.put('/logout', (req, res) => {
     req.session.destroy(() => res.sendStatus(200));
-  });
-
-  // handling validation errors
-  api.use((err, req, res, next) => {
-    if (err instanceof ValidationError) {
-      res.sendStatus(400)
-      next();
-      return;
-    }
-    next(err);
   });
 
   return api

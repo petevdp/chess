@@ -7,7 +7,7 @@ import { AuthService } from './auth.service';
 export class SocketService {
   message$: Observable<SocketServerMessage>;
   private messageSubject: BehaviorSubject<SocketServerMessage>;
-  private socket: SocketIOClient.Socket|null;
+  private socket: SocketIOClient.Socket | null;
   // gameUpdate$: Observable<GameUpdate>;
 
   constructor(authService: AuthService) {
@@ -15,9 +15,9 @@ export class SocketService {
     this.socket = null;
     this.messageSubject = new BehaviorSubject({});
     this.message$ = this.messageSubject.asObservable();
-    authService.currentUser$.subscribe(user => {
-      user && this.initSocket(user);
-    });
+    authService.currentUser$.subscribe(user => (
+      user && this.initSocket(user)
+    ));
   }
 
   initSocket(user: UserDetails) {
@@ -28,6 +28,8 @@ export class SocketService {
 
   complete() {
     this.messageSubject.complete();
-    this.socket && this.socket.disconnect();
+    if (this.socket) {
+      this.socket.disconnect();
+    }
   }
 }

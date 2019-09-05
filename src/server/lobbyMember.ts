@@ -1,9 +1,8 @@
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ChallengeDetails, LobbyMemberDetails, LobbyDetails, ChallengeResolution, ChallengeOutcome } from '../../common/types';
 import { StateComponent } from './lobbyCategory';
 import { map, filter, first } from 'rxjs/operators';
-import { ClientConnection } from './clientSocketConnetions';
-import { LobbyMemberDetails, GameDetails, LobbyMemberDetails } from '../common/types';
+import { ClientConnection, ClientConnectionInterface } from './socketServer';
+import { GameDetails, LobbyMemberDetails, ChallengeResolution, ChallengeDetails, ChallengeOutcome } from '../common/types';
 
 export interface Challenge {
   isCancelled: Promise<boolean>;
@@ -28,15 +27,15 @@ export interface LobbyMemberActions {
 // TODO: switch from socket.io to bare ws + observables.
 export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemberActions> {
   challengeObservable: Observable<ChallengeDetails>;
-  detailsObservable: Observable<LobbyMemberDetails>;
+  details$: Observable<LobbyMemberDetails>;
   actions: LobbyMemberActions;
 
   private stateSubject: BehaviorSubject<MemberState>;
 
   constructor(
-    private connection: ClientConnection
+    private connection: ClientConnectionInterface
   ) {
-    const { messageObservable } = connection;
+    const { clientMessage$: messageObservable } = connection;
     this.challengeObservable = messageObservable.pipe(
       filter(msg => !!msg.challenge),
       map(msg => msg.challenge)
@@ -44,7 +43,7 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
 
     this.stateSubject = new BehaviorSubject({ currentGame: null });
 
-    this.detailsObservable = this.stateSubject.pipe(map((memberState: MemberState) => ({
+    this.details$ = this.stateSubject.pipe(map((memberState: MemberState) => ({
       ...memberState,
       ...this.user,
     })));
@@ -67,7 +66,7 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
 
   challenge = (challengeDetails: ChallengeDetails, resolutionObservable: Observable<ChallengeResolution>) => {
     const { id } = challengeDetails;
-    const { messageObservable, sendMessage } = this.connection;
+    const { clientMessage$: messageObservable, sendMessage } = this.connection;
 
     const isOwnChallenge = () => (
       challengeDetails.challengerId === this.id
@@ -80,7 +79,7 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
         !!msg.challengeResponse
 
         // is correct challenge
-        && msg.challengeResponse.id === id
+        && msg.challengeResponse.challengeId === id
         && (
           // you can't accept your own challenge
           msg.challengeResponse.response
@@ -126,9 +125,10 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
   }
 
   updateLobbyMemberDetails = (details: LobbyMemberDetails[]) => {
+    console.log('update details');
     this.connection.sendMessage({
       lobby: {
-        updateLObbyMemberDetails: details
+        updateLobbyMemberDetails: details
       }
     })
   }

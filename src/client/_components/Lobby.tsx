@@ -11,14 +11,14 @@ interface LobbyProps {
 
 export const Lobby: React.FC<LobbyProps> = ({ socketService }) => {
   const memberDetails = useLobbyMemberDetails(socketService);
+  const detailsComponent = memberDetails.length > 0
+    ? <MemberDetails details={memberDetails} />
+    : <span>loading</span>
+
   return (
     <React.Fragment>
       <div>hello lobby</div>
-      {
-        memberDetails.length > 0
-          ? <MemberDetails details={memberDetails} />
-          : <span>loading</span>
-      }
+      {detailsComponent}
     </React.Fragment>
   );
 };

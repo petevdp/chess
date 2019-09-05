@@ -10,7 +10,7 @@ interface LoginFormState extends UserLogin {
 }
 
 const useLoginForm = (authService: AuthService|null) => {
-  const [inputs, setInputs] = useState({username: '', password: '', status: 'clean'} as LoginFormState);
+  const [inputs, setInputs] = useState({ username: '', password: '', status: 'clean' } as LoginFormState);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();

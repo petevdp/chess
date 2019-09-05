@@ -4,10 +4,10 @@ import { UserDetails } from '../../common/types';
 const CONN_STRING = 'postgres://chess_development:chess_development@localhost:5432/chess_development';
 
 export type QueryOutput = Promise<QueryResultType<QueryResultRowType<string>>>;
-export interface IQueries {
+export interface QueriesInterface {
   getUser: (key: string, value: any) => QueryOutput;
-  addUser: (UserDetails) => QueryOutput
-  deleteUser: (string) => QueryOutput;
+  addUser: (userDetails: UserDetails) => QueryOutput
+  deleteUser: (str: string) => QueryOutput;
 }
 
 export class DBQueries {

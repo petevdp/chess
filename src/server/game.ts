@@ -1,12 +1,12 @@
 import  _ from 'lodash';
 import { Observable, Subject, merge } from 'rxjs';
 import { filter, map, shareReplay, takeWhile, startWith } from 'rxjs/operators';
-import { Colour, GameDetails, GameUpdate } from '../../common/types';
+import { Colour, GameDetails, GameUpdate } from '../common/types';
 import { StateComponent } from './lobbyCategory';
 import  Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
-import { ClientConnection } from './clientSocketConnetions';
+import { ClientConnection } from './socketServer';
 
 export interface GameActions {
   temp: () => void;
@@ -16,7 +16,7 @@ export class Game implements StateComponent<GameDetails, GameActions> {
   id: string;
 
   // TODO make type for gamestate
-  detailsObservable: Observable<GameDetails>;
+  details$: Observable<GameDetails>;
   actions = { temp: () => { } } as GameActions;
   gameUpdateObservable: Observable<GameUpdate>;
 
@@ -66,7 +66,7 @@ export class Game implements StateComponent<GameDetails, GameActions> {
     });
 
 
-    this.detailsObservable = this.gameUpdateObservable.pipe(
+    this.details$ = this.gameUpdateObservable.pipe(
       map(({state}) => ({ ...gameDetails, state })),
       shareReplay(1)
     );
