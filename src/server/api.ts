@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import express from 'express';
-import { QueriesInterface, DBQueries } from './db/queries';
+import { DBQueries } from './db/queries';
+import to from 'await-to-js';
 // import  cors from 'cors';
 import uuidv4 from 'uuid/v4';
 import bodyParser from 'body-parser';
@@ -9,11 +10,13 @@ import { check, validationResult } from 'express-validator';
 
 import { JWT_SECRET_PATH } from './constants';
 import { UserLogin, UserDetails } from '../common/types';
+import { DataIntegrityError } from 'slonik';
 
 
 const RSA_PRIVATE_KEY = fs.readFileSync(JWT_SECRET_PATH);
 
 export const api = (dbQueries: DBQueries) => {
+
 
   const api = express();
 
@@ -45,35 +48,24 @@ export const api = (dbQueries: DBQueries) => {
     check('password').isLength({ min: 2 }),
   ]
 
-  api.put('/signup', userLoginSchema, async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.sendStatus(422).json({errors: errors.array()});
+  api.put('/login', userLoginSchema, async (req, res) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.sendStatus(422).json({errors: validationErrors.array()});
     }
-    const { username, password } = req.body;
-    const id = uuidv4();
-    await dbQueries.addUser({username, id})
-    req.session.userId = id;
-    res.json({username, id});
+    const { username } = req.body;
+    console.log('username: ', username);
+    const user = await dbQueries.getOrAddUser(req.body.username)
+    res.json(user);
   });
 
-  api.put('/login', userLoginSchema, async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.sendStatus(422).json({errors: errors.array()});
+  api.get('/authenticate', async (req, res) => {
+    const [err, user] = await to(dbQueries.getUserById(req.session.userId));
+    if (!user) {
+      res.send(err).sendStatus(401);
     }
-    const { username, password } = req.body;
-    console.log('username: ', username);
-    const userMatches = (await dbQueries.getUserByUsername(username)).rows
-    if (userMatches.length === 1) {
-      const user = userMatches[0] as UserDetails;
-      req.session.userId = user.id;
-      res.json(user);
-    } else {
-      console.log('authorization error')
-      res.sendStatus(401);
-    }
-  });
+    res.json(user).sendStatus(200);
+  })
 
   api.put('/logout', (req, res) => {
     req.session.destroy(() => res.sendStatus(200));
