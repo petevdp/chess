@@ -4,23 +4,23 @@ import { UserLogin } from '../../common/types';
 import { Form, Row, Col } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import { Redirect } from 'react-router';
+import { Center } from './Center';
 
 interface LoginFormState extends UserLogin {
-  status: 'clean' | 'rejected' | 'authenticated';
+  status: 'clean' | 'evaluating' | 'rejected' | 'authenticated';
 }
 
-const useLoginForm = (authService: AuthService|null) => {
+const useLoginForm = (authService: AuthService) => {
   const [inputs, setInputs] = useState({ username: '', password: '', status: 'clean' } as LoginFormState);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
-    if (!authService) {
-      return;
-    }
-    const { status, ...userLogin} = inputs;
-    authService.login(userLogin)
-      .catch(() => setInputs({...inputs, status: 'rejected'}));
+    event.persist();
+
+    const isSuccessful = await authService.login(inputs);
+    setInputs({...inputs, status: isSuccessful ? 'authenticated' : 'rejected'});
   }
+
   const handleInputChange = (event: any) => {
     event.persist();
     const { name, value } = event.target;
@@ -34,7 +34,7 @@ const useLoginForm = (authService: AuthService|null) => {
 }
 
 interface LoginFormProps {
-  authService: AuthService|null;
+  authService: AuthService;
 }
 const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
   const { handleSubmit, handleInputChange, inputs } = useLoginForm(authService);
@@ -55,7 +55,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
         <Form.Group>
           <Form.Label>Username</Form.Label>
           <Form.Control
-            type="username"
             placeholder="Enter Username"
             onChange={handleInputChange}
             name="username"
@@ -65,34 +64,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
         <Form.Group>
           <Form.Label>Password</Form.Label>
           <Form.Control
-            type="password"
             placeholder="Enter Password"
             name="password"
             value={password}
             onChange={handleInputChange}
           />
         </Form.Group>
-        <Button type="submit">Submit</Button>
+        <Button name="login" type="submit">Submit</Button>
         {(status === 'rejected') && 'rejected!'}
       </Form>
     </div>
   )
 };
 
-const LoginWrapper: React.FC = ({ children }) => (
-  <React.Fragment>
-    <Row/>
-      <Row>
-        <Col>
-          {children}
-        </Col>
-      </Row>
-    <Row/>
-  </React.Fragment>
-);
-
 export const Login: React.FC<LoginFormProps> = (props) => (
-  <LoginWrapper>
+  <Center>
     <LoginForm {...props} />
-  </LoginWrapper>
+  </Center>
 );

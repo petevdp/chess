@@ -1,17 +1,17 @@
 import  _ from 'lodash';
-import { Observable, Subject, merge } from 'rxjs';
+import { Observable, merge } from 'rxjs';
 import { filter, map, shareReplay, takeWhile, startWith } from 'rxjs/operators';
 import { Colour, GameDetails, GameUpdate } from '../common/types';
-import { StateComponent } from './lobbyCategory';
 import  Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
 import { ClientConnection } from './socketServer';
+import { HasDetails$ } from '../common/helpers';
 
 export interface GameActions {
   temp: () => void;
 }
-export class Game implements StateComponent<GameDetails, GameActions> {
+export class Game implements HasDetails$<GameDetails> {
   private players: Player[];
   id: string;
 

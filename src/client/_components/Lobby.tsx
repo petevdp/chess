@@ -34,5 +34,5 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({details}) => (
 );
 
 const Member: React.FC<LobbyMemberDetails> = (details) => (
-  <span>details: {details}</span>
+  <span>user: {details.username}</span>
 );

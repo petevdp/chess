@@ -1,14 +1,16 @@
 import { Square } from './board';
 
+export interface Details {
+  id: string;
+}
 export interface ShortMove {
   from: Square;
   to: Square;
   playerId: string;
 }
 
-export interface UserDetails {
+export interface UserDetails extends Details {
   username: string;
-  id: string;
 }
 export interface SessionDetails extends UserDetails {
   idToken: string;

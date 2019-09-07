@@ -23,7 +23,14 @@ export class SocketService {
   initSocket(user: UserDetails) {
     console.log('user at init', user);
     this.socket = IOClient('http://localhost:3000');
-    this.socket.on('message', this.messageSubject.next);
+    this.socket.on('message', (msg: SocketServerMessage) => {
+      this.messageSubject.next(msg);
+      console.log('msg: ', msg);
+    })
+    .on('disconnect', () => {
+      console.log('socket disconnected!');
+      this.messageSubject.complete();
+    })
   }
 
   complete() {

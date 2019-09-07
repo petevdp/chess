@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import  HTTP from 'http';
 import { SocketIoSharedSessionMiddleware } from 'express-socket.io-session';
 import { DBQueries } from './db/queries';
+import to from 'await-to-js';
 
 export interface ClientConnectionInterface {
   clientMessage$: Observable<SocketClientMessage>;
@@ -17,7 +18,7 @@ export class ClientConnection implements ClientConnectionInterface {
   constructor(private socket: IO.Socket, public user: UserDetails) {
     this.clientMessage$ = new Observable(subscriber => {
       socket
-        .on('message', subscriber.next)
+        .on('message', msg => subscriber.next(msg))
         .on('disconnect', () => subscriber.complete());
     });
   }
@@ -30,7 +31,7 @@ export class ClientConnection implements ClientConnectionInterface {
     if (this.socket.disconnected) {
       throw new Error('socket is disconnected!');
     }
-    this.socket.send('message', message);
+    this.socket.send(message);
   }
 }
 
@@ -60,8 +61,10 @@ export class SocketServer {
           return socket.disconnect();
         }
         console.log('userid: ', userId);
-        const { rows } = await queries.getUserById(userId);
-        const user = rows[0] as UserDetails;
+        const [err, user] = await to(queries.getUserById(userId));
+        if (err) {
+          err.s
+        }
         console.log('socket found user', user);
         console.log('new connection');
         subscriber.next(new ClientConnection(socket, user));

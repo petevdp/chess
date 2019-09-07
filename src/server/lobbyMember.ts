@@ -1,8 +1,8 @@
 import { BehaviorSubject, Observable } from 'rxjs';
-import { StateComponent } from './lobbyCategory';
 import { map, filter, first } from 'rxjs/operators';
 import { ClientConnection, ClientConnectionInterface } from './socketServer';
 import { GameDetails, LobbyMemberDetails, ChallengeResolution, ChallengeDetails, ChallengeOutcome } from '../common/types';
+import { HasDetails$ } from '../common/helpers';
 
 export interface Challenge {
   isCancelled: Promise<boolean>;
@@ -13,30 +13,18 @@ interface MemberState {
   currentGame: string | null;
 }
 
-export interface LobbyMemberActions {
-  resolveChallenge: (
-    challengeDetails: ChallengeDetails,
-    resolutionObservable: Observable<ChallengeResolution>,
-  ) => Observable<ChallengeResolution>;
-
-  connection: ClientConnection;
-
-  updateGameDetails: (details: GameDetails[]) => void;
-  updateLobbymemberDetails: (details: LobbyMemberDetails[]) => void;
-}
 // TODO: switch from socket.io to bare ws + observables.
-export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemberActions> {
-  challengeObservable: Observable<ChallengeDetails>;
+export class LobbyMember implements HasDetails$<LobbyMemberDetails> {
+  challenge$: Observable<ChallengeDetails>;
   details$: Observable<LobbyMemberDetails>;
-  actions: LobbyMemberActions;
 
   private stateSubject: BehaviorSubject<MemberState>;
 
   constructor(
-    private connection: ClientConnectionInterface
+    public connection: ClientConnection
   ) {
     const { clientMessage$: messageObservable } = connection;
-    this.challengeObservable = messageObservable.pipe(
+    this.challenge$ = messageObservable.pipe(
       filter(msg => !!msg.challenge),
       map(msg => msg.challenge)
     );
@@ -47,13 +35,6 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
       ...memberState,
       ...this.user,
     })));
-
-    this.actions = {
-      resolveChallenge: this.challenge,
-      updateLobbymemberDetails: this.updateLobbyMemberDetails,
-      updateGameDetails: this.updateGameDetails,
-      connection: this.connection,
-    } as LobbyMemberActions;
   }
 
   get user() {
@@ -125,7 +106,7 @@ export class LobbyMember implements StateComponent<LobbyMemberDetails, LobbyMemb
   }
 
   updateLobbyMemberDetails = (details: LobbyMemberDetails[]) => {
-    console.log('update details');
+    console.log('update details ', details);
     this.connection.sendMessage({
       lobby: {
         updateLobbyMemberDetails: details

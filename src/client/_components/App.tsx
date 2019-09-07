@@ -19,13 +19,20 @@ import NavBar from "./Nav";
 import { PrivateRoute } from "../__helpers/AuthGuard";
 import { UserDetails } from "../../common/types";
 
-interface AppWideServices {
+interface UnconfirmedAppWideServices {
   authService: AuthService|null;
   socketService: SocketService|null;
 }
 
+interface AppWideServices {
+  authService: AuthService;
+  socketService: SocketService;
+}
+
+
+
 const useAppWideServices = () => {
-  const [services, setServices] = useState({authService: null, socketService: null} as AppWideServices);
+  const [services, setServices] = useState({authService: null, socketService: null} as UnconfirmedAppWideServices);
   useEffect(() => {
     const authService = new AuthService();
     const socketService = new SocketService(authService);
@@ -45,23 +52,36 @@ const App: React.FC = () => {
 
   console.log('current user: ', currentUser);
   // initialize global services
-  const { authService, socketService } = services;
   const authGuardRedirectRoute = 'login';
+
+  const { authService, socketService } = services as AppWideServices;
+
+  if (!authService || !socketService) {
+    return (
+      <div className="App">
+        Loading
+      </div>
+    );
+  }
+
+
+  const renderLogin = () => <Login authService={authService} />;
+  const renderLobby = () => <Lobby {...{ authService, socketService }} />;
 
   return (
     <div className="App">
       <Router>
-        <NavBar {...{ authService }}></NavBar>
+        <NavBar {...{ authService }} />
         <Container>
           <Route
             path="/login"
             exact
-            component={() => <Login authService={authService} />}
+            render={renderLogin}
           />
           <PrivateRoute
             exact path="/lobby"
             {...{currentUser, redirectRoute: authGuardRedirectRoute}}
-            GuardedComponent={() => <Lobby {...{ authService, socketService }} />}
+            GuardedComponent={renderLobby}
           />
 
           <Redirect to="login" path="/" />
