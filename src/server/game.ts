@@ -11,6 +11,13 @@ import { HasDetails$ } from '../common/helpers';
 export interface GameActions {
   temp: () => void;
 }
+
+export interface IGame extends HasDetails$<GameDetails> {
+  gameUpdate$: Observable<GameUpdate>;
+  history: unknown;
+  startingPosition: unknown;
+}
+
 export class Game implements HasDetails$<GameDetails> {
   private players: Player[];
   id: string;

@@ -1,8 +1,8 @@
-import { ClientConnectionInterface } from '../../socketServer'
+import { IClientConnection } from '../../socketServer'
 import { UserDetails, SocketClientMessage, SocketServerMessage } from '../../../common/types';
 import { Subject, Observable } from 'rxjs';
 
-export class MockClientConnection implements ClientConnectionInterface {
+export class MockClientConnection implements IClientConnection {
   clientMessageSubject = new Subject<SocketClientMessage>();
   serverMessageSubject = new Subject<SocketServerMessage>();
   clientMessage$: Observable<SocketClientMessage>;

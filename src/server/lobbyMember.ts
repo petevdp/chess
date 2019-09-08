@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, filter, first } from 'rxjs/operators';
-import { ClientConnection, ClientConnectionInterface } from './socketServer';
-import { GameDetails, LobbyMemberDetails, ChallengeResolution, ChallengeDetails, ChallengeOutcome } from '../common/types';
+import { ClientConnection, IClientConnection } from './socketServer';
+import { GameDetails, LobbyMemberDetails, ChallengeResolution, ChallengeDetails, ChallengeOutcome, UserDetails } from '../common/types';
 import { HasDetails$ } from '../common/helpers';
 
 export interface Challenge {
@@ -13,15 +13,23 @@ interface MemberState {
   currentGame: string | null;
 }
 
+export interface ILobbyMember extends HasDetails$<LobbyMemberDetails> {
+  userDetails: UserDetails;
+  clientConnection: IClientConnection;
+  updateLobbyMemberDetails: (details: LobbyMemberDetails[]) => void;
+  joinGame: (id: string) => Promise<boolean>;
+  spectateGame: (id: string) => Promise<boolean>
+}
+
 // TODO: switch from socket.io to bare ws + observables.
-export class LobbyMember implements HasDetails$<LobbyMemberDetails> {
+export class LobbyMember implements ILobbyMember {
   challenge$: Observable<ChallengeDetails>;
   details$: Observable<LobbyMemberDetails>;
 
   private stateSubject: BehaviorSubject<MemberState>;
 
   constructor(
-    public connection: ClientConnection
+    public connection: IClientConnection
   ) {
     const { clientMessage$: messageObservable } = connection;
     this.challenge$ = messageObservable.pipe(
@@ -33,16 +41,16 @@ export class LobbyMember implements HasDetails$<LobbyMemberDetails> {
 
     this.details$ = this.stateSubject.pipe(map((memberState: MemberState) => ({
       ...memberState,
-      ...this.user,
+      ...this.userDetails,
     })));
   }
 
-  get user() {
+  get userDetails() {
     return this.connection.user;
   }
 
   get id() {
-    return this.user.id;
+    return this.userDetails.id;
   }
 
   challenge = (challengeDetails: ChallengeDetails, resolutionObservable: Observable<ChallengeResolution>) => {

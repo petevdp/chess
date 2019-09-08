@@ -10,11 +10,12 @@ interface LobbyProps {
 }
 
 const Lobby: React.FC<LobbyProps> = ({ lobbyService }) => {
-  const memberDetails = lobbyService.useLobbyMemberDetails();
+  const allMemberDetails = lobbyService.useLobbyMemberDetails();
+  const onChallenge = lobbyService.onChallenge
   return (
     <React.Fragment>
       <div>hello lobby</div>
-      {memberDetails ? <ActiveMembersDisplay allMemberDetails={memberDetails} /> : 'empty'}
+      <ActiveMembersDisplayList {...{allMemberDetails, onChallenge}}/>
     </React.Fragment>
   );
 };
@@ -24,20 +25,28 @@ interface ActiveMembersDisplayProps {
   onChallenge: (receiverId: string) => void;
 }
 
-const ActiveMembersDisplay: React.FC<ActiveMembersDisplayProps> = ({
+const ActiveMembersDisplayList: React.FC<ActiveMembersDisplayProps> = ({
   allMemberDetails, onChallenge
-}) => (
-  <ListGroup>
-    {allMemberDetails.map(d => <MemberDisplay key={d.id} {...d, onChallenge}/>)}
-  </ListGroup>
-);
+}) => {
+  const displayList = allMemberDetails.map(memberDetails => (
+    <ActiveMemberDisplay
+      key={memberDetails.id}
+      {...{memberDetails, onChallenge}}
+    />
+  ));
+  return (
+    <ListGroup>
+      {displayList}
+    </ListGroup>
+  );
+};
 
 interface ActiveMemberDisplayProps {
   memberDetails: LobbyMemberDetails;
   onChallenge: (receiverId: string) => void;
 }
 
-const MemberDisplay: React.FC<ActiveMemberDisplayProps> = ({
+const ActiveMemberDisplay: React.FC<ActiveMemberDisplayProps> = ({
   memberDetails, onChallenge
 }) => {
   const onClickChallenge = () => onChallenge(id);
@@ -48,7 +57,7 @@ const MemberDisplay: React.FC<ActiveMemberDisplayProps> = ({
       <Button onClick={onClickChallenge} >Challenge</Button>
     </ListGroup.Item>
   );
- };
+};
 
 interface LobbyServiceProviderProps {
   authService: AuthService;
@@ -56,20 +65,21 @@ interface LobbyServiceProviderProps {
 
 
 const LobbyServiceProvider: React.FC<LobbyServiceProviderProps> = ({ authService }) => {
+  const currentUser = authService.useCurrentUser();
   const [lobbyService, setLobbyService] = useState(null as LobbyService | null);
   useEffect(() => {
     console.log('service provider triggered')
     const socketService = new SocketService(authService);
-    const lobbyService = new LobbyService(socketService);
+    const lobbyService = new LobbyService(socketService, currentUser.id);
     setLobbyService(lobbyService)
     return () => {
       socketService.complete();
     }
-  }, [authService]);
+  }, [authService, currentUser]);
   if (!lobbyService) {
     return <span>loading</span>;
   }
-  return <Lobby {...{lobbyService}}/>
+  return <Lobby {...{ lobbyService }} />
 }
 
 export { LobbyServiceProvider as Lobby };

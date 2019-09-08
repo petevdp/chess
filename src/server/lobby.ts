@@ -2,14 +2,19 @@ import  io from 'socket.io';
 import { Observable, Subject } from 'rxjs';
 import { mergeAll, reduce, map, tap, shareReplay, scan, pluck } from 'rxjs/operators';
 
-import { Game, GameActions } from './game';
-import { LobbyMember } from './lobbyMember';
+import { Game, GameActions, IGame } from './game';
+import { LobbyMember, ILobbyMember } from './lobbyMember';
 import { ChallengeDetails, UserDetails, LobbyMemberDetails, Map, LobbyDetails, GameDetails, ChallengeResolution } from '../common/types';
-import { ClientConnection } from './socketServer';
+import { ClientConnection, IClientConnection } from './socketServer';
 import { allDetails, StateUpdate, updateMap } from '../common/helpers';
 
+export interface ILobby {
+  addLobbyMember: (connection: IClientConnection) => void;
+  game$: Observable<IGame>;
+  member$: Observable<ILobbyMember>;
+}
+
 export class Lobby {
-  detailsObservable: Observable<LobbyDetails>;
   private allMembers$: Observable<Map<LobbyMember>>;
   private memberDetails$: Observable<LobbyMemberDetails[]>;
   private gameDetails$: Observable<GameDetails[]>;

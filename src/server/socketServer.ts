@@ -6,13 +6,15 @@ import { SocketIoSharedSessionMiddleware } from 'express-socket.io-session';
 import { DBQueries } from './db/queries';
 import to from 'await-to-js';
 
-export interface ClientConnectionInterface {
+export interface IClientConnection {
   clientMessage$: Observable<SocketClientMessage>;
-  sendMessage: (SocketServerMessage) => void;
+  sendMessage: (socketServerMessage: SocketServerMessage) => void;
   isActive: boolean;
   user: UserDetails;
+  complete: () => void;
 }
-export class ClientConnection implements ClientConnectionInterface {
+
+export class ClientConnection implements IClientConnection {
   clientMessage$: Observable<SocketClientMessage>;
 
   constructor(private socket: IO.Socket, public user: UserDetails) {

@@ -42,11 +42,9 @@ export interface LobbyMemberDetails extends UserDetails {
   currentGame: string | null;
 }
 export interface GameUpdate {
-  start?: GameDetails;
   move?: ShortMove;
   end?: EndState;
   message?: string;
-  state: string;
 }
 
 export interface ClientPlayerAction {
@@ -54,8 +52,6 @@ export interface ClientPlayerAction {
   type: 'move' | 'resign' | 'disconnect' | 'offerDraw';
   playerId: string;
 }
-
-
 
 export interface AuthPayload {
   user: UserDetails;
@@ -70,6 +66,11 @@ export interface PlayerDetails {
 export interface GameDetails {
   id: string;
   playerDetails: PlayerDetails[];
+}
+
+export interface CompleteGameInfo extends GameDetails {
+  history: unknown;
+  startingPosition: unknown;
 }
 export interface UserLogin {
   username: string;
@@ -87,11 +88,6 @@ export interface Map<T> {
 
 export interface ClientLobbyState {
   members: Map<LobbyMemberDetails>;
-}
-
-export interface LobbyDetails {
-  members: LobbyMemberDetails[];
-  games: GameDetails[];
 }
 
 export type SocketChannel = 'challenge' | 'lobby update';
@@ -114,10 +110,16 @@ export interface LobbyMessage {
   updateGameDetails?: GameDetails[];
   requestChallengeResponse?: ChallengeDetails;
   resolveChallenge?: ChallengeResolution;
-  joinGame?: GameDetails;
+  joinGame?: CompleteGameInfo;
 }
+
+export interface GameMessage {
+  gameUpdate: GameUpdate;
+  initGame: CompleteGameInfo;
+}
+
 export interface SocketServerMessage {
-  game?: GameUpdate;
+  game?: GameMessage;
   lobby?: LobbyMessage;
 }
 export interface SocketClientMessage {
