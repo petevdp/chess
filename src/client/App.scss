@@ -9,4 +9,10 @@
   flex-direction: column;
 }
 
+.memberDetails_member.list-group-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
 @import '~bootstrap/scss/bootstrap.scss';

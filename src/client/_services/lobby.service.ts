@@ -1,8 +1,8 @@
 import { LobbyMemberDetails, LobbyMessage } from '../../common/types';
 import { Observable } from 'rxjs';
 import { SocketService } from './socket.service';
-import { useState, useEffect } from 'react';
 import { routeBy } from '../../common/helpers';
+import { useObservable } from 'rxjs-hooks';
 
 export class LobbyService {
   // challenge$: Observable<ChallengeDetails>;
@@ -15,17 +15,8 @@ export class LobbyService {
     this.lobbyMessage$ = message$.pipe(routeBy('lobby'));
     this.lobbyMemberDetails$ = this.lobbyMessage$.pipe(routeBy('updateLobbyMemberDetails'));
   }
-}
 
-export const useLobbyMemberDetails = (socketService: SocketService|null) => {
-  const [members, setMembers] = useState([] as LobbyMemberDetails[]);
-  useEffect(() => {
-    if (!socketService) {
-      return;
-    }
-    const lobbyService = new LobbyService(socketService);
-    const subscription = lobbyService.lobbyMemberDetails$.subscribe(setMembers);
-    return () => subscription.unsubscribe();
-  }, [socketService])
-  return members;
+  useLobbyMemberDetails() {
+    return useObservable(() => this.lobbyMemberDetails$);
+  }
 }

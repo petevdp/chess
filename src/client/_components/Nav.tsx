@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useObservable } from 'rxjs-hooks';
 import { Nav, Button, Navbar } from 'react-bootstrap';
-import { AuthService, useCurrentUser } from '../_services/auth.service';
+import { AuthService } from '../_services/auth.service';
 import { useStatefulObservable } from '../__helpers/useStatefulObservable';
 import { UserDetails } from '../../common/types';
 import { Subscription } from 'rxjs';
@@ -12,15 +12,7 @@ interface MyNavBarProps {
 }
 
 const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
-  const [currentUser, setCurrentUser] = useState(null as UserDetails | null);
-  useEffect(() => {
-    const subscriptions = new Subscription();
-    subscriptions.add(authService.currentUser$.subscribe(details => {
-      console.log('details: ', details);
-      setCurrentUser(details);
-    }));
-    return () => subscriptions.unsubscribe();
-  }, [authService]);
+  const currentUser = authService.useCurrentUser();
   return (
     <Navbar
       bg="light" expand="lg"
@@ -28,7 +20,9 @@ const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
       <Nav.Item key="lobby" as={Link} to="lobby">
         Lobby
       </Nav.Item>
-      {currentUser ? <LoggedInDisplay {...{authService, currentUser}}  /> : <LoggedOutDisplay /> }
+      <span className="user-status-display">
+        {currentUser ? <LoggedInDisplay {...{authService, currentUser}}  /> : <LoggedOutDisplay /> }
+      </span>
     </Navbar>
   );
 }

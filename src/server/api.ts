@@ -45,26 +45,30 @@ export const api = (dbQueries: DBQueries) => {
 
   const userLoginSchema = [
     check('username').isLength({ min: 2 }),
-    check('password').isLength({ min: 2 }),
+    // check('password').isLength({ min: 2 }),
   ]
 
-  api.put('/login', userLoginSchema, async (req, res) => {
+  api.put('/login', userLoginSchema, async(req, res) => {
+    console.log('login request')
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
-      return res.sendStatus(422).json({errors: validationErrors.array()});
+      return res.json({errors: validationErrors.array()}).sendStatus(422);
     }
     const { username } = req.body;
-    console.log('username: ', username);
-    const user = await dbQueries.getOrAddUser(req.body.username)
+    const user = await dbQueries.getOrAddUser(req.body.username) as UserDetails;
+    console.log(user);
+    req.session.userId = user.id;
     res.json(user);
   });
 
   api.get('/authenticate', async (req, res) => {
-    const [err, user] = await to(dbQueries.getUserById(req.session.userId));
+    const [err, user] = await to(dbQueries.getUser({id: req.session.userId}));
     if (!user) {
-      res.send(err).sendStatus(401);
+      console.log('err: ', err);
+      res.sendStatus(401);
+      return;
     }
-    res.json(user).sendStatus(200);
+    res.json(user);
   })
 
   api.put('/logout', (req, res) => {

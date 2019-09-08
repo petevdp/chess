@@ -3,25 +3,32 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { SocketServerMessage, UserDetails } from '../../common/types';
 
 import { AuthService } from './auth.service';
+import { useObservable } from 'rxjs-hooks';
+import { first } from 'rxjs/operators';
 
 export class SocketService {
   message$: Observable<SocketServerMessage>;
   private messageSubject: BehaviorSubject<SocketServerMessage>;
-  private socket: SocketIOClient.Socket | null;
+  private socket = null as SocketIOClient.Socket | null;
   // gameUpdate$: Observable<GameUpdate>;
 
   constructor(authService: AuthService) {
     // not assigning socket till init
-    this.socket = null;
+    console.log('socket update!');
+
     this.messageSubject = new BehaviorSubject({});
     this.message$ = this.messageSubject.asObservable();
-    authService.currentUser$.subscribe(user => (
-      user && this.initSocket(user)
-    ));
+    authService.currentUser$.subscribe(user => {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+    if (user) {
+      this.initSocket(user);
+    }
+  });
   }
 
   initSocket(user: UserDetails) {
-    console.log('user at init', user);
     this.socket = IOClient('http://localhost:3000');
     this.socket.on('message', (msg: SocketServerMessage) => {
       this.messageSubject.next(msg);

@@ -12,6 +12,12 @@ export interface ShortMove {
 export interface UserDetails extends Details {
   username: string;
 }
+
+export interface UserDetailsPartial {
+  username?: string;
+  id?: string;
+}
+
 export interface SessionDetails extends UserDetails {
   idToken: string;
 }

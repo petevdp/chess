@@ -9,7 +9,7 @@ import {
 } from 'react-router-dom';
 import { Container } from 'react-bootstrap';
 
-import { AuthService, useCurrentUser } from "../_services/auth.service";
+import { AuthService } from "../_services/auth.service";
 import { LobbyService } from '../_services/lobby.service'
 import { SocketService } from "../_services/socket.service";
 
@@ -21,12 +21,10 @@ import { UserDetails } from "../../common/types";
 
 interface UnconfirmedAppWideServices {
   authService: AuthService|null;
-  socketService: SocketService|null;
 }
 
 interface AppWideServices {
   authService: AuthService;
-  socketService: SocketService;
 }
 
 
@@ -35,11 +33,9 @@ const useAppWideServices = () => {
   const [services, setServices] = useState({authService: null, socketService: null} as UnconfirmedAppWideServices);
   useEffect(() => {
     const authService = new AuthService();
-    const socketService = new SocketService(authService);
-    setServices({authService, socketService});
+    setServices({authService});
     return () => {
       console.log('ded');
-      socketService.complete();
       authService.complete();
     }
   }, []);
@@ -48,15 +44,13 @@ const useAppWideServices = () => {
 
 const App: React.FC = () => {
   const services = useAppWideServices();
-  const currentUser = useCurrentUser(services.authService);
 
-  console.log('current user: ', currentUser);
   // initialize global services
   const authGuardRedirectRoute = 'login';
 
-  const { authService, socketService } = services as AppWideServices;
+  const { authService } = services as AppWideServices;
 
-  if (!authService || !socketService) {
+  if (!authService) {
     return (
       <div className="App">
         Loading
@@ -66,7 +60,7 @@ const App: React.FC = () => {
 
 
   const renderLogin = () => <Login authService={authService} />;
-  const renderLobby = () => <Lobby {...{ authService, socketService }} />;
+  const renderLobby = () => <Lobby {...{ authService }} />;
 
   return (
     <div className="App">
@@ -80,7 +74,7 @@ const App: React.FC = () => {
           />
           <PrivateRoute
             exact path="/lobby"
-            {...{currentUser, redirectRoute: authGuardRedirectRoute}}
+            {...{authService, redirectRoute: authGuardRedirectRoute}}
             GuardedComponent={renderLobby}
           />
 

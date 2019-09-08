@@ -17,7 +17,8 @@ export class AuthService {
   currentUser$: Observable<UserDetails | null>;
 
   constructor() {
-    this.currentUser$ = this.currentUserSubject.pipe(tap(v => console.log('u: ', v)));
+    this.currentUser$ = this.currentUserSubject;
+    this.attemptAuthentication();
   }
 
   complete() {
@@ -25,9 +26,9 @@ export class AuthService {
   }
 
   async attemptAuthentication() {
-    const [err, response] = await to(axios.get<UserDetails>(`${API_ROUTE}/auth`));
+    const [err, response] = await to(axios.get<UserDetails>(`${API_ROUTE}/authenticate`));
+    console.log('attempting auth');
     if (!response) {
-      this.currentUserSubject.next(null);
       return;
     }
     this.currentUserSubject.next(response.data as UserDetails);
@@ -38,22 +39,13 @@ export class AuthService {
   }
 
   async login(userLogin: UserLogin) {
+    console.log('logging in')
     const [err, res] = await to(axios.put(this.loginRoute, userLogin));
     if (err) {
       this.currentUserSubject.next(null);
       return false;
     }
     const { data } = res;
-    this.currentUserSubject.next(data);
-    return data;
-  }
-
-  async signup(userLogin: UserLogin) {
-    const [err, data] = await to(this.submitUserLoginDetails(userLogin, this.signupRoute));
-    if (err) {
-      this.currentUserSubject.next(null);
-      return false;
-    }
     this.currentUserSubject.next(data);
     return data;
   }
@@ -69,19 +61,19 @@ export class AuthService {
   }
 }
 
-export const useCurrentUser = (authService: AuthService|null) => {
-  const [currentUser, setCurrentUser] = useState(null as UserDetails | null)
-  useEffect(() => {
-    if (!authService) {
-      setCurrentUser(null);
-      return;
-    }
-    console.log('subscribing to currentuser');
-    const subscription = authService.currentUser$.subscribe(user => {
-      console.log('setting current user');
-      setCurrentUser(user);
-    });
-    return () => subscription.unsubscribe();
-  }, [authService])
-  return currentUser;
-}
+// export const useCurrentUser = (authService: AuthService|null) => {
+//   const [currentUser, setCurrentUser] = useState(null as UserDetails | null)
+//   useEffect(() => {
+//     if (!authService) {
+//       setCurrentUser(null);
+//       return;
+//     }
+//     console.log('subscribing to currentuser');
+//     const subscription = authService.currentUser$.subscribe(user => {
+//       console.log('setting current user');
+//       setCurrentUser(user);
+//     });
+//     return () => subscription.unsubscribe();
+//   }, [authService])
+//   return currentUser;
+// }

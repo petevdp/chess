@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuthService, useCurrentUser } from '../_services/auth.service';
+import { AuthService } from '../_services/auth.service';
 import { UserLogin } from '../../common/types';
 import { Form, Row, Col } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
@@ -16,9 +16,7 @@ const useLoginForm = (authService: AuthService) => {
   const handleSubmit = async (event: any) => {
     event.preventDefault();
     event.persist();
-
-    const isSuccessful = await authService.login(inputs);
-    setInputs({...inputs, status: isSuccessful ? 'authenticated' : 'rejected'});
+    authService.login(inputs);
   }
 
   const handleInputChange = (event: any) => {
@@ -38,7 +36,7 @@ interface LoginFormProps {
 }
 const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
   const { handleSubmit, handleInputChange, inputs } = useLoginForm(authService);
-  const currentUser = useCurrentUser(authService);
+  const currentUser = authService.useCurrentUser();
 
   const { username, password, status } = inputs;
 

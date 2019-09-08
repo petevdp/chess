@@ -19,8 +19,12 @@ export class ClientConnection implements ClientConnectionInterface {
     this.clientMessage$ = new Observable(subscriber => {
       socket
         .on('message', msg => subscriber.next(msg))
-        .on('disconnect', () => subscriber.complete());
-    });
+        .on('disconnect', () => {
+          console.log('I\'m disconnecting');
+          subscriber.complete()
+        });
+    })
+    this.clientMessage$.subscribe(msg => console.log('new msg'))
   }
 
   get isActive() {
@@ -38,6 +42,7 @@ export class ClientConnection implements ClientConnectionInterface {
 export class SocketServer {
   clientConnections$: Observable<ClientConnection>;
   io: IO.Server;
+
 
   constructor(
     http: HTTP.Server,
@@ -61,10 +66,7 @@ export class SocketServer {
           return socket.disconnect();
         }
         console.log('userid: ', userId);
-        const [err, user] = await to(queries.getUserById(userId));
-        if (err) {
-          err.s
-        }
+        const user = await queries.getUser({id: userId});
         console.log('socket found user', user);
         console.log('new connection');
         subscriber.next(new ClientConnection(socket, user));
