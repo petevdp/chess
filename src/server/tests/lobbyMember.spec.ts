@@ -20,6 +20,16 @@ const user3 = {
   username: 'username3',
 }
 
+const game1Details = [
+  {
+    id: 'id',
+    playerDetails: [
+      { user: user1, colour: 'b' },
+      { user: user2, colour: 'w' }
+    ],
+  }
+] as GameDetails[];
+
 beforeEach(done => {
   clientConnection = new MockClientConnection(user1);
   member = new LobbyMember(clientConnection);
@@ -28,8 +38,6 @@ beforeEach(done => {
 
 afterEach(done => {
   clientConnection.complete();
-  clientConnection = null;
-  member = null;
   done();
 })
 
@@ -41,7 +49,7 @@ it('has a user', done => {
 describe('updating details', () => {
   it('can update lobbyMemberDetails', done => {
     const update = [
-      {...user1, currentGame: 'game'}
+      { ...user1, currentGame: 'game' }
     ] as LobbyMemberDetails[]
 
     const message = {
@@ -59,23 +67,9 @@ describe('updating details', () => {
   })
 
   it('can update gameDetails', done => {
-    const gameDetails = [
-      {
-        id: 'id',
-        playerDetails: [
-          { user: user1, colour: 'b' },
-          { user: user2, colour: 'w'}
-        ],
-      }
-    ] as GameDetails[];
-
     const message = {
       lobby: {
-        lobby: {
-          updateGameDetails: [
-            gameDetails,
-          ]
-        }
+        updateGameDetails: game1Details,
       }
     } as SocketServerMessage;
 
@@ -84,6 +78,16 @@ describe('updating details', () => {
       done();
     })
 
-    member.updateGameDetails(gameDetails);
+    member.updateGameDetails(game1Details);
   });
 })
+
+describe('joining game', done => {
+  const message = {
+
+  } as SocketServerMessage
+
+  clientConnection.subscribe(msg => {
+    expect(msg).toEqual()
+  })
+});
