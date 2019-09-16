@@ -82,12 +82,8 @@ export interface ChallengeDetails {
   receiverId: string;
 }
 
-export interface Map<T> {
-  [id: string]: T;
-}
-
 export interface ClientLobbyState {
-  members: Map<LobbyMemberDetails>;
+  members: Map<string, LobbyMemberDetails>;
 }
 
 export type SocketChannel = 'challenge' | 'lobby update';
@@ -105,25 +101,21 @@ export interface ChallengeResponse {
   response: boolean;
 }
 
-export interface LobbyMessage {
-  updateLobbyMemberDetails?: LobbyMemberDetails[];
-  updateGameDetails?: GameDetails[];
-  requestChallengeResponse?: ChallengeDetails;
-  resolveChallenge?: ChallengeResolution;
-  joinGame?: CompleteGameInfo;
+export interface MemberMessage {
+  memberUpdate: Map<string, LobbyMemberDetails>;
 }
 
 export interface GameMessage {
   gameUpdate: GameUpdate;
-  initGame: CompleteGameInfo;
+  loadGamePartial: CompleteGameInfo | CompleteGameInfo[];
+  joinGame: CompleteGameInfo;
 }
 
 export interface SocketServerMessage {
   game?: GameMessage;
-  lobby?: LobbyMessage;
+  member?: MemberMessage;
 }
+
 export interface SocketClientMessage {
-  game?: ClientPlayerAction;
-  challenge?: ChallengeDetails;
-  challengeResponse?: ChallengeResponse;
+  makeMove?: ClientPlayerAction;
 }

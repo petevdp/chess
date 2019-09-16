@@ -1,8 +1,10 @@
-import { MockClientConnection } from './mocks/mocks';
+import { ClientConnection } from '../socketServer';
 import { LobbyMember } from '../lobbyMember';
 import { SocketServerMessage, LobbyMemberDetails, GameDetails, UserDetails } from '../../common/types';
 
-let clientConnection: MockClientConnection;
+jest.mock('../socketServer.ts');
+
+let clientConnection:
 let member: LobbyMember;
 
 const user1 = {
@@ -31,7 +33,7 @@ const game1Details = [
 ] as GameDetails[];
 
 beforeEach(done => {
-  clientConnection = new MockClientConnection(user1);
+  clientConnection = jest.mock('');
   member = new LobbyMember(clientConnection);
   done();
 });
@@ -48,13 +50,13 @@ it('has a user', done => {
 
 describe('updating details', () => {
   it('can update lobbyMemberDetails', done => {
-    const update = [
-      { ...user1, currentGame: 'game' }
-    ] as LobbyMemberDetails[]
+    const update = new Map([ user1, user2 ].map(user => ([
+      user.id, {...user, currentGame: null}
+    ])));
 
     const message = {
-      lobby: {
-        updateLobbyMemberDetails: update
+      member: {
+        memberUpdate: update
       }
     } as SocketServerMessage;
 
@@ -66,20 +68,22 @@ describe('updating details', () => {
     member.updateLobbyMemberDetails(update);
   })
 
-  it('can update gameDetails', done => {
-    const message = {
-      lobby: {
-        updateGameDetails: game1Details,
-      }
-    } as SocketServerMessage;
+  // it('can update gameDetails', done => {
+  //   const update =
 
-    clientConnection.serverMessage$.subscribe(msg => {
-      expect(msg).toEqual(message);
-      done();
-    })
+  //   const message = {
+  //     member: {
+  //       memberUpdate: game1Details,
+  //     }
+  //   } as SocketServerMessage;
 
-    member.updateGameDetails(game1Details);
-  });
+  //   clientConnection.serverMessage$.subscribe(msg => {
+  //     expect(msg).toEqual(message);
+  //     done();
+  //   })
+
+  //   member.updateGameDetails(game1Details);
+  // });
 })
 
 describe('joining game', done => {

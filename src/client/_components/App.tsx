@@ -10,14 +10,13 @@ import {
 import { Container } from 'react-bootstrap';
 
 import { AuthService } from "../_services/auth.service";
-import { LobbyService } from '../_services/lobby.service'
-import { SocketService } from "../_services/socket.service";
 
 import { Lobby } from "./Lobby";
 import { Login } from "./Login";
 import NavBar from "./Nav";
 import { PrivateRoute } from "../__helpers/AuthGuard";
 import { UserDetails } from "../../common/types";
+import { Game } from "./Game";
 
 interface UnconfirmedAppWideServices {
   authService: AuthService|null;
@@ -30,7 +29,7 @@ interface AppWideServices {
 
 
 const useAppWideServices = () => {
-  const [services, setServices] = useState({authService: null, socketService: null} as UnconfirmedAppWideServices);
+  const [services, setServices] = useState({authService: null } as UnconfirmedAppWideServices);
   useEffect(() => {
     const authService = new AuthService();
     setServices({authService});
@@ -43,12 +42,10 @@ const useAppWideServices = () => {
 }
 
 const App: React.FC = () => {
-  const services = useAppWideServices();
+  const { authService } = useAppWideServices();
 
   // initialize global services
   const authGuardRedirectRoute = 'login';
-
-  const { authService } = services as AppWideServices;
 
   if (!authService) {
     return (
@@ -79,6 +76,11 @@ const App: React.FC = () => {
           />
 
           <Redirect to="login" path="/" />
+          <PrivateRoute
+            exact path="/game"
+            {...{authService, redirectRoute: authGuardRedirectRoute}}
+            GuardedComponent={Game}
+          />
         </Container>
       </Router>
     </div>
@@ -86,3 +88,4 @@ const App: React.FC = () => {
  };
 
 export default App;
+o

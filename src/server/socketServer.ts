@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import  HTTP from 'http';
 import { SocketIoSharedSessionMiddleware } from 'express-socket.io-session';
 import { DBQueries } from './db/queries';
-import to from 'await-to-js';
 
 export interface IClientConnection {
   clientMessage$: Observable<SocketClientMessage>;
