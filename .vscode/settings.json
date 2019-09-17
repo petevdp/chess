@@ -1,5 +1,7 @@
 {
   "cSpell.enabled": false,
   "eslint.enable": false,
-  "jest.pathToJest": "node_modules/jest/bin/jest.js"
+  "jest.pathToJest": "node_modules/jest/bin/jest.js",
+  "jest.enableCodeLens": false,
+  "jest.showCoverageOnLoad": true
 }
