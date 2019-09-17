@@ -102,7 +102,7 @@ export interface ChallengeResponse {
 }
 
 export interface MemberMessage {
-  memberUpdate: Map<string, LobbyMemberDetails>;
+  memberUpdate: Array<[string, UserDetails]>;
 }
 
 export interface GameMessage {
