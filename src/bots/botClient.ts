@@ -6,13 +6,15 @@ import { UserLogin, UserDetails, SocketServerMessage } from '../common/types';
 import { isInterfaceDeclaration } from '@babel/types';
 import { Observable } from 'rxjs';
 import { Http2SecureServer } from 'http2';
+import { SSL_OP_EPHEMERAL_RSA } from 'constants';
 
 
 const { API_ROUTE } = config;
 
 const LOGIN_ROUTE = 'http://localhost:3000/api/login';
-const SOCKET_ROUTE = 'http://localhost:3000/socket.io';
+const SOCKET_ROUTE = 'http://localhost:3000';
 
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export class BotClient {
   private serverMessage$: Observable<SocketServerMessage>;
@@ -20,16 +22,37 @@ export class BotClient {
   constructor(private socket: SocketIOClient.Socket, private user: UserDetails) {
     this.serverMessage$ = new Observable(subscriber => {
       this.socket.on('message', (msg: SocketServerMessage) => {
-        console.log(msg);
         subscriber.next(msg)
       })
-        .on('connect', () => {
-          console.log('connected');
-        })
+    })
+
+    this.serverMessage$.subscribe(msg => {
+      console.log('msg: ', msg);
+
     })
     console.log('conn', this.socket.connected);
+    sleep(1000).then(() => console.log('conn: ', this.socket.connected))
   }
 
+  getSocketStatusObservable() {
+    return new Observable(subscriber => {
+      this.socket
+        .on('connect', () => subscriber.next('connect'))
+        .on('reconnect', () => subscriber.next('reconnect'))
+        .on('disconnect', (reason: string) => {
+          if (reason === 'ping timeout') {
+            subscriber.next('ping timeout')
+            return;
+          }
+          // if there wasn't a ping timout, the socket was closed intentionally
+          if (reason === 'io server disconnect') {
+            subscriber.next('io server disconnnect');
+          } else {
+            subscriber.next('io client disconnect');
+          }
+        });
+    })
+  }
 }
 
 const newClient = async (username: string) => {
@@ -37,7 +60,6 @@ const newClient = async (username: string) => {
     LOGIN_ROUTE, { username, userType: 'bot' }
   );
   console.log('resolved');
-  console.log(res.headers['set-cookie'])
   const socket = IOClient(SOCKET_ROUTE, {
     transportOptions: {
       polling: {

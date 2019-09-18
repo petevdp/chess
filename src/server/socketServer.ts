@@ -1,4 +1,4 @@
-import  IO from 'socket.io';
+import  IO, { Socket } from 'socket.io';
 import { SocketClientMessage, SocketServerMessage, UserDetails } from '../common/types';
 import { Observable } from 'rxjs';
 import  HTTP from 'http';
@@ -35,14 +35,22 @@ export class ClientConnection implements IClientConnection {
 
   sendMessage(message: SocketServerMessage) {
     if (this.socket.disconnected) {
-      throw new Error('socket is disconnected!');
+      return console.log('socket disconencted!');
     }
+    console.log('sending');
+    console.log('conn: ', this.socket.connected);
     this.socket.send(message);
   }
   complete(){
   }
 }
 
+const connected = (socket: Socket) => new Promise(resolve => {
+  socket.on('connect', () => {
+    resolve();
+  })
+  socket.connected && resolve();
+})
 export class SocketServer {
   clientConnections$: Observable<ClientConnection>;
   io: IO.Server;
@@ -69,9 +77,10 @@ export class SocketServer {
           console.log('no userid, disconnecting!');
           return socket.disconnect();
         }
+
         const user = await queries.getUser({id: userId});
-        console.log('socket found user', user);
-        console.log('new connection');
+
+        console.log('new connection: ', user);
         subscriber.next(new ClientConnection(socket, user));
       });
     });

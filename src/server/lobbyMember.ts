@@ -26,7 +26,7 @@ export class LobbyMember implements ILobbyMember {
   private stateSubject: BehaviorSubject<MemberState>;
 
   constructor(public connection: IClientConnection) {
-    const { clientMessage$: messageObservable } = connection;
+    const { clientMessage$ } = connection;
 
     this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false });
 
@@ -34,6 +34,16 @@ export class LobbyMember implements ILobbyMember {
       ...memberState,
       ...this.userDetails,
     })));
+
+    clientMessage$.subscribe({
+      complete: () => {
+        this.stateSubject.next({...this.state, leftLobby: true})
+      }
+    })
+  }
+
+  private get state(){
+    return this.stateSubject.value;
   }
 
   get userDetails() {
