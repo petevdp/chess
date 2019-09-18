@@ -1,11 +1,11 @@
-import { OperatorFunction, Observable, Subject } from "rxjs";
+import { OperatorFunction, Observable } from "rxjs";
 import { Details } from "./types";
-import { filter, map, mergeAll, reduce, tap, shareReplay, finalize, scan, pluck } from "rxjs/operators";
+import { filter, map, mergeAll, shareReplay, finalize, scan } from "rxjs/operators";
 
 export function routeBy<IN, OUT>(routeProperty: string): OperatorFunction<IN, OUT> {
-  return input$ => input$.pipe(
+  return (input$: Observable<IN>) => input$.pipe(
     filter((msg: any) => !!msg[routeProperty]),
-    map((msg: any) => msg[routeProperty])
+    map((msg) => msg[routeProperty] as OUT)
   );
 }
 export interface HasDetails$<D> {

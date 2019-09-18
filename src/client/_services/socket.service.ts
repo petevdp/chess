@@ -1,11 +1,8 @@
-import IOClient, { Manager } from 'socket.io-client';
+import IOClient from 'socket.io-client';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { SocketServerMessage, UserDetails, SocketClientMessage } from '../../common/types';
+import { SocketServerMessage, SocketClientMessage } from '../../common/types';
 
-import { AuthService } from './auth.service';
 import { useObservable } from 'rxjs-hooks';
-import { first } from 'rxjs/operators';
-import { useState, useEffect } from 'react';
 
 export class SocketService {
   serverMessage$: Observable<SocketServerMessage>;
@@ -23,9 +20,6 @@ export class SocketService {
     // TODO: if this connection fails, we need to handle it gracefully
     this.socket = IOClient('http://localhost:3000');
 
-    const subscription = this.serverMessageSubject.subscribe(msg => {
-      this.socket.send(msg);
-    });
 
     this.socket.on('message', (msg: SocketServerMessage) => {
       this.serverMessageSubject.next(msg);

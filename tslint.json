@@ -9,6 +9,7 @@
   "rules": {
     "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
     "interface-name": false,
-    "no-default-export": false
+    "no-default-export": false,
+    "jsx-boolean-value": [false]
   }
 }

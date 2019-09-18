@@ -20,6 +20,7 @@ export class ClientConnection implements IClientConnection {
     this.clientMessage$ = new Observable(subscriber => {
       socket
         .on('message', msg => subscriber.next(msg))
+        .on('message', () => console.log('new message'))
         .on('disconnect', () => {
           console.log('I\'m disconnecting');
           subscriber.complete()
@@ -68,7 +69,6 @@ export class SocketServer {
           console.log('no userid, disconnecting!');
           return socket.disconnect();
         }
-        console.log('userid: ', userId);
         const user = await queries.getUser({id: userId});
         console.log('socket found user', user);
         console.log('new connection');

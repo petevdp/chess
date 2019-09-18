@@ -1,4 +1,4 @@
-import React, { useEffect, useState, SyntheticEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AuthService } from '../_services/auth.service';
 import { LobbyService } from '../_services/lobby.service';
 import { LobbyMemberDetails } from '../../common/types';
@@ -46,7 +46,7 @@ interface ActiveMemberDisplayProps {
 const MemberDisplay: React.FC<ActiveMemberDisplayProps> = ({
   memberDetails
 }) => {
-  const { username, id } = memberDetails;
+  const { username } = memberDetails;
   return (
     <ListGroup.Item className="memberDetails_member">
       searching

@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, {  } from 'react';
 import { Link } from 'react-router-dom';
-import { useObservable } from 'rxjs-hooks';
 import { Nav, Button, Navbar } from 'react-bootstrap';
 import { AuthService } from '../_services/auth.service';
-import { useStatefulObservable } from '../__helpers/useStatefulObservable';
 import { UserDetails } from '../../common/types';
-import { Subscription } from 'rxjs';
 
 interface MyNavBarProps {
   authService: AuthService;
@@ -15,7 +12,8 @@ const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
   const currentUser = authService.useCurrentUser();
   return (
     <Navbar
-      bg="light" expand="lg"
+      bg="light"
+      expand="lg"
     >
       <Nav.Item key="lobby" as={Link} to="lobby">
         Lobby
