@@ -38,6 +38,8 @@ export class ClientConnection implements IClientConnection {
     }
     this.socket.send(message);
   }
+  complete(){
+  }
 }
 
 export class SocketServer {

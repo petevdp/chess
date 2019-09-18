@@ -40,6 +40,7 @@ export interface EndState {
 
 export interface LobbyMemberDetails extends UserDetails {
   currentGame: string | null;
+  leftLobby: boolean;
 }
 export interface GameUpdate {
   move?: ShortMove;
@@ -102,7 +103,7 @@ export interface ChallengeResponse {
 }
 
 export interface MemberMessage {
-  memberUpdate: Array<[string, UserDetails]>;
+  memberUpdate: Array<[string, LobbyMemberDetails]>;
 }
 
 export interface GameMessage {

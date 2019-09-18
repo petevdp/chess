@@ -1,16 +1,12 @@
-import { ClientConnection } from '../socketServer';
 import { LobbyMember } from '../lobbyMember';
 import { SocketServerMessage, LobbyMemberDetails, GameDetails, UserDetails } from '../../common/types';
+import { MockClientConnection } from '../__mocks__/socketServer';
 
-jest.mock('../socketServer.ts');
-
-let clientConnection:
-let member: LobbyMember;
 
 const user1 = {
   id: 'id1',
   username: 'username1',
-}
+} as UserDetails;
 
 const user2 = {
   id: 'id2',
@@ -22,50 +18,29 @@ const user3 = {
   username: 'username3',
 }
 
-const game1Details = [
-  {
-    id: 'id',
-    playerDetails: [
-      { user: user1, colour: 'b' },
-      { user: user2, colour: 'w' }
-    ],
-  }
-] as GameDetails[];
 
-beforeEach(done => {
-  clientConnection = jest.mock('');
-  member = new LobbyMember(clientConnection);
-  done();
-});
-
-afterEach(done => {
+it('has a user', () => {
+  const clientConnection = new MockClientConnection(user1);
+  const member = new LobbyMember(clientConnection, new Map());
+  expect(member.userDetails).toEqual(user1)
   clientConnection.complete();
-  done();
-})
-
-it('has a user', done => {
-  expect(member.userDetails).toEqual(clientConnection.user);
-  done();
 })
 
 describe('updating details', () => {
   it('can update lobbyMemberDetails', done => {
+    const clientConnection = new MockClientConnection(user1);
+    const member = new LobbyMember(clientConnection, new Map())
     const update = new Map([ user1, user2 ].map(user => ([
       user.id, {...user, currentGame: null}
     ])));
 
     const message = {
       member: {
-        memberUpdate: update
+        memberUpdate: [...update]
       }
     } as SocketServerMessage;
-
-    clientConnection.serverMessage$.subscribe(msg => {
-      expect(msg).toEqual(message);
-      done();
-    });
-
     member.updateLobbyMemberDetails(update);
+    expect(clientConnection.sendMessage.mock.results[1]).toEqual(message)
   })
 
   // it('can update gameDetails', done => {
@@ -86,12 +61,12 @@ describe('updating details', () => {
   // });
 })
 
-describe('joining game', done => {
-  const message = {
+// describe('joining game', done => {
+//   const message = {
 
-  } as SocketServerMessage
+//   } as SocketServerMessage
 
-  clientConnection.subscribe(msg => {
-    expect(msg).toEqual()
-  })
-});
+//   clientConnection1.subscribe(msg => {
+//     expect(msg).toEqual()
+//   })
+// });

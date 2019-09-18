@@ -1,10 +1,10 @@
 import  io from 'socket.io';
 import { Observable, Subject } from 'rxjs';
-import { mergeAll, reduce, map, tap, shareReplay, scan, pluck } from 'rxjs/operators';
+import { mergeAll, reduce, map, tap, shareReplay, scan, pluck, filter } from 'rxjs/operators';
 
 import { Game, GameActions, IGame } from './game';
 import { LobbyMember, ILobbyMember } from './lobbyMember';
-import { ChallengeDetails, UserDetails, LobbyMemberDetails, Map, LobbyDetails, GameDetails, ChallengeResolution } from '../common/types';
+import { ChallengeDetails, UserDetails, LobbyMemberDetails, GameDetails, ChallengeResolution } from '../common/types';
 import { ClientConnection, IClientConnection } from './socketServer';
 import { allDetails, StateUpdate, updateMap } from '../common/helpers';
 
@@ -15,14 +15,14 @@ export interface ILobby {
 }
 
 export class Lobby {
-  private allMembers$: Observable<Map<LobbyMember>>;
-  private memberDetails$: Observable<LobbyMemberDetails[]>;
+  private members$: Observable<Map<string, LobbyMember>>;
+  private memberDetails$: Observable<Map<string, LobbyMemberDetails>>;
   private gameDetails$: Observable<GameDetails[]>;
   private lobbyChallengeSubject: Subject<ChallengeDetails>;
 
-  private members = {} as Map<LobbyMember>;
+  private members = {} as Map<string, LobbyMember>;
+  private memberUpdateSubject: Subject<[string, LobbyMember|null]>;
 
-  private memberUpdateSubject: Subject<StateUpdate<LobbyMember>>;
   private gameSubject: Subject<Game>;
 
   constructor() {
@@ -30,70 +30,30 @@ export class Lobby {
     this.gameSubject = new Subject<Game>();
     this.lobbyChallengeSubject = new Subject();
 
-    this.memberUpdateSubject.subscribe(member => {
-      console.log('we got one bois');
-    })
+    this.members$ = new Observable
 
-    this.allMembers$ = this.memberUpdateSubject.pipe(
-      scan((acc, val) => updateMap<LobbyMember>(acc, val), {} as Map<LobbyMember>),
-      tap(members => {
-        console.log('tap dat');
-        this.members = members;
-      })
+
+    this.memberDetails$ = this.memberUpdateSubject.pipe(
+      filter(([id, member]) => !!member),
+      map(([id, member]) => member.details$),
+      mergeAll(),
+      scan((acc, details) => {
+        if (!details.leftLobby) {
+          console.log('deleting ', details.username);
+          acc.delete(details.id)
+          return acc;
+        }
+        acc.set(details.id, details);
+        return acc;
+      }, new Map<string, LobbyMemberDetails>()),
+      shareReplay(1)
     )
-    console.log('Im so confused');
-    this.memberDetails$ = allDetails(
-      this.memberUpdateSubject.pipe(pluck('value'))
-    );
 
-    this.gameDetails$ = allDetails(this.gameSubject);
-
-    // resolve incoming challenges
-    this.lobbyChallengeSubject.subscribe({
-      next: (challengeDetails) => {
-        const { challengerId, receiverId, id } = challengeDetails;
-        const resolutionSubject = new Subject<ChallengeResolution>();
-
-        const receiver = this.members[receiverId];
-        if (!receiver) {
-          throw new Error('receiver does not exist!');
-        }
-        const challenger = this.members[challengerId];
-        if (!challenger) {
-          throw new Error('challenger does not exist!');
-        }
-
-        resolutionSubject.subscribe({
-          next: isAccepted => {
-            // complete after only one value
-            resolutionSubject.complete();
-            this.createGame([receiver, challenger]);
-          }
-        });
-
-        // ask involved members to resolve the challenge.
-        // The receiver can accept or decline, and the challenger can cancel.
-        [receiver, challenger].forEach(mem => {
-          const memberResolutionObservable = mem.challenge(
-            challengeDetails,
-            resolutionSubject.asObservable()
-          );
-
-          memberResolutionObservable.subscribe(resolution => (
-            resolutionSubject.next(resolution)
-          ));
-        });
-
-      }
-    });
   }
 
   addLobbyMember = (client: ClientConnection) => {
     console.log('adding lobby member');
     const member = new LobbyMember(client);
-    member.challenge$.subscribe({
-      next: challenge => this.lobbyChallengeSubject.next(challenge),
-    });
 
     this.memberDetails$.subscribe(details => {
       member.updateLobbyMemberDetails(details);
@@ -101,7 +61,7 @@ export class Lobby {
 
     member.details$.subscribe({
       complete: () => {
-        this.memberUpdateSubject.next({id: member.id, value: null});
+        this.memberUpdateSubject.next();
       }
     })
 
@@ -109,7 +69,7 @@ export class Lobby {
   }
 
   private createGame(members: LobbyMember[]) {
-    const game = new Game(members.map(m => m.connection));
+    const game = new Game(members.map(m => m.clientConnection));
     this.gameSubject.next(game);
   }
 }
