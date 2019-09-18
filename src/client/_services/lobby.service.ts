@@ -7,7 +7,7 @@ import { useObservable } from 'rxjs-hooks';
 import { scan, pluck, shareReplay, filter, map } from 'rxjs/operators';
 import { useEffect } from 'react';
 
-export class LobbyMemberService {
+export class LobbyService {
   lobbyMemberDetailsMap$: Observable<Map<string, LobbyMemberDetails>>;
   lobbyMessage$: Observable<MemberMessage>;
 
@@ -23,6 +23,9 @@ export class LobbyMemberService {
       }, new Map<string, LobbyMemberDetails>()),
       shareReplay(1)
     );
+  }
+
+  queueForGame = () => {
   }
 
   useLobbyMemberDetails() {
