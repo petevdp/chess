@@ -64,7 +64,6 @@ export const api = (dbQueries: DBQueries) => {
   api.get('/authenticate', async (req, res) => {
     const [err, user] = await to(dbQueries.getUser({id: req.session.userId}));
     if (!user) {
-      console.log('err: ', err);
       res.sendStatus(401);
       return;
     }

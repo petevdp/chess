@@ -1,19 +1,19 @@
 import React, { useEffect, useState, SyntheticEvent } from 'react';
 import { AuthService } from '../_services/auth.service';
-import { LobbyMemberService } from '../_services/lobbyMember.service';
+import { LobbyService } from '../_services/lobby.service';
 import { LobbyMemberDetails } from '../../common/types';
 import { SocketService } from '../_services/socket.service';
 import { ListGroup, Button } from 'react-bootstrap';
 
 interface LobbyProps {
-  lobbyService: LobbyMemberService;
+  lobbyService: LobbyService;
 }
 
 const Lobby: React.FC<LobbyProps> = ({ lobbyService }) => {
   const allMemberDetails = lobbyService.useLobbyMemberDetailsArr();
   return (
     <React.Fragment>
-      <div>hello lobby</div>
+      <Button onClick={lobbyService.queueForGame}>Queue for Game</Button>
       <ActiveMembersDisplayList {...{allMemberDetails}}/>
     </React.Fragment>
   );
@@ -27,7 +27,7 @@ const ActiveMembersDisplayList: React.FC<ActiveMembersDisplayProps> = ({
   allMemberDetails
 }) => {
   const displayList = allMemberDetails.map(memberDetails => (
-    <ActiveMemberDisplay
+    <MemberDisplay
       key={memberDetails.id}
       {...{memberDetails}}
     />
@@ -43,12 +43,13 @@ interface ActiveMemberDisplayProps {
   memberDetails: LobbyMemberDetails;
 }
 
-const ActiveMemberDisplay: React.FC<ActiveMemberDisplayProps> = ({
+const MemberDisplay: React.FC<ActiveMemberDisplayProps> = ({
   memberDetails
 }) => {
   const { username, id } = memberDetails;
   return (
     <ListGroup.Item className="memberDetails_member">
+      searching
       <label className="member_classname">{username}</label>
     </ListGroup.Item>
   );
@@ -60,7 +61,7 @@ interface LobbyServiceProviderProps {
 
 
 const LobbyServiceProvider: React.FC<LobbyServiceProviderProps> = ({ authService }) => {
-  const [lobbyService, setLobbyService] = useState(null as LobbyMemberService | null);
+  const [lobbyService, setLobbyService] = useState(null as LobbyService | null);
   const currentUser = authService.useCurrentUser();
   useEffect(() => {
     if (!currentUser) {
@@ -68,7 +69,7 @@ const LobbyServiceProvider: React.FC<LobbyServiceProviderProps> = ({ authService
     }
     console.log('service provider triggered')
     const socketService = new SocketService();
-    const lobbyService = new LobbyMemberService(socketService, currentUser.id);
+    const lobbyService = new LobbyService(socketService, currentUser.id);
     setLobbyService(lobbyService)
     return () => {
 

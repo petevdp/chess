@@ -9,8 +9,10 @@ export interface ShortMove {
   playerId: string;
 }
 
+export type UserType = 'bot' | 'human';
 export interface UserDetails extends Details {
   username: string;
+  type: UserType;
 }
 
 export interface UserDetailsPartial {
@@ -76,6 +78,7 @@ export interface CompleteGameInfo extends GameDetails {
 export interface UserLogin {
   username: string;
   password: string;
+  userType: UserType;
 }
 export interface ChallengeDetails {
   id: string;
