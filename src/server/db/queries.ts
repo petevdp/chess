@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4';
 import errors from 'errors';
 import { createPool, sql, DatabasePoolConnectionType, QueryResultType, QueryResultRowType, QueryMaybeOneFunctionType, DatabasePoolType, CommonQueryMethodsType } from 'slonik';
-import { UserDetails, UserDetailsPartial } from '../../common/types';
+import { UserDetails, UserDetailsPartial, UserType } from '../../common/types';
 import to from 'await-to-js';
 
 const CONN_STRING = 'postgres://chess_development:chess_development@localhost:5432/chess_development';
@@ -38,23 +38,29 @@ export class DBQueries {
   };
 
 
-  private async _addUser(connection: DatabasePoolConnectionType, username: string, id = null): Promise<UserDetails> {
+  private async _addUser(
+    connection: DatabasePoolConnectionType,
+    username: string,
+    type: UserType,
+    id = null,
+  ): Promise<UserDetails> {
     return connection.maybeOne(sql`
-          INSERT INTO users(id, username)
-          VALUES(${id || uuidv4()}, ${username})
+          INSERT INTO users(id, username, type)
+          VALUES(${id || uuidv4()}, ${username}, ${type})
         `);
   }
 
   /**
    * gets a user, or adds and gets if user doesn't exist
    * @param username
+   * @param type
    * @returns UserDetails
    */
-  getOrAddUser(username: string): Promise<UserDetails> {
+  getOrAddUser(username: string, type: UserType): Promise<UserDetails> {
     return this.pool.connect(async (connection) => {
       let user = await this._getUser({username}, connection);
       if (!user) {
-        await this._addUser(connection, username);
+        await this._addUser(connection, username, type);
         user = await this._getUser({username}, connection);
       }
       return user;

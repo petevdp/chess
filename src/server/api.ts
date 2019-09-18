@@ -45,17 +45,17 @@ export const api = (dbQueries: DBQueries) => {
 
   const userLoginSchema = [
     check('username').isLength({ min: 2 }),
-    // check('password').isLength({ min: 2 }),
+    check('userType').isIn(['bot', 'human'])
   ]
 
   api.put('/login', userLoginSchema, async(req, res) => {
     console.log('login request')
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
-      return res.json({errors: validationErrors.array()}).sendStatus(422);
+      return res.status(422).json({errors: validationErrors.array()});
     }
-    const { username } = req.body;
-    const user = await dbQueries.getOrAddUser(req.body.username) as UserDetails;
+    const { username, userType } = req.body;
+    const user = await dbQueries.getOrAddUser(username, userType) as UserDetails;
     console.log(user);
     req.session.userId = user.id;
     res.json(user);

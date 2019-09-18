@@ -9,7 +9,8 @@ pool.connect(async connection => {
   await connection.query(sql`
     CREATE TABLE users (
       id varchar(36) CONSTRAINT firstkey PRIMARY KEY,
-      username varchar(40) UNIQUE
+      username varchar(40) UNIQUE,
+      type varchar(36)
     )
   `);
   console.log('completed');
