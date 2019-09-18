@@ -8,22 +8,6 @@ export function routeBy<IN, OUT>(routeProperty: string): OperatorFunction<IN, OU
     map((msg: any) => msg[routeProperty])
   );
 }
-
-
-export function updateMap<V>(state: Map<string, V>, { id, value }: StateUpdate<V>) {
-  if (!value) {
-    const { [id]: toDelete, ...rest } = state;
-    return rest;
-  }
-  return { ...state, [id]: value } as Map<string, V>;
-};
-
-
-export interface StateUpdate<D> {
-  id: string;
-  value: D | null;
-}
-
 export interface HasDetails$<D> {
   details$: Observable<D>;
 }
