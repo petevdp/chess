@@ -6,7 +6,6 @@ import { Game, GameActions, IGame } from './game';
 import { LobbyMember, ILobbyMember } from './lobbyMember';
 import { ChallengeDetails, UserDetails, LobbyMemberDetails, GameDetails, ChallengeResolution } from '../common/types';
 import { ClientConnection, IClientConnection } from './socketServer';
-import { allDetails, StateUpdate, updateMap } from '../common/helpers';
 
 export interface ILobby {
   addLobbyMember: (connection: IClientConnection) => void;
@@ -38,7 +37,7 @@ export class Lobby {
       map(([id, member]) => member.details$),
       mergeAll(),
       scan((acc, details) => {
-        if (!details.leftLobby) {
+        if (details.leftLobby) {
           console.log('deleting ', details.username);
           acc.delete(details.id)
           return acc;
@@ -61,15 +60,15 @@ export class Lobby {
 
     member.details$.subscribe({
       complete: () => {
-        this.memberUpdateSubject.next();
+        this.memberUpdateSubject.next([member.id, null]);
       }
     })
 
-    this.memberUpdateSubject.next({id: member.id, value: member});
+    this.memberUpdateSubject.next([member.id, member]);
   }
 
   private createGame(members: LobbyMember[]) {
-    const game = new Game(members.map(m => m.clientConnection));
+    const game = new Game(members.map(m => m.connection));
     this.gameSubject.next(game);
   }
 }

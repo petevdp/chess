@@ -107,9 +107,9 @@ export interface MemberMessage {
 }
 
 export interface GameMessage {
-  gameUpdate: GameUpdate;
-  loadGamePartial: CompleteGameInfo | CompleteGameInfo[];
-  joinGame: CompleteGameInfo;
+  gameUpdate?: GameUpdate;
+  loadGamePartial?: CompleteGameInfo | CompleteGameInfo[];
+  joinGame?: CompleteGameInfo;
 }
 
 export interface SocketServerMessage {

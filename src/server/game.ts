@@ -5,7 +5,7 @@ import { Colour, GameDetails, GameUpdate } from '../common/types';
 import  Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
-import { ClientConnection } from './socketServer';
+import { ClientConnection, IClientConnection } from './socketServer';
 import { HasDetails$ } from '../common/helpers';
 
 export interface GameActions {
@@ -32,7 +32,7 @@ export class Game implements HasDetails$<GameDetails> {
   private chess: Chess;
 
   constructor(
-    playerConnections: ClientConnection[]
+    playerConnections: IClientConnection[]
   ) {
     this.id = uuidv4();
 

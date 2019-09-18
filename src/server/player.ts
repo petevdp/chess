@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-import { ClientConnection } from './socketServer';
+import { ClientConnection as IClientConnection } from './socketServer';
 import {
   PlayerDetails,
   ClientPlayerAction,
@@ -18,13 +18,13 @@ export class Player {
   ready: Promise<void>;
 
   constructor(
-    private connection: ClientConnection,
+    private connection: IClientConnection,
     public colour: Colour
   ) {
 
     this.playerActionObservable = connection.clientMessage$.pipe(
-      filter(msg => !!msg.game),
-      map(({game}) => ({...game, colour, playerId: this.id}))
+      filter(msg => !!msg.makeMove),
+      map(({makeMove}) => ({...makeMove, colour: this.colour}))
     );
   }
 
@@ -45,7 +45,7 @@ export class Player {
 
   updateGame(gameUpdate: GameUpdate) {
     this.connection.sendMessage({
-      game: gameUpdate,
+      game: { gameUpdate },
     });
   }
 }

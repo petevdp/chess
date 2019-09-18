@@ -10,11 +10,13 @@ interface MemberState {
 
 export interface ILobbyMember extends HasDetails$<LobbyMemberDetails> {
   userDetails: UserDetails;
-  clientConnection: IClientConnection;
-  updateGamePartial: (update: GameUpdate) => void;
-  loadGamePartials: (info: CompleteGameInfo[]) => void;
-  joinGame: (info: CompleteGameInfo) => Promise<boolean>;
-  spectateGame: (id: string) => Promise<boolean>
+  details$: Observable<LobbyMemberDetails>;
+  connection: IClientConnection;
+
+  // updateGamePartial: (update: GameUpdate) => void;
+  // loadGamePartials: (info: CompleteGameInfo[]) => void;
+  // joinGame: (info: CompleteGameInfo) => Promise<boolean>;
+  // spectateGame: (id: string) => Promise<boolean>
 }
 
 // TODO: switch from socket.io to bare ws + observables.
