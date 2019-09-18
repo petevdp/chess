@@ -8,6 +8,7 @@
   },
   "rules": {
     "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
-    "interface-name": false
+    "interface-name": false,
+    "no-default-export": false
   }
 }
