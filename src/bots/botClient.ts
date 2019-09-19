@@ -40,6 +40,6 @@ const newClient = async (username: string) => {
 }
 
 (async () => {
-  const client1 = newClient('billy').catch(err => {throw err})
+  const client1 = newClient('billy');
   const client2 = newClient('bob');
 })();
