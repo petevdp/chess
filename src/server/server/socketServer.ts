@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import ExpressSession from 'express-session';
 import express from 'express';
 import WebSocket from 'ws';
 import Http from 'http';
