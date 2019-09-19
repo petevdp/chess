@@ -17,9 +17,8 @@ export class ClientConnection implements IClientConnection {
   constructor(private ws: WebSocket, public user: UserDetails) {
     this.clientMessage$ = new Observable(subscriber => {
       ws
-        .on('message', msg => subscriber.next(msg))
-        .on('message', () => console.log('new message'))
-        .on('close', () => {
+        .on('message', msg => subscriber.next(JSON.parse(msg as string) as SocketClientMessage))
+        .on('error', () => {
           console.log('I\'m disconnecting');
           subscriber.complete()
         });
@@ -34,7 +33,7 @@ export class ClientConnection implements IClientConnection {
     if (!this.isActive) {
       return console.log('socket disconnected!');
     }
-    this.ws.send(message);
+    this.ws.send(JSON.stringify(message));
   }
   complete() {
   }

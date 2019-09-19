@@ -20,14 +20,18 @@ export const SocketServer = (
     console.log('parsing session');
 
     sessionParser(request, {}, () => {
-      const { session, sessionId } = request;
-      if (!sessionId) {
+      const { session } = request;
+      console.log('session: ', session);
+
+      if (!session.userId) {
         socket.destroy();
+        console.log('no worky worky');
+        return;
       }
       console.log('session is parsed');
 
       // emit connection event with parsed session
-      wss.handleUpgrade(_, socket, head, socket => {
+      wss.handleUpgrade(request, socket, head, socket => {
         client$.next({ session, socket });
         wss.emit('connection', socket, request);
       });

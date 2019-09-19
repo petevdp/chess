@@ -16,8 +16,8 @@ export class BotClient {
 
   constructor(private socket: WebSocket, private user: UserDetails) {
     this.serverMessage$ = new Observable(subscriber => {
-      this.socket.on('message', (msg: SocketServerMessage) => {
-        subscriber.next(msg)
+      this.socket.on('message', (msg: string) => {
+        subscriber.next(JSON.parse(msg) as SocketServerMessage)
       })
     })
 
@@ -32,7 +32,6 @@ const newClient = async (username: string) => {
     LOGIN_ROUTE, { username, userType: 'bot' }
   );
   const socket = new WebSocket(SOCKET_ROUTE, {
-    origin: 'http://localhost:3000',
     headers: {
       'cookie': res.headers['set-cookie'],
     }
@@ -41,6 +40,6 @@ const newClient = async (username: string) => {
 }
 
 (async () => {
-  const client1 = newClient('billy');
+  const client1 = newClient('billy').catch(err => {throw err})
   const client2 = newClient('bob');
 })();

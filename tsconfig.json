@@ -22,10 +22,10 @@
   },
   "include": [
     // includes everything, even files we only want to be linted
-    "src",
+    "src"
   ],
   "exclude": [
     // Now exclude what we do not want in our project
     "src/server/**/*"
-  ],
+  ]
 }

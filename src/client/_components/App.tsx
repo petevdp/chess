@@ -34,7 +34,6 @@ const useAppWideServices = () => {
     const authService = new AuthService();
     setServices({authService});
     return () => {
-      console.log('ded');
       authService.complete();
     }
   }, []);

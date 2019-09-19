@@ -10,8 +10,6 @@ export const useStatefulObservable = (
   console.log('lmao');
 
   return useObservable((input$: Observable<any>) => input$.pipe(
-    tap(v => console.log('before ', v)),
     mergeMap((input) => input ? input : empty()),
-    tap(v => console.log('after ', v))
   ), defaultVal, [observable])
 };
