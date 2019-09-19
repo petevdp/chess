@@ -26,7 +26,6 @@ export class ClientConnection implements IClientConnection {
           subscriber.complete()
         });
     })
-    this.clientMessage$.subscribe(msg => console.log('new msg'))
   }
 
   get isActive() {
@@ -35,22 +34,14 @@ export class ClientConnection implements IClientConnection {
 
   sendMessage(message: SocketServerMessage) {
     if (this.socket.disconnected) {
-      return console.log('socket disconencted!');
+      return console.log('socket disconnected!');
     }
-    console.log('sending');
-    console.log('conn: ', this.socket.connected);
     this.socket.send(message);
   }
   complete(){
   }
 }
 
-const connected = (socket: Socket) => new Promise(resolve => {
-  socket.on('connect', () => {
-    resolve();
-  })
-  socket.connected && resolve();
-})
 export class SocketServer {
   clientConnections$: Observable<ClientConnection>;
   io: IO.Server;
@@ -66,7 +57,6 @@ export class SocketServer {
     this.io.use(sharedSession)
 
     this.io.use((socket, next) => {
-      console.log('session: ', socket.handshake.session);
       next();
     });
 
@@ -74,13 +64,10 @@ export class SocketServer {
       this.io.on('connection', async (socket) => {
         const { userId } = socket.handshake.session;
         if (!userId) {
-          console.log('no userid, disconnecting!');
           return socket.disconnect();
         }
 
         const user = await queries.getUser({id: userId});
-
-        console.log('new connection: ', user);
         subscriber.next(new ClientConnection(socket, user));
       });
     });
