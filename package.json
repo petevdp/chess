@@ -70,7 +70,7 @@
   "scripts": {
     "start:app": "react-scripts start",
     "db:reset": "cd src/server/db && ts-node schema.ts",
-    "start:server": "cd src/server && ts-node-dev --respawn --transpileOnly ./server.ts && wait-on tcp:5000",
+    "start:server": "cd src/server && ts-node-dev --respawn --transpileOnly ./server && wait-on tcp:5000",
     "start": "run-p --race start:server start:app",
     "build": "react-scripts build",
     "test": "react-scripts test",
