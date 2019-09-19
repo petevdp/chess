@@ -1,14 +1,14 @@
 import { Observable } from 'rxjs';
 import { filter, map, first, take, tap } from 'rxjs/operators';
 
-import { ClientConnection as IClientConnection, ClientConnection } from './socketServer';
+import { ClientConnection as IClientConnection, ClientConnection } from '../server/socketServer';
 import {
   PlayerDetails,
   ClientPlayerAction,
   Colour,
   GameUpdate,
   CompleteGameInfo,
-} from '../common/types';
+} from '../../common/types';
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
   colour: Colour;

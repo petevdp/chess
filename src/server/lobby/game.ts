@@ -1,12 +1,12 @@
 import _ from 'lodash';
 import { Observable, merge, BehaviorSubject } from 'rxjs';
 import { filter, map, shareReplay, takeWhile, startWith, mapTo } from 'rxjs/operators';
-import { Colour, GameDetails, GameUpdate, CompleteGameInfo } from '../common/types';
+import { Colour, GameDetails, GameUpdate, CompleteGameInfo } from '../../common/types';
 import { Chess } from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
-import { ClientConnection, IClientConnection } from './socketServer';
-import { HasDetails$ } from '../common/helpers';
+import { ClientConnection, IClientConnection } from '../server/socketServer';
+import { HasDetails$ } from '../../common/helpers';
 import { LobbyMember } from './lobbyMember';
 
 export class Game implements HasDetails$<GameDetails> {

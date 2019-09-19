@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import express from 'express';
-import { DBQueries } from './db/queries';
+import { DBQueries } from '../db/queries';
 import to from 'await-to-js';
 // import  cors from 'cors';
 import uuidv4 from 'uuid/v4';
@@ -8,8 +8,8 @@ import bodyParser from 'body-parser';
 import Moment from 'moment';
 import { check, validationResult } from 'express-validator';
 
-import { JWT_SECRET_PATH } from './constants';
-import { UserLogin, UserDetails } from '../common/types';
+import { JWT_SECRET_PATH } from '../constants';
+import { UserLogin, UserDetails } from '../../common/types';
 import { DataIntegrityError } from 'slonik';
 
 

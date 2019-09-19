@@ -1,8 +1,8 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, filter, first } from 'rxjs/operators';
-import { ClientConnection, IClientConnection } from './socketServer';
-import { GameDetails, LobbyMemberDetails, ChallengeDetails, ChallengeOutcome, UserDetails, CompleteGameInfo, GameUpdate } from '../common/types';
-import { HasDetails$ } from '../common/helpers';
+import { ClientConnection, IClientConnection } from '../server/socketServer';
+import { GameDetails, LobbyMemberDetails, ChallengeDetails, ChallengeOutcome, UserDetails, CompleteGameInfo, GameUpdate } from '../../common/types';
+import { HasDetails$ } from '../../common/helpers';
 interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;

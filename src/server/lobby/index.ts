@@ -1,11 +1,10 @@
-import  io from 'socket.io';
 import { Observable, Subject } from 'rxjs';
 import { mergeAll, reduce, map, tap, shareReplay, scan, pluck, filter } from 'rxjs/operators';
 
 import { Game, GameActions, IGame } from './game';
 import { LobbyMember, ILobbyMember } from './lobbyMember';
-import { ChallengeDetails, UserDetails, LobbyMemberDetails, GameDetails, ChallengeResolution } from '../common/types';
-import { ClientConnection, IClientConnection } from './socketServer';
+import { ChallengeDetails, UserDetails, LobbyMemberDetails, GameDetails, ChallengeResolution } from '../../common/types';
+import { ClientConnection, IClientConnection } from '../server/socketServer';
 import { Arena } from './arena';
 
 export interface ILobby {

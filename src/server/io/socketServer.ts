@@ -1,12 +1,13 @@
 import IO, { Socket } from 'socket.io';
-import { SocketClientMessage, SocketServerMessage, UserDetails } from '../common/types';
-import { Observable } from 'rxjs';
+import { SocketClientMessage, SocketServerMessage, UserDetails } from '../../common/types';
+import { Observable, Subject } from 'rxjs';
 import HTTP from 'http';
 import { SocketIoSharedSessionMiddleware } from 'express-socket.io-session';
-import { DBQueries } from './db/queries';
+import { DBQueries } from '../db/queries';
 import express from 'express';
-import { Lobby } from './lobby';
+import { Lobby } from '../lobby';
 import WebSocket from 'ws';
+import Http from 'http';
 
 
 export interface IClientConnection {
@@ -46,23 +47,33 @@ export class ClientConnection implements IClientConnection {
   }
 }
 
-export const SocketRoute = (queries: DBQueries, lobby: Lobby) => {
-  const router = express.Router()
+interface RawConnection {
+  socket: WebSocket;
+  session: any;
+}
 
-  router.ws('/', (ws, req) => {
-    if (!req.sessionID) {
-      console.log('no session');
-      ws.close();
-      return;
-    }
+export const SocketServer = (httpServer: Http.Server, sessionParser: express.RequestHandler) => {
+  const wss = new WebSocket.Server({ noServer: true });
 
-    const { userId } = req.session;
-    queries.getUser({ id: userId })
-      .then(user => {
-        const connection = new ClientConnection(ws, user)
-        lobby.addLobbyMember(connection);
+  const client$ = new Subject<RawConnection>();
+  httpServer.on('upgrade', (request, socket, head) => {
+    console.log('parsing session');
+
+    sessionParser(request, {}, () => {
+      const { session, sessionId } = request;
+      if (!sessionId) {
+        socket.destroy();
+      }
+      console.log('session is parsed');
+
+      // emit connection event with parsed session
+      wss.handleUpgrade(_, socket, head, socket => {
+        client$.next({ session, socket });
+        wss.emit('connection', socket, request);
       });
-  })
 
-  return router;
+    })
+  });
+
+  return client$.asObservable();
 }

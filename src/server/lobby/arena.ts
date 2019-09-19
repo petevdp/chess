@@ -2,7 +2,7 @@ import { LobbyMember } from "./lobbyMember";
 import { Observable, BehaviorSubject, merge, Subject } from "rxjs";
 import { scan, map, mergeAll, filter } from "rxjs/operators";
 import { Game } from "./game";
-import { sleep } from "../common/helpers";
+import { sleep } from "../../common/helpers";
 
 interface UnmatchedState {
   potentialGames: Array<Promise<Game | false>>;

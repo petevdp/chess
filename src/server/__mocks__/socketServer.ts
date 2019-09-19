@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs';
 
-import { IClientConnection } from '../socketServer';
+import { IClientConnection } from '../server/socketServer';
 import { SocketClientMessage, UserDetails } from '../../common/types';
 
 // explicit mock since we don't want to have to pass in a socket.
