@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { SocketService } from '../client/_services/socket.service';
+import { sleep } from '../common/helpers';
 import IOClient from 'socket.io-client';
 import config from '../common/config';
 import { UserLogin, UserDetails, SocketServerMessage } from '../common/types';
@@ -14,7 +15,6 @@ const { API_ROUTE } = config;
 const LOGIN_ROUTE = 'http://localhost:3000/api/login';
 const SOCKET_ROUTE = 'http://localhost:3000';
 
-const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export class BotClient {
   private serverMessage$: Observable<SocketServerMessage>;

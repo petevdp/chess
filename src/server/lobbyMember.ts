@@ -42,6 +42,21 @@ export class LobbyMember implements ILobbyMember {
     })
   }
 
+  resolveMatchedOrDisconnected(){
+    return new Promise<void>(resolve => {
+      if (this.state.currentGame) {
+        return resolve();
+      }
+      this.stateSubject.subscribe({
+        next: ({currentGame, leftLobby}) => {
+          if (currentGame || leftLobby) {
+            resolve();
+          }
+        }
+      })
+    })
+  }
+
   private get state(){
     return this.stateSubject.value;
   }
