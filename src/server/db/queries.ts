@@ -20,7 +20,10 @@ export class DBQueries {
   }
 
   async getUser(detailsPartial: UserDetailsPartial) {
-    return this.pool.connect(connection => this._getUser(detailsPartial, connection));
+    return this.pool.connect(connection => this._getUser(detailsPartial, connection))
+      .catch(err => {
+        throw new errors.GetUserError(`Couldn't get user with details ${detailsPartial}`);
+      })
   }
 
   async _getUser({ username, id }: UserDetailsPartial, connection) {
@@ -67,3 +70,9 @@ export class DBQueries {
     });
   }
 }
+
+// errors
+errors.create({
+  name: 'GetUserError',
+  defaultMessage: 'failed to retrieve user',
+});
