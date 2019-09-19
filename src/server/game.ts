@@ -14,9 +14,9 @@ export class Game implements HasDetails$<GameDetails> {
   id: string;
 
   // TODO make type for gamestate
-  details$: Observable<GameDetails>;
+  gameDetails: GameDetails;
   gameUpdate$: Observable<GameUpdate>;
-  completeGameInfo$: BehaviorSubject<CompleteGameInfo>;
+  completeGameInfo$: BehaviorSubject<CompleteGameInfo | null>;
 
   requiredPlayerCount = 2;
 
@@ -34,17 +34,10 @@ export class Game implements HasDetails$<GameDetails> {
       throw new Error(`wrong number of players! should be: ${this.requiredPlayerCount}`);
     }
 
-    this.completeGameInfo$ = new BehaviorSubject();
+    this.completeGameInfo$ = new BehaviorSubject(null);
 
     this.players = _.zip(gameMembers, colours)
       .map(([member, colour]) => new Player(member.connection, colour, this.completeGameInfo$.asObservable()));
-
-    {
-      const gameDetails = {
-        playerDetails: this.players.map(({ details }) => details),
-        id: this.id,
-      } as GameDetails
-
 
     const gameUpdate$ = merge(
       ...this.players.map(p => p.playerActionObservable)
@@ -57,6 +50,11 @@ export class Game implements HasDetails$<GameDetails> {
     );
 
 
+    this.gameDetails = {
+      playerDetails: this.players.map(({ details }) => details),
+      id: this.id,
+    } as GameDetails
+
     this.gameUpdate$.subscribe(update => {
       this.players.forEach(p => p.updateGame(update));
       this.completeGameInfo$.next({
@@ -67,8 +65,14 @@ export class Game implements HasDetails$<GameDetails> {
     });
 
   }
+
   get completeGameInfo() {
-    return this.completeGameInfo$.value;
+    return this.completeGameInfo$.value
+    || {
+      ...this.gameDetails,
+      history: this.chess.history(),
+      state: this.chess.state(),
+    }
   }
 
 

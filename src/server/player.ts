@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, first } from 'rxjs/operators';
 
 import { ClientConnection as IClientConnection, ClientConnection } from './socketServer';
 import {
@@ -29,7 +29,10 @@ export class Player {
       map(({makeMove}) => ({...makeMove, colour: this.colour}))
     );
 
-    completeGameInfo$.subscribe({
+    completeGameInfo$.pipe(
+      filter(info => !!info),
+      first()
+    ).subscribe({
       next: info => {
         if (!info) {
           return;
