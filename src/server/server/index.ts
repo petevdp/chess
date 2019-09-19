@@ -13,7 +13,8 @@ import sharedSession from 'express-socket.io-session';
 
 import { api } from './api';
 import { Lobby } from '../lobby';
-import { SocketServer, ClientConnection } from './socketServer';
+import { SocketServer } from './socketServer';
+import { ClientConnection } from './clientConnection';
 
 
 import ExpressWs from 'express-ws';
@@ -45,8 +46,8 @@ app.use(session);
 
   const client$ = SocketServer(http, session);
 
-  client$.subscribe(async ({socket, request}) => {
-    const user = await queries.getUser(request.session.userId);
+  client$.subscribe(async ({socket, session}) => {
+    const user = await queries.getUser(session.userId);
     lobby.addLobbyMember(new ClientConnection(socket, user));
   })
 
