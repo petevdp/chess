@@ -6,6 +6,7 @@ import { Game, GameActions, IGame } from './game';
 import { LobbyMember, ILobbyMember } from './lobbyMember';
 import { ChallengeDetails, UserDetails, LobbyMemberDetails, GameDetails, ChallengeResolution } from '../common/types';
 import { ClientConnection, IClientConnection } from './socketServer';
+import { Arena } from './arena';
 
 export interface ILobby {
   addLobbyMember: (connection: IClientConnection) => void;
@@ -15,6 +16,7 @@ export interface ILobby {
 
 export class Lobby {
   private members$: Observable<Map<string, LobbyMember>>;
+  private arena: Arena;
   private memberDetails$: Observable<Map<string, LobbyMemberDetails>>;
   private gameDetails$: Observable<GameDetails[]>;
   private lobbyChallengeSubject: Subject<ChallengeDetails>;
@@ -27,9 +29,6 @@ export class Lobby {
   constructor() {
     this.memberUpdateSubject = new Subject();
     this.gameSubject = new Subject<Game>();
-    this.lobbyChallengeSubject = new Subject();
-
-    this.members$ = new Observable
 
 
     this.memberDetails$ = this.memberUpdateSubject.pipe(
@@ -46,8 +45,12 @@ export class Lobby {
         return acc;
       }, new Map<string, LobbyMemberDetails>()),
       shareReplay(1)
-    )
+    );
 
+    this.arena = new Arena(this.memberUpdateSubject.asObservable())
+    this.arena.games$.subscribe(game => {
+      console.log('new game: ', game.gameDetails);
+    })
   }
 
   addLobbyMember = (client: ClientConnection) => {

@@ -10,16 +10,25 @@ interface UnmatchedState {
 }
 
 export class Arena {
-  constructor(private lobbyMember$: Observable<LobbyMember>) {
-    const unmatched$ = new Subject<[string, LobbyMember]>()
+  games$: Observable<Game>;
+
+  constructor(lobbyMember$: Observable<[string, LobbyMember|null]>) {
+    const unmatched$ = new Subject<[string, LobbyMember|null]>()
+
     lobbyMember$.subscribe({
-      next: member => {
-        unmatched$.next([member.id, member])
+      next: update => {
+        console.log('member update');
+        unmatched$.next(update)
       }
     })
-    const games$ = unmatched$.pipe(
+
+    this.games$ = unmatched$.pipe(
       scan((acc, [id, member]) => {
+        console.log('member: ', member.userDetails);
+
+
         const { allUnmatched } = acc;
+
         if (!member) {
           allUnmatched.delete(id);
           return acc;
@@ -30,12 +39,13 @@ export class Arena {
         ));
 
         allUnmatched.set(id, member);
+        console.log('unmatched: ', allUnmatched);
         return acc;
       }, { potentialGames: [], allUnmatched: new Map() } as UnmatchedState),
-      map(({potentialGames}) => merge(potentialGames)),
+      map(({potentialGames}) => merge(...potentialGames)),
       mergeAll(),
       filter(game => !!game),
-    );
+    ) as Observable<Game>;
   }
 
   private async resolvePotentialGame(members: LobbyMember[]) {
@@ -43,9 +53,11 @@ export class Arena {
       sleep(100),
       ...members.map(async (m) => {
         await m.resolveMatchedOrDisconnected();
+        console.log('already in game!');
         return false;
       })
     ])
-    return successfulResolution  && new Game(members);
+    console.log('succ: ', successfulResolution);
+    return !successfulResolution  && new Game(members);
   }
 }
