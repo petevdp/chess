@@ -1,6 +1,6 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, filter, first } from 'rxjs/operators';
-import { ClientConnection, IClientConnection } from '../server/socketServer';
+import { ClientConnection, IClientConnection } from '../server/clientConnection';
 import { GameDetails, LobbyMemberDetails, ChallengeDetails, ChallengeOutcome, UserDetails, CompleteGameInfo, GameUpdate } from '../../common/types';
 import { HasDetails$ } from '../../common/helpers';
 interface MemberState {
@@ -28,7 +28,7 @@ export class LobbyMember implements ILobbyMember {
   constructor(public connection: ClientConnection) {
     const { clientMessage$ } = connection;
 
-    this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false });
+    this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false } as MemberState);
 
     this.details$ = this.stateSubject.pipe(map((memberState: MemberState) => ({
       ...memberState,
@@ -57,9 +57,9 @@ export class LobbyMember implements ILobbyMember {
     })
   }
 
-  joinGame(gameId: string, gameState$) {
+  // joinGame(gameId: string, gameState$: ) {
 
-  }
+  // }
 
   private get state(){
     return this.stateSubject.value;
