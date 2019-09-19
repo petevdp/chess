@@ -34,7 +34,7 @@ export class Arena {
       }, { potentialGames: [], allUnmatched: new Map() } as UnmatchedState),
       map(({potentialGames}) => merge(potentialGames)),
       mergeAll(),
-      filter(pot => !!pot),
+      filter(game => !!game),
     );
   }
 
@@ -48,18 +48,4 @@ export class Arena {
     ])
     return successfulResolution  && new Game(members.map(m => m.connection));
   }
-}
-
-export class UnmatchedPlayer {
-  constructor(
-    private lobbyMember: LobbyMember,
-    unmatched$: Observable<Map<string, UnmatchedPlayer>>
-  ) {
-    unmatched$.pipe(
-      scan((, ))
-
-      // out
-    )
-  }
-
 }
