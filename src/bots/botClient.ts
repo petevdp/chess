@@ -1,12 +1,7 @@
 import axios from 'axios';
-import { SocketService } from '../client/_services/socket.service';
-import { sleep } from '../common/helpers';
 import config from '../common/config';
-import { UserLogin, UserDetails, SocketServerMessage } from '../common/types';
-import { isInterfaceDeclaration } from '@babel/types';
+import { UserDetails, SocketServerMessage } from '../common/types';
 import { Observable } from 'rxjs';
-import { Http2SecureServer } from 'http2';
-import { SSL_OP_EPHEMERAL_RSA } from 'constants';
 import WebSocket from 'ws';
 
 
