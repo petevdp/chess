@@ -13,8 +13,10 @@ import sharedSession from 'express-socket.io-session';
 
 import { api } from './api';
 import { Lobby } from './lobby';
-import { SocketServer } from './socketServer';
+import { SocketRoute } from './socketServer';
 
+
+import ExpressWs from 'express-ws';
 
 // loads .env file into process.env
 dotenv.config({path: path.resolve('../.env')});
@@ -29,21 +31,17 @@ const session = ExpressSessionFactory({
 const app = express();
 const http = HttpServer.createServer(app);
 
-
+const expressWs = ExpressWs(app);
 app.use(session);
 
 (async () => {
   const queries = new DBQueries();
 
   const lobby = new Lobby();
-  const socketServer = new SocketServer(http, sharedSession(session), queries);
-
-  socketServer.clientConnections$.subscribe({
-    next: lobby.addLobbyMember
-  });
 
 
   app.use('/api', api(queries));
+  app.use('/socket', SocketRoute(queries, lobby));
 
   http.listen(config.PORT, () => {
     console.log(`Listening on ${config.PORT}`);
