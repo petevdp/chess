@@ -67,7 +67,6 @@ export class Game implements HasDetails$<GameDetails> {
 
     this.gameUpdate$.subscribe(update => {
       this.players.forEach(p => p.updateGame(update));
-      console.log('complete: ', this.completeGameInfo);
       this.completeGameInfo$.next({
         ...this.completeGameInfo,
         history: this.chess.history(),

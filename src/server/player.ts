@@ -38,8 +38,6 @@ export class Player {
       filter(info => !!info),
     ).subscribe({
       next: info => {
-        console.log('weird');
-
         if (!info) {
           return;
         }
