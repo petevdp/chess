@@ -6,6 +6,6 @@
     "moduleResolution": "node",
     "noUnusedLocals": false
   },
-  "include": ["./"],
+  "include": ["./*"],
   "exclude": ["./*/**/__tests__/**/*"]
 }
