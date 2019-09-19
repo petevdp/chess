@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { Observable, merge, BehaviorSubject } from 'rxjs';
 import { filter, map, shareReplay, takeWhile, startWith, mapTo } from 'rxjs/operators';
 import { Colour, GameDetails, GameUpdate, CompleteGameInfo } from '../common/types';
-import Chess from 'chess.js';
+import { Chess } from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
 import { ClientConnection, IClientConnection } from './socketServer';
@@ -26,7 +26,7 @@ export class Game implements HasDetails$<GameDetails> {
     gameMembers: LobbyMember[],
   ) {
     this.id = uuidv4();
-    this.chess = Chess();
+    this.chess = new Chess();
 
     const colours = _.shuffle(['b', 'w']) as Colour[];
 
@@ -37,15 +37,19 @@ export class Game implements HasDetails$<GameDetails> {
     this.completeGameInfo$ = new BehaviorSubject(null);
 
     this.players = _.zip(gameMembers, colours)
-      .map(([member, colour]) => new Player(member.connection, colour, this.completeGameInfo$.asObservable()));
+      .map(([member, colour]) => new Player(
+        member.connection,
+        colour,
+        this.completeGameInfo$.asObservable()
+      ));
 
-    const gameUpdate$ = merge(
+    this.gameUpdate$ = merge(
       ...this.players.map(p => p.playerActionObservable)
     ).pipe(
       filter(this.isValidPlayerAction),
       map(this.getGameUpdateFromAction),
       // take until and including an update ending the game.
-      takeWhile(({ end }) => !end, true),
+      // takeWhile(({ end }) => !end, true),
       shareReplay(1)
     );
 
@@ -55,23 +59,29 @@ export class Game implements HasDetails$<GameDetails> {
       id: this.id,
     } as GameDetails
 
+    this.completeGameInfo$.next({
+      ...this.completeGameInfo,
+      history: this.chess.history(),
+      state: this.chess.fen(),
+    });
+
     this.gameUpdate$.subscribe(update => {
       this.players.forEach(p => p.updateGame(update));
       this.completeGameInfo$.next({
         ...this.completeGameInfo,
         history: this.chess.history(),
-        state: this.chess.state(),
+        state: this.chess.fen(),
       })
     });
 
   }
 
   get completeGameInfo() {
-    return this.completeGameInfo$.value
+    return this.completeGameInfo$.getValue()
     || {
       ...this.gameDetails,
       history: this.chess.history(),
-      state: this.chess.state(),
+      state: this.chess.fen(),
     }
   }
 

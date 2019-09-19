@@ -74,7 +74,6 @@ export class LobbyMember implements ILobbyMember {
   }
 
   updateLobbyMemberDetails = (update: Map<string, LobbyMemberDetails>) => {
-    console.log('update details ', update);
     this.connection.sendMessage({
       member: {
         memberUpdate: [...update],

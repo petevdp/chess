@@ -25,4 +25,5 @@ export function allDetails<D extends Details>(obj$: Observable<HasDetails$<D>>) 
   )
 }
 
-export const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+export const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
+

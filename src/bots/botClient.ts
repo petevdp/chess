@@ -71,6 +71,6 @@ const newClient = async (username: string) => {
 }
 
 (async () => {
-  const client = await newClient('billy');
-  console.log('here\'s billy');
+  const client1 = newClient('billy');
+  const client2 = newClient('bob');
 })();
