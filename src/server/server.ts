@@ -10,12 +10,6 @@ import { DBQueries } from './db/queries';
 // middleware
 import ExpressSessionFactory from 'express-session';
 import sharedSession from 'express-socket.io-session';
-const session = ExpressSessionFactory({
-  secret: 'my-secret',
-  resave: true,
-  saveUninitialized: true,
-  genid: uuidv4,
-});
 
 import { api } from './api';
 import { Lobby } from './lobby';
@@ -24,6 +18,13 @@ import { SocketServer } from './socketServer';
 
 // loads .env file into process.env
 dotenv.config({path: path.resolve('../.env')});
+
+const session = ExpressSessionFactory({
+  secret: 'my-secret',
+  resave: true,
+  saveUninitialized: true,
+  genid: uuidv4,
+});
 
 const app = express();
 const http = HttpServer.createServer(app);
