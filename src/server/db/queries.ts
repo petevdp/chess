@@ -1,4 +1,4 @@
-import uuidv4 from '../server/node_modules/uuid/v4';
+import uuidv4 from 'uuid/v4';
 import errors from 'errors';
 import { createPool, sql, DatabasePoolConnectionType, QueryResultType, QueryResultRowType, QueryMaybeOneFunctionType, DatabasePoolType, CommonQueryMethodsType } from 'slonik';
 import { UserDetails, UserDetailsPartial, UserType } from '../../common/types';
