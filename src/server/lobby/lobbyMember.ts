@@ -61,7 +61,7 @@ export class LobbyMember implements ILobbyMember {
 
   // }
 
-  private get state(){
+  get state(){
     return this.stateSubject.value;
   }
 

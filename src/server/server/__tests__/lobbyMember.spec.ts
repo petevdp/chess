@@ -1,8 +1,8 @@
 import { MockClientConnection }  from '../__mocks__/clientConnection';
 import { ClientConnection } from '../clientConnection';
-import { UserDetails, LobbyMemberDetails, SocketServerMessage } from '../../../common/types';
+import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage } from '../../../common/types';
 import { LobbyMember } from '../../lobby/lobbyMember';
-import { empty, EMPTY } from 'rxjs';
+import { empty, EMPTY, of, NEVER, Observable } from 'rxjs';
 
 
 const user1 = {
@@ -23,11 +23,20 @@ beforeEach(() => {
 afterEach(() => {
 })
 
-it('can update member details', () => {
-  const clientConnection = new MockClientConnection(EMPTY);
+function getLobbyConnectionPair(
+  clientMessage$: Observable<SocketClientMessage>
+): [MockClientConnection, LobbyMember] {
+  const clientConnection = new MockClientConnection(clientMessage$);
 
-  // need to coerce mock into type to change connection constructor signature
+  // need to coerce mock into correct type to change connection constructor signature
   const member = new LobbyMember(clientConnection as unknown as ClientConnection)
+  return [clientConnection, member];
+}
+
+it('can update member details', () => {
+  const [clientConnection, member] = getLobbyConnectionPair(EMPTY);
+
+
   const update = new Map<string, LobbyMemberDetails>([
     [lobbyMember1.id, lobbyMember1],
   ])
@@ -40,6 +49,19 @@ it('can update member details', () => {
   } as SocketServerMessage;
 
   expect(clientConnection.sendMessage.mock.calls[0][0]).toEqual(message)
-
   clientConnection.clean();
 });
+
+describe('state', () => {
+  it('set leftLobby to true when clientMessage$ completes', () => {
+  const [clientConnection, member] = getLobbyConnectionPair(EMPTY);
+    expect(member.state.leftLobby).toBeTruthy();
+    clientConnection.clean();
+  })
+
+  test('leftLobby is true when client observable still open', () => {
+  const [clientConnection, member] = getLobbyConnectionPair(NEVER);
+    expect(member.state.leftLobby).toBeFalsy();
+    clientConnection.clean();
+  });
+})
