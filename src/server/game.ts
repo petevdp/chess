@@ -1,22 +1,13 @@
-import  _ from 'lodash';
-import { Observable, merge } from 'rxjs';
-import { filter, map, shareReplay, takeWhile, startWith } from 'rxjs/operators';
-import { Colour, GameDetails, GameUpdate } from '../common/types';
-import  Chess from 'chess.js';
+import _ from 'lodash';
+import { Observable, merge, BehaviorSubject } from 'rxjs';
+import { filter, map, shareReplay, takeWhile, startWith, mapTo } from 'rxjs/operators';
+import { Colour, GameDetails, GameUpdate, CompleteGameInfo } from '../common/types';
+import Chess from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
 import { ClientConnection, IClientConnection } from './socketServer';
 import { HasDetails$ } from '../common/helpers';
-
-export interface GameActions {
-  temp: () => void;
-}
-
-export interface IGame extends HasDetails$<GameDetails> {
-  gameUpdate$: Observable<GameUpdate>;
-  history: unknown;
-  startingPosition: unknown;
-}
+import { LobbyMember } from './lobbyMember';
 
 export class Game implements HasDetails$<GameDetails> {
   private players: Player[];
@@ -24,59 +15,60 @@ export class Game implements HasDetails$<GameDetails> {
 
   // TODO make type for gamestate
   details$: Observable<GameDetails>;
-  actions = { temp: () => { } } as GameActions;
-  gameUpdateObservable: Observable<GameUpdate>;
+  gameUpdate$: Observable<GameUpdate>;
+  completeGameInfo$: BehaviorSubject<CompleteGameInfo>;
 
   requiredPlayerCount = 2;
 
   private chess: Chess;
 
   constructor(
-    playerConnections: IClientConnection[]
+    gameMembers: LobbyMember[],
   ) {
     this.id = uuidv4();
+    this.chess = Chess();
 
     const colours = _.shuffle(['b', 'w']) as Colour[];
 
-    this.chess =  Chess();
-
-    if (playerConnections.length !== 2) {
+    if (gameMembers.length !== 2) {
       throw new Error(`wrong number of players! should be: ${this.requiredPlayerCount}`);
     }
 
-    this.players = _.zip(playerConnections, colours)
-      .map(([connection, colour]) => new Player(connection, colour));
+    this.completeGameInfo$ = new BehaviorSubject();
 
-    const playerDetails = this.players.map(({details}) => details);
-    const gameDetails = {
-      id: this.id,
-      playerDetails,
-      state: this.chess.fen(),
-    } as GameDetails;
+    this.players = _.zip(gameMembers, colours)
+      .map(([member, colour]) => new Player(member.connection, colour, this.completeGameInfo$.asObservable()));
+
+    {
+      const gameDetails = {
+        playerDetails: this.players.map(({ details }) => details),
+        id: this.id,
+      } as GameDetails
 
 
-    this.gameUpdateObservable = merge(
+    const gameUpdate$ = merge(
       ...this.players.map(p => p.playerActionObservable)
     ).pipe(
-        filter(this.isValidPlayerAction),
-        map(this.getGameUpdateFromAction),
-        startWith({ start: gameDetails } as GameUpdate),
-
-        // take until and including an update ending the game is issued
-        takeWhile(({end}) => !end, true),
-        shareReplay(1)
-      );
-
-
-    this.players.forEach(player => {
-      this.gameUpdateObservable.subscribe(player.updateGame);
-    });
-
-
-    this.details$ = this.gameUpdateObservable.pipe(
-      map(({state}) => ({ ...gameDetails, state })),
+      filter(this.isValidPlayerAction),
+      map(this.getGameUpdateFromAction),
+      // take until and including an update ending the game.
+      takeWhile(({ end }) => !end, true),
       shareReplay(1)
     );
+
+
+    this.gameUpdate$.subscribe(update => {
+      this.players.forEach(p => p.updateGame(update));
+      this.completeGameInfo$.next({
+        ...this.completeGameInfo,
+        history: this.chess.history(),
+        state: this.chess.state(),
+      })
+    });
+
+  }
+  get completeGameInfo() {
+    return this.completeGameInfo$.value;
   }
 
 
@@ -86,8 +78,8 @@ export class Game implements HasDetails$<GameDetails> {
 
   private isInvalidMove(move, colour) {
     return this.chess.turn() !== colour
-    || !move
-    || this.chess.moves({ square: move.from }).includes(move.to);
+      || !move
+      || this.chess.moves({ square: move.from }).includes(move.to);
   }
 
   private isValidPlayerAction = ({ move, colour }: PlayerAction) => {
@@ -179,6 +171,6 @@ export class Game implements HasDetails$<GameDetails> {
       }
     };
 
-    return  actions[playerAction.type]();
+    return actions[playerAction.type]();
   }
 }

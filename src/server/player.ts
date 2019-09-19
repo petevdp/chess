@@ -1,12 +1,13 @@
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-import { ClientConnection as IClientConnection } from './socketServer';
+import { ClientConnection as IClientConnection, ClientConnection } from './socketServer';
 import {
   PlayerDetails,
   ClientPlayerAction,
   Colour,
   GameUpdate,
+  CompleteGameInfo,
 } from '../common/types';
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
@@ -18,14 +19,28 @@ export class Player {
   ready: Promise<void>;
 
   constructor(
-    private connection: IClientConnection,
-    public colour: Colour
+    private connection: ClientConnection,
+    public colour: Colour,
+    completeGameInfo$: Observable<CompleteGameInfo>
   ) {
 
     this.playerActionObservable = connection.clientMessage$.pipe(
       filter(msg => !!msg.makeMove),
       map(({makeMove}) => ({...makeMove, colour: this.colour}))
     );
+
+    completeGameInfo$.subscribe({
+      next: info => {
+        if (!info) {
+          return;
+        }
+        this.connection.sendMessage({
+          game: {
+            loadGame: info,
+          }
+        })
+      }
+    })
   }
 
   get user() {

@@ -25,7 +25,7 @@ export class LobbyMember implements ILobbyMember {
 
   private stateSubject: BehaviorSubject<MemberState>;
 
-  constructor(public connection: IClientConnection) {
+  constructor(public connection: ClientConnection) {
     const { clientMessage$ } = connection;
 
     this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false });
@@ -55,6 +55,10 @@ export class LobbyMember implements ILobbyMember {
         }
       })
     })
+  }
+
+  joinGame(gameId: string, gameState$) {
+
   }
 
   private get state(){

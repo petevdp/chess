@@ -46,6 +46,6 @@ export class Arena {
         return false;
       })
     ])
-    return successfulResolution  && new Game(members.map(m => m.connection));
+    return successfulResolution  && new Game(members);
   }
 }

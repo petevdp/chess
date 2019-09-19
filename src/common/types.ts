@@ -73,7 +73,7 @@ export interface GameDetails {
 
 export interface CompleteGameInfo extends GameDetails {
   history: unknown;
-  startingPosition: unknown;
+  state: unknown;
 }
 export interface UserLogin {
   username: string;
@@ -112,7 +112,7 @@ export interface MemberMessage {
 export interface GameMessage {
   gameUpdate?: GameUpdate;
   loadGamePartial?: CompleteGameInfo | CompleteGameInfo[];
-  joinGame?: CompleteGameInfo;
+  loadGame?: CompleteGameInfo;
 }
 
 export interface SocketServerMessage {
