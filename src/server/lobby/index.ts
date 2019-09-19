@@ -1,38 +1,24 @@
 import { Observable, Subject } from 'rxjs';
-import { mergeAll, reduce, map, tap, shareReplay, scan, pluck, filter } from 'rxjs/operators';
+import { mergeAll, map, shareReplay, scan, filter } from 'rxjs/operators';
 
-import { Game, GameActions, IGame } from './game';
-import { LobbyMember, ILobbyMember } from './lobbyMember';
-import { ChallengeDetails, UserDetails, LobbyMemberDetails, GameDetails, ChallengeResolution } from '../../common/types';
-import { ClientConnection, IClientConnection } from '../server/socketServer';
+import { LobbyMember } from './lobbyMember';
+import { ChallengeDetails, LobbyMemberDetails, GameDetails } from '../../common/types';
+import { ClientConnection } from '../server/clientConnection';
 import { Arena } from './arena';
 
-export interface ILobby {
-  addLobbyMember: (connection: IClientConnection) => void;
-  game$: Observable<IGame>;
-  member$: Observable<ILobbyMember>;
-}
-
 export class Lobby {
-  private members$: Observable<Map<string, LobbyMember>>;
   private arena: Arena;
   private memberDetails$: Observable<Map<string, LobbyMemberDetails>>;
-  private gameDetails$: Observable<GameDetails[]>;
-  private lobbyChallengeSubject: Subject<ChallengeDetails>;
 
-  private members = {} as Map<string, LobbyMember>;
   private memberUpdateSubject: Subject<[string, LobbyMember|null]>;
-
-  private gameSubject: Subject<Game>;
 
   constructor() {
     this.memberUpdateSubject = new Subject();
-    this.gameSubject = new Subject<Game>();
 
 
     this.memberDetails$ = this.memberUpdateSubject.pipe(
-      filter(([id, member]) => !!member),
-      map(([id, member]) => member.details$),
+      filter(([, member]) => !!member),
+      map(([, member]) => member.details$),
       mergeAll(),
       scan((acc, details) => {
         if (details.leftLobby) {
@@ -47,6 +33,7 @@ export class Lobby {
     );
 
     this.arena = new Arena(this.memberUpdateSubject.asObservable())
+
     this.arena.games$.subscribe(game => {
       console.log('new game: ', game.gameDetails);
     })
@@ -67,10 +54,5 @@ export class Lobby {
     })
 
     this.memberUpdateSubject.next([member.id, member]);
-  }
-
-  private createGame(members: LobbyMember[]) {
-    const game = new Game(members.map(m => m.connection));
-    this.gameSubject.next(game);
   }
 }
