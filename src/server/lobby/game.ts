@@ -1,11 +1,12 @@
 import _ from 'lodash';
-import { Observable, merge, BehaviorSubject } from 'rxjs';
-import { filter, map, shareReplay, takeWhile, startWith, mapTo } from 'rxjs/operators';
-import { Colour, GameDetails, GameUpdate, CompleteGameInfo } from '../../common/types';
-import { Chess } from 'chess.js';
+import errors from 'errors';
+import { Observable, merge, BehaviorSubject, of } from 'rxjs';
+import { filter, shareReplay, concatMap } from 'rxjs/operators';
+import { Colour, GameDetails, GameUpdate, CompleteGameInfo, DRAW_REASONS, ShortMove } from '../../common/types';
+import { Chess, ChessInstance } from 'chess.js';
 import uuidv4 from 'uuid/v4';
 import { Player, PlayerAction } from './player';
-import { ClientConnection, IClientConnection } from '../server/socketServer';
+import { ClientConnection, IClientConnection } from '../server/clientConnection';
 import { HasDetails$ } from '../../common/helpers';
 import { LobbyMember } from './lobbyMember';
 
@@ -20,7 +21,7 @@ export class Game implements HasDetails$<GameDetails> {
 
   requiredPlayerCount = 2;
 
-  private chess: Chess;
+  private chess: ChessInstance;
 
   constructor(
     gameMembers: LobbyMember[],
@@ -46,8 +47,11 @@ export class Game implements HasDetails$<GameDetails> {
     this.gameUpdate$ = merge(
       ...this.players.map(p => p.playerActionObservable)
     ).pipe(
-      filter(this.isValidPlayerAction),
-      map(this.getGameUpdateFromAction),
+      filter(this.validatePlayerAction),
+      concatMap((action) => {
+        const updates = this.getGameUpdatesFromPlayerAction(action);
+        return of(...updates);
+      }),
       // take until and including an update ending the game.
       // takeWhile(({ end }) => !end, true),
       shareReplay(1)
@@ -78,11 +82,11 @@ export class Game implements HasDetails$<GameDetails> {
 
   get completeGameInfo() {
     return this.completeGameInfo$.getValue()
-    || {
-      ...this.gameDetails,
-      history: this.chess.history(),
-      state: this.chess.fen(),
-    }
+      || {
+        ...this.gameDetails,
+        history: this.chess.history(),
+        state: this.chess.fen(),
+      }
   }
 
 
@@ -90,101 +94,92 @@ export class Game implements HasDetails$<GameDetails> {
     return this.players.find(p => p.id !== playerId);
   }
 
-  private isInvalidMove(move, colour) {
+  private validateMove(move: ShortMove, colour: Colour) {
     return this.chess.turn() !== colour
-      || !move
-      || this.chess.moves({ square: move.from }).includes(move.to);
+      && this.chess.moves({ square: move.from }).includes(move.to);
   }
 
-  private isValidPlayerAction = ({ move, colour }: PlayerAction) => {
-    return !(move && this.isInvalidMove(move, colour));
+  private validatePlayerAction = ({ move, colour }: PlayerAction) => {
+    // TODO add more sophisticated validation for other player actions
+    return !move || !this.validateMove(move, colour);
   }
 
-  private getGameUpdateFromAction(playerAction: PlayerAction): GameUpdate {
-    const { move, playerId } = playerAction;
-    const actions = {
-      move: () => {
-        this.chess.move(playerAction.move);
-        const state = this.chess.fen() as string;
-        if (this.chess.in_checkmate()) {
-          return {
-            end: {
-              winnerId: this.findOpponent(playerId).id,
-              reason: 'checkmate',
-            },
-            move,
-            state,
-          } as GameUpdate;
+  /**
+   * Input must be validated by validatePlayerAction first.
+   *
+   * Output is an array because we want to seperate game
+   * endstates and the moves that ended them.
+   */
+  private getGameUpdatesFromPlayerAction(playerAction: PlayerAction): GameUpdate[] {
+    const { type, playerId } = playerAction
+    const updates = [] as GameUpdate[];
+    const getOpponentId = () => this.findOpponent(playerId).id;
+
+    if (type === 'offerDraw') {
+      updates.push({ type });
+      return updates;
+    }
+
+    if (type === 'resign') {
+      updates.push({
+        type: 'end',
+        end: {
+          winnerId: getOpponentId(),
+          reason: 'resign'
         }
+      });
+      return updates;
+    }
 
-        if (this.chess.in_stalemate()) {
-          return {
-            end: {
-              winnerId: null,
-              reason: 'stalemate',
-            },
-            move,
-            state,
-          } as GameUpdate;
+    if (type === 'disconnect') {
+      updates.push({
+        type: 'end',
+        end: {
+          winnerId: getOpponentId(),
+          reason: 'disconnect'
         }
+      })
+      return updates;
+    }
 
-        if (this.chess.in_threefold_repitiion()) {
-          return {
-            end: {
-              winnerId: null,
-              reason: 'threefold repitition',
-            },
-            move,
-            state,
-          } as GameUpdate;
-        }
+    // type === move
+    const { move } = playerAction;
+    this.chess.move(move);
 
-        if (this.chess.in_draw()) {
-          return {
-            end: {
-              winnerId: null,
-              reason: 'draw',
-            },
-            move,
-            state,
-          } as GameUpdate;
-        }
+    updates.push({ type: 'move', move, });
 
-        return {
-          type: 'ongoing',
-          move,
-          state,
-        } as GameUpdate;
-      },
+    if (!this.chess.game_over()) {
+      return updates;
+    }
+    const endUpdate = {
+      type: 'end',
+    } as GameUpdate;
 
-      resign: () => {
-        return {
-          end: {
-            winnerId: this.findOpponent(playerId).id,
-            reason: 'resigned',
-          },
-          state: this.chess.fen() as string,
-        } as GameUpdate;
-      },
-
-      disconnect: () => {
-        return {
-          end: {
-            winnerId: this.findOpponent(playerId).id,
-            reason: 'disconnected',
-          },
-          state: this.chess.fen() as string,
-        } as GameUpdate;
-      },
-
-      offerDraw: () => {
-        return {
-          message: 'offer draw',
-          state: this.chess.fen() as string,
-        } as GameUpdate;
+    if (this.chess.in_checkmate()) {
+      endUpdate.end = {
+        winnerId: playerId,
+        reason: 'checkmate',
       }
+      return [endUpdate];
+    }
+    // TODO add flagging and alternative rulesets
+
+    const determineDrawType = () => {
+      for (const reason in DRAW_REASONS) {
+        if (this.chess[reason]()) {
+          return reason;
+        }
+      }
+      throw new Error('no draw reason');
+    }
+
+    // must be draw
+    endUpdate.end = {
+      winnerId: null,
+      reason: determineDrawType(),
     };
 
-    return actions[playerAction.type]();
+    updates.push(endUpdate);
+    return updates;
   }
 }

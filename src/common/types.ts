@@ -26,13 +26,31 @@ export interface SessionDetails extends UserDetails {
 
 export type Colour = 'b' | 'w';
 
-export type GameEndReason =
+export type drawReason =
+  'in_stalemate'
+  | 'in_threefold_repitition'
+  | 'insufficient_material';
+
+export const DRAW_REASONS: drawReason[] = [
+  'in_stalemate',
+  'in_threefold_repitition',
+  'insufficient_material'
+]
+
+export type endReason =
   'checkmate'
   | 'stalemate'
-  | 'draw'
-  | 'resigned'
-  | 'disconnected'
-  | 'threefold repitition';
+  | 'resign'
+  | 'disconnect'
+  | drawReason;
+
+
+export const END_REASONS: endReason[] = [
+  ...DRAW_REASONS,
+  'checkmate',
+  'resign',
+  'disconnect',
+];
 
 
 export interface EndState {
@@ -44,15 +62,18 @@ export interface LobbyMemberDetails extends UserDetails {
   currentGame: string | null;
   leftLobby: boolean;
 }
+
+type ActionType = 'move' | 'resign' | 'disconnect' | 'offerDraw';
+
 export interface GameUpdate {
+  type: 'move' | 'end' | 'offerDraw';
   move?: ShortMove;
   end?: EndState;
-  message?: string;
 }
 
 export interface ClientPlayerAction {
+  type: ActionType;
   move?: ShortMove;
-  type: 'move' | 'resign' | 'disconnect' | 'offerDraw';
   playerId: string;
 }
 
@@ -110,9 +131,9 @@ export interface MemberMessage {
 }
 
 export interface GameMessage {
-  gameUpdate?: GameUpdate;
+  update?: GameUpdate;
   loadGamePartial?: CompleteGameInfo | CompleteGameInfo[];
-  loadGame?: CompleteGameInfo;
+  joinGame?: CompleteGameInfo;
 }
 
 export interface SocketServerMessage {
