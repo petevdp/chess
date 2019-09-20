@@ -1216,6 +1216,11 @@
     "@types/connect" "*"
     "@types/node" "*"
 
+"@types/chess.js@^0.10.0":
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/@types/chess.js/-/chess.js-0.10.0.tgz#8272fe9d117b11db38c21e65ec394df74a786c57"
+  integrity sha512-esXTIYEeSa4HSt5ZCvkN4toKuZL53zyIBh1gcSTzvKpmQ7XM0H7Mf8lo858IJM8lBoHZsAa57yxwY78FS/2s3A==
+
 "@types/connect@*":
   version "3.4.32"
   resolved "https://registry.yarnpkg.com/@types/connect/-/connect-3.4.32.tgz#aa0e9616b9435ccad02bc52b5b454ffc2c70ba28"
