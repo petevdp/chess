@@ -1,31 +1,18 @@
 import axios from 'axios';
+import { Chess, ChessInstance } from 'chess.js';
 import config from '../common/config';
-import { UserDetails, SocketServerMessage } from '../common/types';
-import { Observable } from 'rxjs';
+import { UserDetails, SocketServerMessage, GameUpdate, CompleteGameInfo, GameMessage, EndReason, ClientPlayerAction } from '../common/types';
+import { Observable, Subject } from 'rxjs';
 import WebSocket from 'ws';
+import { filter, map, scan, groupBy, take, mergeMap, pluck, takeUntil, tap } from 'rxjs/operators';
+import { ChessEngine, randomMoveChoice } from './engines';
+import { routeBy } from '../common/helpers';
 
 
 const { API_ROUTE } = config;
 
 const LOGIN_ROUTE = 'http://localhost:3000/api/login';
 const SOCKET_ROUTE = 'http://localhost:3000';
-
-
-export class BotClient {
-  private serverMessage$: Observable<SocketServerMessage>;
-
-  constructor(private socket: WebSocket, private user: UserDetails) {
-    this.serverMessage$ = new Observable(subscriber => {
-      this.socket.on('message', (msg: string) => {
-        subscriber.next(JSON.parse(msg) as SocketServerMessage)
-      })
-    })
-
-    this.serverMessage$.subscribe(msg => {
-      console.log('msg: ', msg);
-    });
-  }
-}
 
 const newClient = async (username: string) => {
   const res = await axios.put(
@@ -36,7 +23,7 @@ const newClient = async (username: string) => {
       'cookie': res.headers['set-cookie'],
     }
   });
-  return new BotClient(socket, res.data as UserDetails)
+  return new GameClient(socket, res.data as UserDetails, new ChessEngine(randomMoveChoice))
 }
 
 (async () => {

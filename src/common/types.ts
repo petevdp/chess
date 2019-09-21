@@ -1,12 +1,8 @@
 import { Square } from './board';
+import { ShortMove } from 'chess.js';
 
 export interface Details {
   id: string;
-}
-export interface ShortMove {
-  from: Square;
-  to: Square;
-  playerId: string;
 }
 
 export type UserType = 'bot' | 'human';
@@ -37,7 +33,7 @@ export const DRAW_REASONS: drawReason[] = [
   'insufficient_material'
 ]
 
-export type endReason =
+export type EndReason =
   'checkmate'
   | 'stalemate'
   | 'resign'
@@ -45,7 +41,7 @@ export type endReason =
   | drawReason;
 
 
-export const END_REASONS: endReason[] = [
+export const END_REASONS: EndReason[] = [
   ...DRAW_REASONS,
   'checkmate',
   'resign',
@@ -55,8 +51,10 @@ export const END_REASONS: endReason[] = [
 
 export interface EndState {
   winnerId: string | null;
-  reason: GameEndReason;
+  reason: EndReason;
 }
+
+export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 export interface LobbyMemberDetails extends UserDetails {
   currentGame: string | null;
@@ -93,8 +91,7 @@ export interface GameDetails {
 }
 
 export interface CompleteGameInfo extends GameDetails {
-  history: unknown;
-  state: unknown;
+  history: string[];
 }
 export interface UserLogin {
   username: string;
@@ -131,8 +128,9 @@ export interface MemberMessage {
 }
 
 export interface GameMessage {
+  type: 'update' | 'join';
   update?: GameUpdate;
-  loadGamePartial?: CompleteGameInfo | CompleteGameInfo[];
+  // loadGamePartial?: CompleteGameInfo | CompleteGameInfo[];
   joinGame?: CompleteGameInfo;
 }
 
