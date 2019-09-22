@@ -1,16 +1,13 @@
 {
   "cSpell.enabled": false,
   "eslint.enable": true,
-  "eslint.validate": [
+  "editor.formatOnSave": false,
+  "eslint.autoFixOnSave": true,
+  "eslint.alwaysShowStatus": true,
+  "eslint.validate":  [
     "javascript",
     "javascriptreact",
-    "typescript",
-    "typescriptreact"
+    {"language":  "typescript",  "autoFix":  true  },
+    {"language":  "typescriptreact",  "autoFix":  true  }
   ],
-  "editor.formatOnSave": true,
-  "[typescript]": {
-    "editor.formatOnSave": false
-  },
-  "eslint.autoFixOnSave": true,
-  "eslint.alwaysShowStatus": true
 }

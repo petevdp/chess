@@ -1,10 +1,8 @@
-import { GameUpdate, START_FEN } from '../types'
+import { GameUpdate } from '../types'
 import { GameStream, GameClient } from '../gameProviders'
-import { of, Subscription, from, empty, EMPTY } from 'rxjs'
-import { doesNotReject } from 'assert'
+import { of, from, EMPTY } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { skip } from 'rxjs/operators'
-import { Move, ChessInstance } from 'chess.js'
 
 const moveUpdates: GameUpdate[] = [
   {
@@ -117,6 +115,18 @@ describe('GameClient', () => {
           done()
         }
       })
+    })
+
+    it('resolves endPromise with EndState when supplied', async (done) => {
+      const client = new GameClient(
+        of(resignUpdate),
+        'w',
+        () => { throw new Error('makeMove shouldn\'t be called') }
+      )
+
+      const endState = await client.endPromise
+      expect(endState).toEqual(resignUpdate.end)
+      done()
     })
   })
 })

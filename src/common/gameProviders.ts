@@ -1,25 +1,25 @@
-import { Observable, Subject } from 'rxjs'
-import { ChessInstance, Move, Chess, ShortMove } from 'chess.js'
-import { EndState, GameUpdate, ClientPlayerAction, Colour } from './types'
-import { map, filter, startWith, concatMap } from 'rxjs/operators'
-import { routeBy } from './helpers'
+import {Observable, Subject} from 'rxjs'
+import {ChessInstance, Move, Chess, ShortMove} from 'chess.js'
+import {EndState, GameUpdate, Colour} from './types'
+import {map, filter, startWith, concatMap} from 'rxjs/operators'
+import {routeBy} from './helpers'
 
 interface GameOptions {
   startingFEN?: string;
 }
 
 export class GameStream {
-  move$: Observable<ChessInstance>;
-  end$: Observable<EndState>;
+  move$: Observable<ChessInstance>
+  end$: Observable<EndState>
   private chess: ChessInstance
   constructor (
     gameUpdate$: Observable<GameUpdate>,
-    { startingFEN }: GameOptions = {}
+    {startingFEN}: GameOptions = {}
   ) {
     this.chess = new Chess(startingFEN)
     this.move$ = gameUpdate$.pipe(
       routeBy<ShortMove>('move'),
-      map(move => {
+      map((move) => {
         const out = this.chess.move(move)
         if (!out) {
           throw new Error('invalid move')
@@ -29,32 +29,34 @@ export class GameStream {
       startWith(this.chess)
     )
 
-    this.end$ = gameUpdate$.pipe(
-      routeBy<EndState>('end')
-    )
+    this.end$ = gameUpdate$.pipe(routeBy<EndState>('end'))
   }
 }
 
 // signature for function which can make moves for the client.
 // Make sure this funciton doesn't modify the ChessInstance it's passed.
-export type MoveMaker = (chess: ChessInstance) => Promise<Move>;
+export type MoveMaker = (chess: ChessInstance) => Promise<Move>
 
 export class GameClient {
   private chess: ChessInstance
 
   // generalUpdate$ do not include moves. Completes on game end.
-  generalUpdate$: Observable<GameUpdate>;
-  clientMove$: Observable<Move>;
+  generalUpdate$: Observable<GameUpdate>
+  clientMove$: Observable<Move>
+  endPromise: Promise<EndState>
 
   constructor (
     gameUpdate$: Observable<GameUpdate>,
     private colour: Colour,
     private getMoveFromPlayer: MoveMaker,
-    { startingFEN }: GameOptions = {}
+    {startingFEN}: GameOptions = {}
   ) {
     this.chess = new Chess(startingFEN)
 
-    const moveResponse$ = this.makeClientMoveObservable(gameUpdate$, getMoveFromPlayer)
+    const moveResponse$ = this.makeClientMoveObservable(
+      gameUpdate$,
+      getMoveFromPlayer
+    )
 
     const clientMoveSub = new Subject<Promise<Move>>()
 
@@ -95,7 +97,7 @@ export class GameClient {
   private makeGeneralUpdateObservable (gameUpdate$: Observable<GameUpdate>) {
     return gameUpdate$.pipe(
       // ignore moves
-      filter(({ type }) => type !== 'move')
+      filter(({type}) => type !== 'move')
     )
   }
 
@@ -107,7 +109,7 @@ export class GameClient {
     return true
   }
 
-  makeMove (move: Move): void { }
-  resign (): void { }
-  offerDraw (): void { }
+  makeMove (): void {}
+  resign (): void {}
+  offerDraw (): void {}
 }

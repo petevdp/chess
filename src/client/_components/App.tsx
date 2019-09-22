@@ -3,8 +3,6 @@ import "../App.scss"
 import {
   BrowserRouter as Router,
   Route,
-  Link,
-  RouteComponentProps,
   Redirect
 } from "react-router-dom"
 import { Container } from "react-bootstrap"
@@ -15,15 +13,10 @@ import { Lobby } from "./Lobby"
 import { Login } from "./Login"
 import NavBar from "./Nav"
 import { PrivateRoute } from "../__helpers/AuthGuard"
-import { UserDetails } from "../../common/types"
 import { Game } from "./Game"
 
 interface UnconfirmedAppWideServices {
   authService: AuthService | null;
-}
-
-interface AppWideServices {
-  authService: AuthService;
 }
 
 const useAppWideServices = () => {
