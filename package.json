@@ -51,7 +51,7 @@
     "test": "jest",
     "eject": "react-scripts eject",
     "compile": "tsc -p .",
-    "lint": "node_modules/.bin/eslint src --ext .ts,.tsx,.js",
+    "lint": "eslint src --ext .ts,.tsx,.js",
     "prepare": "yarn run compile",
     "pretest": "yarn run compile",
     "posttest": "yarn run check"

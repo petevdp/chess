@@ -1,8 +1,8 @@
-import {Observable, Subject} from 'rxjs'
-import {ChessInstance, Move, Chess, ShortMove} from 'chess.js'
-import {EndState, GameUpdate, Colour} from './types'
-import {map, filter, startWith, concatMap} from 'rxjs/operators'
-import {routeBy} from './helpers'
+import { Observable, Subject } from 'rxjs'
+import { ChessInstance, Move, Chess, ShortMove } from 'chess.js'
+import { EndState, GameUpdate, Colour } from './types'
+import { map, filter, startWith, concatMap } from 'rxjs/operators'
+import { routeBy } from './helpers'
 
 interface GameOptions {
   startingFEN?: string;
@@ -14,7 +14,7 @@ export class GameStream {
   private chess: ChessInstance
   constructor (
     gameUpdate$: Observable<GameUpdate>,
-    {startingFEN}: GameOptions = {}
+    { startingFEN }: GameOptions = {}
   ) {
     this.chess = new Chess(startingFEN)
     this.move$ = gameUpdate$.pipe(
@@ -49,7 +49,7 @@ export class GameClient {
     gameUpdate$: Observable<GameUpdate>,
     private colour: Colour,
     private getMoveFromPlayer: MoveMaker,
-    {startingFEN}: GameOptions = {}
+    { startingFEN }: GameOptions = {}
   ) {
     this.chess = new Chess(startingFEN)
 
@@ -97,7 +97,7 @@ export class GameClient {
   private makeGeneralUpdateObservable (gameUpdate$: Observable<GameUpdate>) {
     return gameUpdate$.pipe(
       // ignore moves
-      filter(({type}) => type !== 'move')
+      filter(({ type }) => type !== 'move')
     )
   }
 
