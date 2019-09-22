@@ -1,5 +1,5 @@
-import { Square } from './board';
-import { ShortMove } from 'chess.js';
+import { Square } from './board'
+import { ShortMove } from 'chess.js'
 
 export interface Details {
   id: string;
@@ -40,21 +40,19 @@ export type EndReason =
   | 'disconnect'
   | drawReason;
 
-
 export const END_REASONS: EndReason[] = [
   ...DRAW_REASONS,
   'checkmate',
   'resign',
-  'disconnect',
-];
-
+  'disconnect'
+]
 
 export interface EndState {
   winnerId: string | null;
   reason: EndReason;
 }
 
-export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 export interface LobbyMemberDetails extends UserDetails {
   currentGame: string | null;
@@ -109,7 +107,6 @@ export interface ClientLobbyState {
 }
 
 export type SocketChannel = 'challenge' | 'lobby update';
-
 
 export type ChallengeOutcome = 'accepted' | 'declined' | 'cancelled';
 

@@ -1,8 +1,8 @@
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, filter, first } from 'rxjs/operators';
-import { ClientConnection, IClientConnection } from '../server/clientConnection';
-import { GameDetails, LobbyMemberDetails, ChallengeDetails, ChallengeOutcome, UserDetails, CompleteGameInfo, GameUpdate } from '../../common/types';
-import { HasDetails$ } from '../../common/helpers';
+import { BehaviorSubject, Observable } from 'rxjs'
+import { map, filter, first } from 'rxjs/operators'
+import { ClientConnection, IClientConnection } from '../server/clientConnection'
+import { GameDetails, LobbyMemberDetails, ChallengeDetails, ChallengeOutcome, UserDetails, CompleteGameInfo, GameUpdate } from '../../common/types'
+import { HasDetails$ } from '../../common/helpers'
 interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
@@ -25,32 +25,32 @@ export class LobbyMember implements ILobbyMember {
 
   private stateSubject: BehaviorSubject<MemberState>;
 
-  constructor(public connection: ClientConnection) {
-    const { clientMessage$ } = connection;
+  constructor (public connection: ClientConnection) {
+    const { clientMessage$ } = connection
 
-    this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false } as MemberState);
+    this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false } as MemberState)
 
     this.details$ = this.stateSubject.pipe(map((memberState: MemberState) => ({
       ...memberState,
-      ...this.userDetails,
-    })));
+      ...this.userDetails
+    })))
 
     clientMessage$.subscribe({
       complete: () => {
-        this.stateSubject.next({...this.state, leftLobby: true})
+        this.stateSubject.next({ ...this.state, leftLobby: true })
       }
     })
   }
 
-  resolveMatchedOrDisconnected(){
+  resolveMatchedOrDisconnected () {
     return new Promise<void>(resolve => {
       if (this.state.currentGame) {
-        return resolve();
+        return resolve()
       }
       this.stateSubject.subscribe({
-        next: ({currentGame, leftLobby}) => {
+        next: ({ currentGame, leftLobby }) => {
           if (currentGame || leftLobby) {
-            resolve();
+            resolve()
           }
         }
       })
@@ -61,23 +61,23 @@ export class LobbyMember implements ILobbyMember {
 
   // }
 
-  get state(){
-    return this.stateSubject.value;
+  get state () {
+    return this.stateSubject.value
   }
 
-  get userDetails() {
-    return this.connection.user;
+  get userDetails () {
+    return this.connection.user
   }
 
-  get id() {
-    return this.userDetails.id;
+  get id () {
+    return this.userDetails.id
   }
 
   updateLobbyMemberDetails = (update: Map<string, LobbyMemberDetails>) => {
     this.connection.sendMessage({
       member: {
-        memberUpdate: [...update],
+        memberUpdate: [...update]
       }
-    });
+    })
   }
 }

@@ -2,6 +2,8 @@
   "compilerOptions": {
     "target": "es5",
     "downlevelIteration": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,

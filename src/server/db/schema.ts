@@ -1,6 +1,6 @@
-import { createPool, sql } from 'slonik';
+import { createPool, sql } from 'slonik'
 
-const pool = createPool('postgres://chess_development:chess_development@localhost:5432/chess_development');
+const pool = createPool('postgres://chess_development:chess_development@localhost:5432/chess_development')
 
 pool.connect(async connection => {
   await connection.query(sql`
@@ -12,6 +12,6 @@ pool.connect(async connection => {
       username varchar(40) UNIQUE,
       type varchar(36)
     )
-  `);
-  console.log('completed');
-});
+  `)
+  console.log('completed')
+})

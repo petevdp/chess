@@ -1,39 +1,37 @@
-import { Observable, Subject } from "rxjs";
-import { ChessInstance, Move, Chess, ShortMove } from "chess.js";
-import { EndState, GameUpdate, ClientPlayerAction, Colour } from './types';
-import { map, filter, startWith, concatMap } from "rxjs/operators";
-import { routeBy } from "./helpers";
-import { start } from "repl";
-import { thisExpression } from "@babel/types";
+import { Observable, Subject } from 'rxjs'
+import { ChessInstance, Move, Chess, ShortMove } from 'chess.js'
+import { EndState, GameUpdate, ClientPlayerAction, Colour } from './types'
+import { map, filter, startWith, concatMap } from 'rxjs/operators'
+import { routeBy } from './helpers'
 
 interface GameOptions {
   startingFEN?: string;
 }
 
 export class GameStream {
-   move$: Observable<ChessInstance>;
-   end$: Observable<EndState>;
-   private chess: ChessInstance;
-  constructor(
+  move$: Observable<ChessInstance>;
+  end$: Observable<EndState>;
+  private chess: ChessInstance
+  constructor (
     gameUpdate$: Observable<GameUpdate>,
     { startingFEN }: GameOptions = {}
   ) {
-    this.chess = new Chess(startingFEN);
+    this.chess = new Chess(startingFEN)
     this.move$ = gameUpdate$.pipe(
       routeBy<ShortMove>('move'),
       map(move => {
-        const out = this.chess.move(move);
+        const out = this.chess.move(move)
         if (!out) {
-          throw new Error('invalid move');
+          throw new Error('invalid move')
         }
-        return this.chess;
+        return this.chess
       }),
-      startWith(this.chess),
-    );
+      startWith(this.chess)
+    )
 
     this.end$ = gameUpdate$.pipe(
       routeBy<EndState>('end')
-    );
+    )
   }
 }
 
@@ -42,13 +40,13 @@ export class GameStream {
 export type MoveMaker = (chess: ChessInstance) => Promise<Move>;
 
 export class GameClient {
-  private chess: ChessInstance;
+  private chess: ChessInstance
 
   // generalUpdate$ do not include moves. Completes on game end.
   generalUpdate$: Observable<GameUpdate>;
   clientMove$: Observable<Move>;
 
-  constructor(
+  constructor (
     gameUpdate$: Observable<GameUpdate>,
     private colour: Colour,
     private getMoveFromPlayer: MoveMaker,
@@ -56,9 +54,9 @@ export class GameClient {
   ) {
     this.chess = new Chess(startingFEN)
 
-    const moveResponse$ = this.makeClientMoveObservable(gameUpdate$, getMoveFromPlayer);
+    const moveResponse$ = this.makeClientMoveObservable(gameUpdate$, getMoveFromPlayer)
 
-    const clientMoveSub = new Subject<Promise<Move>>();
+    const clientMoveSub = new Subject<Promise<Move>>()
 
     if (this.colour === this.chess.turn()) {
       const movePromise = this.getMoveFromPlayer(this.chess)
@@ -69,16 +67,16 @@ export class GameClient {
 
     this.clientMove$ = clientMoveSub.pipe(
       concatMap(async (movePromise) => {
-        const move = await movePromise;
-        this.makeMoveIfValid(move);
-        return move;
-      }),
-    );
+        const move = await movePromise
+        this.makeMoveIfValid(move)
+        return move
+      })
+    )
 
-    this.generalUpdate$ = this.makeGeneralUpdateObservable(gameUpdate$);
+    this.generalUpdate$ = this.makeGeneralUpdateObservable(gameUpdate$)
   }
 
-  private makeClientMoveObservable(
+  private makeClientMoveObservable (
     gameUpdate$: Observable<GameUpdate>,
     getMoveFromPlayer: MoveMaker
   ) {
@@ -87,30 +85,29 @@ export class GameClient {
       filter(() => this.chess.turn() !== this.colour),
       map(async (opponentMove) => {
         // TODO add error handling, currently will throw if invalid move
-        this.makeMoveIfValid(opponentMove);
-        const clientMove = await getMoveFromPlayer(this.chess);
-        return clientMove;
+        this.makeMoveIfValid(opponentMove)
+        const clientMove = await getMoveFromPlayer(this.chess)
+        return clientMove
       })
-    );
-
-  }
-
-  private makeGeneralUpdateObservable(gameUpdate$: Observable<GameUpdate>) {
-    return gameUpdate$.pipe(
-      // ignore moves
-      filter(({type}) => type !== 'move'),
     )
   }
 
-  private makeMoveIfValid(move: ShortMove) {
-    console.log('move: ', move);
-    if (!this.chess.move(move)) {
-      throw new Error('invalid move');
-    }
-    return true;
+  private makeGeneralUpdateObservable (gameUpdate$: Observable<GameUpdate>) {
+    return gameUpdate$.pipe(
+      // ignore moves
+      filter(({ type }) => type !== 'move')
+    )
   }
 
-  makeMove(move: Move): void {}
-  resign(): void {}
-  offerDraw(): void {}
+  private makeMoveIfValid (move: ShortMove) {
+    console.log('move: ', move)
+    if (!this.chess.move(move)) {
+      throw new Error('invalid move')
+    }
+    return true
+  }
+
+  makeMove (move: Move): void { }
+  resign (): void { }
+  offerDraw (): void { }
 }

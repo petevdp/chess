@@ -1,5 +1,5 @@
-import config from '../common/config';
+import config from '../common/config'
 
 export default {
-  ...config,
+  ...config
 }

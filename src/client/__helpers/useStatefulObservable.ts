@@ -1,15 +1,14 @@
-import { Observable, empty } from "rxjs";
-import { useObservable } from "rxjs-hooks";
-import { switchMap, tap, concatMap, mergeMap } from "rxjs/operators";
-
+import { Observable, empty } from 'rxjs'
+import { useObservable } from 'rxjs-hooks'
+import { switchMap, tap, concatMap, mergeMap } from 'rxjs/operators'
 
 export const useStatefulObservable = (
   observable: Observable<any> | null,
   defaultVal: any
 ) => {
-  console.log('lmao');
+  console.log('lmao')
 
   return useObservable((input$: Observable<any>) => input$.pipe(
-    mergeMap((input) => input ? input : empty()),
+    mergeMap((input) => input || empty())
   ), defaultVal, [observable])
-};
+}

@@ -1,13 +1,13 @@
-import { BehaviorSubject, Observable } from 'rxjs';
-import axios from 'axios';
-import to from 'await-to-js';
+import { BehaviorSubject, Observable } from 'rxjs'
+import axios from 'axios'
+import to from 'await-to-js'
 
-import config from '../app.config';
-import { UserLogin, UserDetails } from '../../common/types';
-import { useState, useEffect } from 'react';
-import { tap } from 'rxjs/operators';
-import { useObservable } from 'rxjs-hooks';
-const { API_ROUTE } = config;
+import config from '../app.config'
+import { UserLogin, UserDetails } from '../../common/types'
+import { useState, useEffect } from 'react'
+import { tap } from 'rxjs/operators'
+import { useObservable } from 'rxjs-hooks'
+const { API_ROUTE } = config
 
 export class AuthService {
   private loginRoute = `${API_ROUTE}/login`;
@@ -16,48 +16,49 @@ export class AuthService {
   currentUserSubject = new BehaviorSubject<UserDetails | null>(null);
   currentUser$: Observable<UserDetails | null>;
 
-  constructor() {
-    this.currentUser$ = this.currentUserSubject;
-    this.attemptAuthentication();
+  constructor () {
+    this.currentUser$ = this.currentUserSubject
+    this.attemptAuthentication()
   }
 
-  complete() {
-    this.currentUserSubject.complete();
+  complete () {
+    this.currentUserSubject.complete()
   }
 
-  async attemptAuthentication() {
-    const [err, response] = await to(axios.get<UserDetails>(`${API_ROUTE}/authenticate`));
-    console.log('attempting auth');
+  async attemptAuthentication () {
+    const [err, response] = await to(axios.get<UserDetails>(`${API_ROUTE}/authenticate`))
+    console.log('attempting auth')
     if (!response) {
-      return;
+      return
     }
-    this.currentUserSubject.next(response.data as UserDetails);
-  }
-  async submitUserLoginDetails(userLogin: UserLogin, route: string) {
-    const res = await axios.put(route, userLogin);
-    return res.data;
+    this.currentUserSubject.next(response.data as UserDetails)
   }
 
-  async login(userLogin: UserLogin) {
+  async submitUserLoginDetails (userLogin: UserLogin, route: string) {
+    const res = await axios.put(route, userLogin)
+    return res.data
+  }
+
+  async login (userLogin: UserLogin) {
     console.log('logging in')
-    const [err, res] = await to(axios.put(this.loginRoute, userLogin));
+    const [err, res] = await to(axios.put(this.loginRoute, userLogin))
     if (err) {
-      this.currentUserSubject.next(null);
-      return false;
+      this.currentUserSubject.next(null)
+      return false
     }
-    const { data } = res;
-    this.currentUserSubject.next(data);
-    return data;
+    const { data } = res
+    this.currentUserSubject.next(data)
+    return data
   }
 
   logout = async () => {
     const res = await axios.put(`${API_ROUTE}/logout`)
-    this.currentUserSubject.next(null);
-    return res.status === 200;
+    this.currentUserSubject.next(null)
+    return res.status === 200
   }
 
-  useCurrentUser() {
-    return useObservable(() => this.currentUser$);
+  useCurrentUser () {
+    return useObservable(() => this.currentUser$)
   }
 }
 

@@ -1,10 +1,10 @@
-import { Observable, Subject } from 'rxjs';
-import { mergeAll, map, shareReplay, scan, filter } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs'
+import { mergeAll, map, shareReplay, scan, filter } from 'rxjs/operators'
 
-import { LobbyMember } from './lobbyMember';
-import { ChallengeDetails, LobbyMemberDetails, GameDetails } from '../../common/types';
-import { ClientConnection } from '../server/clientConnection';
-import { Arena } from './arena';
+import { LobbyMember } from './lobbyMember'
+import { ChallengeDetails, LobbyMemberDetails, GameDetails } from '../../common/types'
+import { ClientConnection } from '../server/clientConnection'
+import { Arena } from './arena'
 
 export class Lobby {
   private arena: Arena;
@@ -12,9 +12,8 @@ export class Lobby {
 
   private memberUpdateSubject: Subject<[string, LobbyMember|null]>;
 
-  constructor() {
-    this.memberUpdateSubject = new Subject();
-
+  constructor () {
+    this.memberUpdateSubject = new Subject()
 
     this.memberDetails$ = this.memberUpdateSubject.pipe(
       filter(([, member]) => !!member),
@@ -22,37 +21,37 @@ export class Lobby {
       mergeAll(),
       scan((acc, details) => {
         if (details.leftLobby) {
-          console.log('deleting ', details.username);
+          console.log('deleting ', details.username)
           acc.delete(details.id)
-          return acc;
+          return acc
         }
-        acc.set(details.id, details);
-        return acc;
+        acc.set(details.id, details)
+        return acc
       }, new Map<string, LobbyMemberDetails>()),
       shareReplay(1)
-    );
+    )
 
     this.arena = new Arena(this.memberUpdateSubject.asObservable())
 
     this.arena.games$.subscribe(game => {
-      console.log('new game: ', game.gameDetails);
+      console.log('new game: ', game.gameDetails)
     })
   }
 
   addLobbyMember = (client: ClientConnection) => {
-    console.log('adding lobby member');
-    const member = new LobbyMember(client);
+    console.log('adding lobby member')
+    const member = new LobbyMember(client)
 
     this.memberDetails$.subscribe(details => {
-      member.updateLobbyMemberDetails(details);
-    });
+      member.updateLobbyMemberDetails(details)
+    })
 
     member.details$.subscribe({
       complete: () => {
-        this.memberUpdateSubject.next([member.id, null]);
+        this.memberUpdateSubject.next([member.id, null])
       }
     })
 
-    this.memberUpdateSubject.next([member.id, member]);
+    this.memberUpdateSubject.next([member.id, member])
   }
 }

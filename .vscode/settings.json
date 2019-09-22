@@ -1,7 +1,16 @@
 {
   "cSpell.enabled": false,
-  "eslint.enable": false,
-  "jest.pathToJest": "node_modules/jest/bin/jest.js",
-  "jest.enableCodeLens": false,
-  "jest.showCoverageOnLoad": true
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "editor.formatOnSave": false
+  },
+  "eslint.autoFixOnSave": true,
+  "eslint.alwaysShowStatus": true
 }

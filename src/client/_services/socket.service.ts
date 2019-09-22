@@ -1,8 +1,8 @@
-import IOClient from 'socket.io-client';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { SocketServerMessage, SocketClientMessage } from '../../common/types';
+import IOClient from 'socket.io-client'
+import { BehaviorSubject, Observable, Subject } from 'rxjs'
+import { SocketServerMessage, SocketClientMessage } from '../../common/types'
 
-import { useObservable } from 'rxjs-hooks';
+import { useObservable } from 'rxjs-hooks'
 
 export class SocketService {
   serverMessage$: Observable<SocketServerMessage>;
@@ -11,26 +11,25 @@ export class SocketService {
 
   clientMessageSubject = new Subject<SocketClientMessage>();
 
-  constructor() {
+  constructor () {
     // not assigning socket till init
-    console.log('socket update!');
-    this.serverMessageSubject = new BehaviorSubject({});
-    this.serverMessage$ = this.serverMessageSubject.asObservable();
+    console.log('socket update!')
+    this.serverMessageSubject = new BehaviorSubject({})
+    this.serverMessage$ = this.serverMessageSubject.asObservable()
 
     // TODO: if this connection fails, we need to handle it gracefully
-    this.socket = IOClient('http://localhost:3000');
-
+    this.socket = IOClient('http://localhost:3000')
 
     this.socket.on('message', (msg: SocketServerMessage) => {
-      this.serverMessageSubject.next(msg);
-      console.log('msg: ', msg);
+      this.serverMessageSubject.next(msg)
+      console.log('msg: ', msg)
     })
-    .on('disconnect', () => {
-      console.log('socket disconnected!');
-    });
+      .on('disconnect', () => {
+        console.log('socket disconnected!')
+      })
   }
 
-  useSocketStatus() {
+  useSocketStatus () {
     const connected = useObservable(() => new Observable(subscriber => {
       this.socket
         .on('connect', () => subscriber.next('connect'))
@@ -38,24 +37,24 @@ export class SocketService {
         .on('disconnect', (reason: string) => {
           if (reason === 'ping timeout') {
             subscriber.next('ping timeout')
-            return;
+            return
           }
 
           // if there wasn't a ping timout, the socket was closed intentionally
           if (reason === 'io server disconnect') {
-            subscriber.next('io server disconnnect');
+            subscriber.next('io server disconnnect')
           } else {
-            subscriber.next('io client disconnect');
+            subscriber.next('io client disconnect')
           }
-          this.serverMessageSubject.complete();
-          subscriber.complete();
-        });
-    }), this.socket.connected);
-    return connected;
+          this.serverMessageSubject.complete()
+          subscriber.complete()
+        })
+    }), this.socket.connected)
+    return connected
   }
 
-  complete() {
+  complete () {
     // observables will be cleaned up on disconnect handler
-    this.socket.disconnect();
+    this.socket.disconnect()
   }
 }
