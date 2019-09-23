@@ -1,6 +1,6 @@
 import { GameUpdate } from '../types'
-import { GameStream, GameClient } from '../gameProviders'
-import { of, from, EMPTY } from 'rxjs'
+import { GameStream, GameClient, MoveMaker } from '../gameProviders'
+import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { skip } from 'rxjs/operators'
 
@@ -60,24 +60,25 @@ describe('GameStream', () => {
 })
 
 describe('GameClient', () => {
-  describe('calls to makeMove', () => {
-    it('is called when opponent moves', done => {
-      const mockMoveMaker = jest.fn(Engines.firstMoveEngine)
+  describe('calls to getMove', () => {
+    it('is called when opponent moves', (done) => {
+      const mockMoveMaker = jest.fn(move => {
+        done()
+        return Engines.firstMoveEngine(move)
+      })
+
       const client = new GameClient(
         of(moveUpdates[0]),
         'b',
 
-        // movemaker will be ignored by updates, not part of class behaviour.
-        // turning client moves into updates happens serverside
         mockMoveMaker
       )
 
-      client.generalUpdate$.subscribe({
-        complete: () => {
-          expect(mockMoveMaker.mock.calls.length).toEqual(1)
-          done()
-        }
+      client.action$.subscribe({
+        complete: () => { }
       })
+
+      client.complete()
     })
 
     it('is not called when opponent has yet to move', done => {
@@ -90,7 +91,7 @@ describe('GameClient', () => {
         mockMoveMaker
       )
 
-      client.generalUpdate$.subscribe({
+      client.gameUpdate$.subscribe({
         complete: () => {
           expect(mockMoveMaker.mock.calls.length).toEqual(0)
           done()
@@ -99,34 +100,35 @@ describe('GameClient', () => {
     })
 
     it('calls moveMaker on instantiation when player is white', done => {
-      const mockMoveMaker = jest.fn(Engines.firstMoveEngine)
+      const moveMaker: MoveMaker = chess => {
+        return Engines.firstMoveEngine(chess)
+      }
       const client = new GameClient(
-        EMPTY,
+        NEVER,
         'w',
-
-        // movemaker will be ignored by updates, not part of class behaviour.
-        // turning client moves into updates happens serverside
-        mockMoveMaker
+        moveMaker
       )
 
-      client.clientMove$.subscribe({
-        complete: () => {
-          expect(mockMoveMaker.mock.calls.length).toEqual(1)
+      client.action$.subscribe({
+        next: () => {
           done()
+        },
+        complete: () => {
+          done.fail(new Error('completed for some reason'))
         }
       })
     })
+  })
 
-    it('resolves endPromise with EndState when supplied', async (done) => {
+  describe('endPromise', () => {
+    it('ends when issued an gameUpdate of type end', done => {
       const client = new GameClient(
         of(resignUpdate),
         'w',
-        () => { throw new Error('makeMove shouldn\'t be called') }
+        Engines.firstMoveEngine
       )
 
-      const endState = await client.endPromise
-      expect(endState).toEqual(resignUpdate.end)
-      done()
+      client.endPromise.then(() => done())
     })
   })
 })

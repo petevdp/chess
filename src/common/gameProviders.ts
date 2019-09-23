@@ -1,7 +1,7 @@
-import { Observable, Subject } from 'rxjs'
+import { Observable, concat, EMPTY, from } from 'rxjs'
 import { ChessInstance, Move, Chess, ShortMove } from 'chess.js'
-import { EndState, GameUpdate, Colour } from './types'
-import { map, filter, startWith, concatMap } from 'rxjs/operators'
+import { EndState, GameUpdate, Colour, ClientAction } from './types'
+import { map, filter, startWith, concatMap, tap } from 'rxjs/operators'
 import { routeBy } from './helpers'
 
 interface GameOptions {
@@ -37,79 +37,69 @@ export class GameStream {
 // Make sure this funciton doesn't modify the ChessInstance it's passed.
 export type MoveMaker = (chess: ChessInstance) => Promise<Move>
 
+export interface ClientActionProvider {
+  getMove: MoveMaker;
+}
 export class GameClient {
   private chess: ChessInstance
 
-  // generalUpdate$ do not include moves. Completes on game end.
-  generalUpdate$: Observable<GameUpdate>
-  clientMove$: Observable<Move>
-  endPromise: Promise<EndState>
+  action$: Observable<ClientAction>
+  endPromise: Promise<EndState>;
 
   constructor (
-    gameUpdate$: Observable<GameUpdate>,
+    public gameUpdate$: Observable<GameUpdate>,
     private colour: Colour,
-    private getMoveFromPlayer: MoveMaker,
+    getMove: MoveMaker,
     { startingFEN }: GameOptions = {}
   ) {
     this.chess = new Chess(startingFEN)
 
-    const moveResponse$ = this.makeClientMoveObservable(
-      gameUpdate$,
-      getMoveFromPlayer
+    // TODO implement actions other than moves
+    this.action$ = this.makeClientMoveObservable(
+      gameUpdate$.pipe(
+        filter(update => update.type === 'move'),
+        map(({ move }) => move as ShortMove)
+      ),
+      getMove
     )
 
-    const clientMoveSub = new Subject<Promise<Move>>()
-
-    if (this.colour === this.chess.turn()) {
-      const movePromise = this.getMoveFromPlayer(this.chess)
-      clientMoveSub.next(movePromise)
-    }
-
-    moveResponse$.subscribe(clientMoveSub)
-
-    this.clientMove$ = clientMoveSub.pipe(
-      concatMap(async (movePromise) => {
-        const move = await movePromise
-        this.makeMoveIfValid(move)
-        return move
-      })
-    )
-
-    this.generalUpdate$ = this.makeGeneralUpdateObservable(gameUpdate$)
+    this.endPromise = gameUpdate$.pipe(routeBy<EndState>('end'), tap(() => {
+      console.log('ending')
+    })).toPromise()
   }
 
+  complete () { }
+
   private makeClientMoveObservable (
-    gameUpdate$: Observable<GameUpdate>,
-    getMoveFromPlayer: MoveMaker
+    opponentMove$: Observable<ShortMove>,
+    getMove: MoveMaker
   ) {
-    return gameUpdate$.pipe(
-      routeBy<ShortMove>('move'),
-      filter(() => this.chess.turn() !== this.colour),
-      map(async (opponentMove) => {
-        // TODO add error handling, currently will throw if invalid move
-        this.makeMoveIfValid(opponentMove)
-        const clientMove = await getMoveFromPlayer(this.chess)
+    const moveIfStarting = this.colour === this.chess.turn()
+      ? from(getMove(this.chess))
+      : EMPTY
+
+    const respondToOpponentMove: Observable<Move> = opponentMove$.pipe(
+      concatMap(async (opponentMove) => {
+        console.log('opponent move')
+        const chess = this.makeMoveIfValid(opponentMove)
+        const clientMove = await getMove(chess)
+        this.makeMoveIfValid(clientMove)
         return clientMove
       })
     )
-  }
 
-  private makeGeneralUpdateObservable (gameUpdate$: Observable<GameUpdate>) {
-    return gameUpdate$.pipe(
-      // ignore moves
-      filter(({ type }) => type !== 'move')
+    const moveToAction = map((move: Move): ClientAction => ({ type: 'move', move }))
+
+    return concat(
+      moveIfStarting.pipe(moveToAction),
+      respondToOpponentMove.pipe(moveToAction)
     )
   }
 
   private makeMoveIfValid (move: ShortMove) {
-    console.log('move: ', move)
     if (!this.chess.move(move)) {
       throw new Error('invalid move')
     }
-    return true
+    return this.chess
   }
-
-  makeMove (): void {}
-  resign (): void {}
-  offerDraw (): void {}
 }

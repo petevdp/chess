@@ -58,7 +58,7 @@ export interface LobbyMemberDetails extends UserDetails {
   leftLobby: boolean;
 }
 
-type ActionType = 'move' | 'resign' | 'disconnect' | 'offerDraw';
+export type ActionType = 'move' | 'resign' | 'disconnect' | 'offerDraw';
 
 export interface GameUpdate {
   type: 'move' | 'end' | 'offerDraw';
@@ -66,9 +66,11 @@ export interface GameUpdate {
   end?: EndState;
 }
 
-export interface ClientPlayerAction {
+export interface ClientAction {
   type: ActionType;
   move?: ShortMove;
+}
+export interface ClientPlayerAction extends ClientAction {
   playerId: string;
 }
 
