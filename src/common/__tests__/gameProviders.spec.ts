@@ -49,7 +49,7 @@ describe('GameStream', () => {
     })
   })
 
-  it('allows custrom starting positions', done => {
+  it('allows custom starting positions', done => {
     const someFEN = 'rnbqkbnr/1ppppppp/8/p7/P7/8/1PPPPPPP/RNBQKBNR w KQkq a6 0 2'
     const stream = new GameStream(EMPTY, { startingFEN: someFEN })
     stream.move$.subscribe(chess => {
