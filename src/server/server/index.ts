@@ -28,7 +28,8 @@ const session = ExpressSessionFactory({
 })
 
 const app = express()
-const expressWs = ExpressWs(app)
+
+ExpressWs(app)
 
 const http = HttpServer.createServer(app)
 

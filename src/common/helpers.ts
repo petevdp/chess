@@ -1,7 +1,6 @@
 import { OperatorFunction, Observable } from 'rxjs'
 import { Details } from './types'
-import { filter, map, mergeAll, shareReplay, finalize, scan, pluck } from 'rxjs/operators'
-import { any } from 'prop-types'
+import { filter, map, mergeAll, shareReplay, finalize, scan } from 'rxjs/operators'
 
 export function routeBy<OUT> (routeProperty: string): OperatorFunction<any, OUT> {
   return (input$) => input$.pipe(
@@ -9,11 +8,11 @@ export function routeBy<OUT> (routeProperty: string): OperatorFunction<any, OUT>
     map(obj => obj[routeProperty])
   )
 }
-export interface HasDetails$<D> {
+export interface HasDetailsObservable<D> {
   details$: Observable<D>;
 }
 
-export function allDetails<D extends Details> (obj$: Observable<HasDetails$<D>>) {
+export function allDetails<D extends Details> (obj$: Observable<HasDetailsObservable<D>>) {
   console.log('piping')
   return obj$.pipe(
     map((obj) => obj.details$),
@@ -26,4 +25,4 @@ export function allDetails<D extends Details> (obj$: Observable<HasDetails$<D>>)
   )
 }
 
-export const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms))
+export const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))

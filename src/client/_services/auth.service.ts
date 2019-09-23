@@ -4,14 +4,11 @@ import to from 'await-to-js'
 
 import config from '../app.config'
 import { UserLogin, UserDetails } from '../../common/types'
-import { useState, useEffect } from 'react'
-import { tap } from 'rxjs/operators'
 import { useObservable } from 'rxjs-hooks'
 const { API_ROUTE } = config
 
 export class AuthService {
   private loginRoute = `${API_ROUTE}/login`;
-  private signupRoute = `${API_ROUTE}/signup`;
 
   currentUserSubject = new BehaviorSubject<UserDetails | null>(null);
   currentUser$: Observable<UserDetails | null>;
@@ -26,7 +23,7 @@ export class AuthService {
   }
 
   async attemptAuthentication () {
-    const [err, response] = await to(axios.get<UserDetails>(`${API_ROUTE}/authenticate`))
+    const [, response] = await to(axios.get<UserDetails>(`${API_ROUTE}/authenticate`))
     console.log('attempting auth')
     if (!response) {
       return

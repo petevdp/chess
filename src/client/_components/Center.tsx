@@ -1,15 +1,21 @@
-import React from "react"
+import React, { ReactChildren } from "react"
 
 import { Row, Col } from "react-bootstrap"
 
-export const Center: React.FC = ({ children }) => (
-  <React.Fragment>
-    <Row/>
-    <Row>
-      <Col>
-        {children}
-      </Col>
-    </Row>
-    <Row/>
-  </React.Fragment>
-)
+interface CenterProps {
+  children: ReactChildren;
+}
+
+export function Center ({ children }: CenterProps) {
+  return (
+    <React.Fragment>
+      <Row/>
+      <Row>
+        <Col>
+          {children}
+        </Col>
+      </Row>
+      <Row/>
+    </React.Fragment>
+  )
+}

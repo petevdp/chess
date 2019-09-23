@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { AuthService } from '../_services/auth.service'
 import { UserLogin } from '../../common/types'
-import { Form, Row, Col, Button } from 'react-bootstrap'
+import { Form, Button } from 'react-bootstrap'
 
 import { Redirect } from 'react-router'
 import { Center } from './Center'
@@ -34,7 +34,7 @@ const useLoginForm = (authService: AuthService) => {
 interface LoginFormProps {
   authService: AuthService;
 }
-const LoginForm: React.FC<LoginFormProps> = ({ authService }) => {
+function LoginForm ({ authService }: LoginFormProps) {
   const { handleSubmit, handleInputChange, inputs } = useLoginForm(authService)
   const currentUser = authService.useCurrentUser()
 

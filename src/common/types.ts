@@ -1,4 +1,3 @@
-import { Square } from './board'
 import { ShortMove } from 'chess.js'
 
 export interface Details {

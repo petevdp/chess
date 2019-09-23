@@ -1,42 +1,14 @@
-import * as fs from 'fs'
 import express from 'express'
 import { DBQueries } from '../db/queries'
 import to from 'await-to-js'
-// import  cors from 'cors';
-import uuidv4 from 'uuid/v4'
 import bodyParser from 'body-parser'
-import Moment from 'moment'
 import { check, validationResult } from 'express-validator'
-
-import { JWT_SECRET_PATH } from '../constants'
-import { UserLogin, UserDetails } from '../../common/types'
-import { DataIntegrityError } from 'slonik'
-
-const RSA_PRIVATE_KEY = fs.readFileSync(JWT_SECRET_PATH)
+import { UserDetails } from '../../common/types'
 
 export const api = (dbQueries: DBQueries) => {
   const api = express()
 
   api.use(bodyParser.json())
-  // TODO access control header still present for some reason
-
-  // api.use(cors({
-  //   origin: 'http://localhost:4200',
-  //   credentials: true,
-  // }));
-
-  const loginSchema = {
-    type: 'object',
-    required: ['username', 'password'],
-    properties: {
-      username: {
-        type: 'string'
-      },
-      password: {
-        type: 'string'
-      }
-    }
-  }
 
   const userLoginSchema = [
     check('username').isLength({ min: 2 }),
@@ -57,7 +29,7 @@ export const api = (dbQueries: DBQueries) => {
   })
 
   api.get('/authenticate', async (req, res) => {
-    const [err, user] = await to(dbQueries.getUser({ id: req.session.userId }))
+    const [, user] = await to(dbQueries.getUser({ id: req.session.userId }))
     if (!user) {
       res.sendStatus(401)
       return

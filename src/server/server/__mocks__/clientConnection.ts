@@ -1,6 +1,5 @@
-import { SocketClientMessage, SocketServerMessage } from '../../../common/types'
-import { Subject, Observable } from 'rxjs'
-import { ClientConnection } from '../clientConnection'
+import { SocketClientMessage } from '../../../common/types'
+import { Observable } from 'rxjs'
 
 export class MockClientConnection {
   constructor (public clientMessage$: Observable<SocketClientMessage>) { }

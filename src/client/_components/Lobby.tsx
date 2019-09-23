@@ -9,7 +9,7 @@ interface LobbyProps {
   lobbyService: LobbyService;
 }
 
-const Lobby: React.FC<LobbyProps> = ({ lobbyService }) => {
+function Lobby ({ lobbyService }: LobbyProps) {
   const allMemberDetails = lobbyService.useLobbyMemberDetailsArr()
   return (
     <React.Fragment>
@@ -23,9 +23,9 @@ interface ActiveMembersDisplayProps {
   allMemberDetails: LobbyMemberDetails[];
 }
 
-const ActiveMembersDisplayList: React.FC<ActiveMembersDisplayProps> = ({
-  allMemberDetails
-}) => {
+function ActiveMembersDisplayList (
+  { allMemberDetails }: ActiveMembersDisplayProps
+) {
   const displayList = allMemberDetails.map(memberDetails => (
     <MemberDisplay
       key={memberDetails.id}
@@ -43,9 +43,7 @@ interface ActiveMemberDisplayProps {
   memberDetails: LobbyMemberDetails;
 }
 
-const MemberDisplay: React.FC<ActiveMemberDisplayProps> = ({
-  memberDetails
-}) => {
+function MemberDisplay ({ memberDetails }: ActiveMemberDisplayProps) {
   const { username } = memberDetails
   return (
     <ListGroup.Item className="memberDetails_member">
@@ -59,7 +57,7 @@ interface LobbyServiceProviderProps {
   authService: AuthService;
 }
 
-const LobbyServiceProvider: React.FC<LobbyServiceProviderProps> = ({ authService }) => {
+function LobbyServiceProvider ({ authService }: LobbyServiceProviderProps) {
   const [lobbyService, setLobbyService] = useState(null as LobbyService | null)
   const currentUser = authService.useCurrentUser()
   useEffect(() => {

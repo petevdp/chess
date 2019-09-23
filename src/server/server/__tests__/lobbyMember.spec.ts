@@ -2,7 +2,7 @@ import { MockClientConnection } from '../__mocks__/clientConnection'
 import { ClientConnection } from '../clientConnection'
 import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage } from '../../../common/types'
 import { LobbyMember } from '../../lobby/lobbyMember'
-import { empty, EMPTY, of, NEVER, Observable } from 'rxjs'
+import { EMPTY, NEVER, Observable } from 'rxjs'
 
 const user1 = {
   id: 'id1',

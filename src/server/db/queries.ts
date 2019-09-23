@@ -1,8 +1,7 @@
 import uuidv4 from 'uuid/v4'
 import errors from 'errors'
-import { createPool, sql, DatabasePoolConnectionType, QueryResultType, QueryResultRowType, QueryMaybeOneFunctionType, DatabasePoolType, CommonQueryMethodsType } from 'slonik'
+import { createPool, sql, DatabasePoolConnectionType, QueryResultType, QueryResultRowType, DatabasePoolType } from 'slonik'
 import { UserDetails, UserDetailsPartial, UserType } from '../../common/types'
-import to from 'await-to-js'
 
 const CONN_STRING = 'postgres://chess_development:chess_development@localhost:5432/chess_development'
 
@@ -21,7 +20,7 @@ export class DBQueries {
 
   async getUser (detailsPartial: UserDetailsPartial) {
     return this.pool.connect(connection => this._getUser(detailsPartial, connection))
-      .catch(err => {
+      .catch(() => {
         throw new errors.GetUserError(`Couldn't get user with details ${detailsPartial}`)
       })
   }

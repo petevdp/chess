@@ -1,17 +1,17 @@
 import { BehaviorSubject, Observable } from 'rxjs'
-import { map, filter, first } from 'rxjs/operators'
-import { ClientConnection, IClientConnection } from '../server/clientConnection'
-import { GameDetails, LobbyMemberDetails, ChallengeDetails, ChallengeOutcome, UserDetails, CompleteGameInfo, GameUpdate } from '../../common/types'
-import { HasDetails$ } from '../../common/helpers'
+import { map } from 'rxjs/operators'
+import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
+import { LobbyMemberDetails, UserDetails } from '../../common/types'
+import { HasDetailsObservable } from '../../common/helpers'
 interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
 }
 
-export interface ILobbyMember extends HasDetails$<LobbyMemberDetails> {
+export interface LobbyMemberInterface extends HasDetailsObservable<LobbyMemberDetails> {
   userDetails: UserDetails;
   details$: Observable<LobbyMemberDetails>;
-  connection: IClientConnection;
+  connection: ClientConnectionInterface;
 
   // updateGamePartial: (update: GameUpdate) => void;
   // loadGamePartials: (info: CompleteGameInfo[]) => void;
@@ -20,7 +20,7 @@ export interface ILobbyMember extends HasDetails$<LobbyMemberDetails> {
 }
 
 // TODO: switch from socket.io to bare ws + observables.
-export class LobbyMember implements ILobbyMember {
+export class LobbyMember implements LobbyMemberInterface {
   details$: Observable<LobbyMemberDetails>;
 
   private stateSubject: BehaviorSubject<MemberState>;

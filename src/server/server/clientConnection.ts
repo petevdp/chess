@@ -2,7 +2,7 @@ import { Observable } from 'rxjs'
 import { SocketClientMessage, SocketServerMessage, UserDetails } from '../../common/types'
 import WebSocket from 'ws'
 
-export interface IClientConnection {
+export interface ClientConnectionInterface {
   clientMessage$: Observable<SocketClientMessage>;
   sendMessage: (socketServerMessage: SocketServerMessage) => void;
   isActive: boolean;
@@ -10,7 +10,7 @@ export interface IClientConnection {
   complete: () => void;
 }
 
-export class ClientConnection implements IClientConnection {
+export class ClientConnection implements ClientConnectionInterface {
   clientMessage$: Observable<SocketClientMessage>;
 
   constructor (private ws: WebSocket, public user: UserDetails) {

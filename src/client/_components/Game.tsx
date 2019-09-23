@@ -2,9 +2,9 @@ import React from 'react'
 import { Board } from './Board'
 
 export interface GameProps {
-
+  ayy: 'lmao';
 }
 
-export const Game: React.FC<GameProps> = (props) => {
+export function Game (props: GameProps) {
   return <Board />
 }

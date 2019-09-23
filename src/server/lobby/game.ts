@@ -1,16 +1,14 @@
 import _ from 'lodash'
-import errors from 'errors'
 import { Observable, merge, BehaviorSubject, of } from 'rxjs'
 import { filter, shareReplay, concatMap } from 'rxjs/operators'
-import { Colour, GameDetails, GameUpdate, CompleteGameInfo, DRAW_REASONS, ShortMove } from '../../common/types'
-import { Chess, ChessInstance } from 'chess.js'
+import { Colour, GameDetails, GameUpdate, CompleteGameInfo, DRAW_REASONS } from '../../common/types'
+import { Chess, ChessInstance, ShortMove } from 'chess.js'
 import uuidv4 from 'uuid/v4'
 import { Player, PlayerAction } from './player'
-import { ClientConnection, IClientConnection } from '../server/clientConnection'
-import { HasDetails$ } from '../../common/helpers'
+import { HasDetailsObservable } from '../../common/helpers'
 import { LobbyMember } from './lobbyMember'
 
-export class Game implements HasDetails$<GameDetails> {
+export class Game implements HasDetailsObservable<GameDetails> {
   private players: Player[];
   id: string;
 

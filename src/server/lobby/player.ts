@@ -1,7 +1,8 @@
 import { Observable } from 'rxjs'
-import { filter, map, first, take, tap } from 'rxjs/operators'
+import { filter, map, tap } from 'rxjs/operators'
 
-import { ClientConnection as IClientConnection, ClientConnection } from '../server/socketServer'
+import { ClientConnection } from '../server/clientConnection'
+
 import {
   PlayerDetails,
   ClientPlayerAction,
@@ -36,13 +37,12 @@ export class Player {
     ).subscribe({
       next: info => {
         if (!info) {
-          return
+          // return
         }
-        this.connection.sendMessage({
-          game: {
-            loadGame: info
-          }
-        })
+        // this.connection.sendMessage({
+        //   game: {
+        //   }
+        // })
       }
     })
   }
@@ -64,7 +64,7 @@ export class Player {
 
   updateGame (gameUpdate: GameUpdate) {
     this.connection.sendMessage({
-      game: { gameUpdate }
+      game: { update: gameUpdate, type: 'update' }
     })
   }
 }

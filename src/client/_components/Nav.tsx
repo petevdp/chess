@@ -8,7 +8,7 @@ interface MyNavBarProps {
   authService: AuthService;
 }
 
-const MyNavBar: React.FC<MyNavBarProps> = ({ authService }) => {
+function MyNavBar ({ authService }: MyNavBarProps) {
   const currentUser = authService.useCurrentUser()
   return (
     <Navbar
@@ -36,7 +36,7 @@ interface LoggedInDisplayProps {
   currentUser: UserDetails;
 }
 
-const LoggedInDisplay: React.FC<LoggedInDisplayProps> = ({ authService, currentUser }) => {
+function LoggedInDisplay ({ authService, currentUser }: LoggedInDisplayProps) {
   return (
     <Nav.Item key="logout">
       Logged in as {currentUser.username}

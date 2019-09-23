@@ -2,7 +2,7 @@ import { Observable, Subject } from 'rxjs'
 import { mergeAll, map, shareReplay, scan, filter } from 'rxjs/operators'
 
 import { LobbyMember } from './lobbyMember'
-import { ChallengeDetails, LobbyMemberDetails, GameDetails } from '../../common/types'
+import { LobbyMemberDetails } from '../../common/types'
 import { ClientConnection } from '../server/clientConnection'
 import { Arena } from './arena'
 
