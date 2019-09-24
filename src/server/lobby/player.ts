@@ -23,6 +23,7 @@ export class Player {
     completeGameInfo: CompleteGameInfo,
     gameUpdate$: Observable<GameUpdate>
   ) {
+    console.log('new player!');
     this.colour = this.getColour(completeGameInfo, connection.user)
 
     this.playerAction$ = connection.clientMessage$.pipe(

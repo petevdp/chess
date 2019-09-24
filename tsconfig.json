@@ -28,6 +28,7 @@
   ],
   "exclude": [
     // Now exclude what we do not want in our project
+    "node_modules",
     "src/server/**/*"
   ]
 }

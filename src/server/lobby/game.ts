@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { Observable, merge, of, Subject } from 'rxjs'
 import { filter, shareReplay, concatMap, takeWhile } from 'rxjs/operators'
-import { Colour, GameDetails, GameUpdate, CompleteGameInfo, DRAW_REASONS, DrawReason, PlayerDetails } from '../../common/types'
+import { Colour, GameDetails, GameUpdate, CompleteGameInfo, DrawReason, PlayerDetails } from '../../common/types'
 import { Chess, ChessInstance, ShortMove } from 'chess.js'
 import uuidv4 from 'uuid/v4'
 import { Player, PlayerAction } from './player'
@@ -22,6 +22,8 @@ class Game {
   constructor (
     gameMembers: LobbyMember[]
   ) {
+    console.log('new game');
+
     this.id = uuidv4()
     this.chess = new Chess()
 
@@ -31,20 +33,34 @@ class Game {
       throw new Error(`wrong number of players! should be: ${this.requiredPlayerCount}`)
     }
 
-    this.gameUpdate$ = merge(
+    console.log('creating players');
+    const gameUpdateSubject = new Subject<GameUpdate>()
+
+    this.players = this.createPlayers(gameMembers, this.completeGameInfo, gameUpdateSubject)
+
+
+    const playerUpdates = merge(
       ...this.players.map(p => p.playerAction$),
-      this.gameController$
     ).pipe(
       filter(this.validatePlayerAction),
       concatMap((action) => {
         const updates = this.getGameUpdatesFromPlayerAction(action)
         return of(...updates)
       }),
-      takeWhile(update => update.type !== 'end', true),
-      shareReplay(1)
     )
 
-    this.players = this.createPlayers(gameMembers, this.completeGameInfo)
+    merge(
+      playerUpdates,
+      this.gameController$
+    ).pipe(
+      takeWhile(update => update.type !== 'end', true),
+      shareReplay(1)
+    ).subscribe({
+      next: gameUpdateSubject.next,
+      complete: gameUpdateSubject.complete
+    })
+
+    this.gameUpdate$ = gameUpdateSubject.asObservable()
   }
 
   /**
@@ -63,9 +79,9 @@ class Game {
   private createGameDetails (gameMembers: LobbyMember[]): GameDetails {
     const colours = _.shuffle(['b', 'w']) as Colour[]
     const userDetails = gameMembers.map(member => member.userDetails)
-    const playerDetails: PlayerDetails[] = _.zip(userDetails, colours).map(([user, colour]) => ({
+    const playerDetails = _.zip(userDetails, colours).map(([user, colour]) => ({
       user, colour
-    }))
+    })) as PlayerDetails[]
 
     return {
       playerDetails,
@@ -75,13 +91,15 @@ class Game {
 
   private createPlayers (
     gameMembers: LobbyMember[],
-    completeGameInfo: CompleteGameInfo
+    completeGameInfo: CompleteGameInfo,
+    gameUpdate$: Observable<GameUpdate>
   ) {
+
     return gameMembers.map(({ connection }) => (
       new Player(
         connection,
         completeGameInfo,
-        this.gameUpdate$
+        gameUpdate$
       )
     ))
   }
@@ -116,7 +134,10 @@ class Game {
   private getGameUpdatesFromPlayerAction (playerAction: PlayerAction): GameUpdate[] {
     const { type, playerId } = playerAction
     const updates = [] as GameUpdate[]
-    const getOpponentId = () => this.findOpponent(playerId).id
+    const getOpponentId = () => {
+      const player = this.findOpponent(playerId)
+      return player ? player.id : null
+    }
 
     if (type === 'offerDraw') {
       updates.push({ type })
@@ -139,14 +160,14 @@ class Game {
         type: 'end',
         end: {
           winnerId: getOpponentId(),
-          reason: 'disconnect'
+          reason: 'clientDisconnect'
         }
       })
       return updates
     }
 
     // type === move
-    const { move } = playerAction
+    const  move = playerAction.move as ShortMove
     this.chess.move(move)
 
     updates.push({ type: 'move', move })
@@ -168,14 +189,17 @@ class Game {
 
     // TODO add flagging and alternative rulesets
     const determineDrawType = (): DrawReason => {
-      for (const reason in DRAW_REASONS) {
-        if (this.chess[reason]()) {
-          return reason as DrawReason
-        }
+      const reasons: [DrawReason, boolean][] = [
+        ['in_stalemate', this.chess.in_stalemate()],
+        ['in_threefold_repetition', this.chess.in_threefold_repetition()],
+        ['insufficient_material', this.chess.insufficient_material()]
+      ]
+      const reason = reasons.find(r => r[1])
+      if (!reason) {
+        throw new Error('reason not valid draw, but isn\'t')
       }
-      throw new Error('no draw reason')
+      return reason[0]
     }
-
     // must be draw
     endUpdate.end = {
       winnerId: null,

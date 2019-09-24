@@ -56,7 +56,6 @@ export class BotClient {
           next: (action) => {
             sendMessageToServer({
               gameAction: {
-                playerId: user.id,
                 gameId: info.id,
                 ...action
               }

@@ -1,4 +1,4 @@
-import { ShortMove } from 'chess.js'
+import { ShortMove, ChessInstance } from 'chess.js'
 
 export interface Details {
   id: string;
@@ -23,12 +23,12 @@ export type Colour = 'b' | 'w';
 
 export type DrawReason =
   'in_stalemate'
-  | 'in_threefold_repitition'
+  | 'in_threefold_repetition'
   | 'insufficient_material';
 
-export const DRAW_REASONS: DrawReason[] = [
+export const DRAW_REASONS: Array<keyof ChessInstance> = [
   'in_stalemate',
-  'in_threefold_repitition',
+  'in_threefold_repetition',
   'insufficient_material'
 ]
 
@@ -41,7 +41,7 @@ export type EndReason =
   | DrawReason;
 
 export const END_REASONS: EndReason[] = [
-  ...DRAW_REASONS,
+  ...DRAW_REASONS as DrawReason[],
   'checkmate',
   'resign',
   'clientDisconnect',
