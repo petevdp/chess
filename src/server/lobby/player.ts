@@ -1,22 +1,20 @@
 import { Observable } from 'rxjs'
-import { filter, map, publish } from 'rxjs/operators'
-
-import { ClientConnection } from '../server/clientConnection'
+import { filter, map } from 'rxjs/operators'
 
 import {
-  PlayerDetails,
   ClientPlayerAction,
   Colour,
   GameUpdate,
-  CompleteGameInfo
+  CompleteGameInfo,
+  UserDetails
 } from '../../common/types'
+import { ClientConnection } from '../server/clientConnection'
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
   colour: Colour;
 }
 export class Player {
   playerAction$: Observable<PlayerAction>
-  ready: Promise<void>
   colour: Colour
 
   constructor (
@@ -24,11 +22,14 @@ export class Player {
     completeGameInfo: CompleteGameInfo,
     gameUpdate$: Observable<GameUpdate>
   ) {
-    this.colour = completeGameInfo.playerDetails.find(p => p.user.id === this.user.id).colour
+    this.colour = this.getColour(completeGameInfo, connection.user)
 
     this.playerAction$ = connection.clientMessage$.pipe(
       filter(msg => !!msg.gameAction),
-      map(({ gameAction }) => ({ ...gameAction, colour: this.colour }))
+      map(({ gameAction }) => ({
+        ...gameAction,
+        colour: this.colour
+      } as PlayerAction))
     )
 
     gameUpdate$.subscribe({
@@ -46,6 +47,15 @@ export class Player {
         join: completeGameInfo
       }
     })
+  }
+
+  private getColour (completeGameInfo: CompleteGameInfo, user: UserDetails) {
+    const { playerDetails } = completeGameInfo
+    const player = playerDetails.find(p => p.user.id === user.id)
+    if (!player) {
+      throw new Error('can\'t find player!')
+    }
+    return player.colour
   }
 
   get user () {

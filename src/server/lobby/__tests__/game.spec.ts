@@ -1,5 +1,5 @@
 import { UserDetails } from "../../../common/types"
-import { getLobbyConnectionPair } from "./helpers"
+import { getLobbyMemberConnectionPair } from "./helpers"
 import { EMPTY } from "rxjs"
 import Game from "../game"
 jest.mock('../game')
@@ -27,12 +27,11 @@ const user2: UserDetails = {
 // }
 
 it('sends joinGame messages to connections on instantiation', () => {
-  const [conn1, member1] = getLobbyConnectionPair(EMPTY, user1)
-  const [conn2, member2] = getLobbyConnectionPair(EMPTY, user2)
+  const [conn1, member1] = getLobbyMemberConnectionPair(EMPTY, user1)
+  const [conn2, member2] = getLobbyMemberConnectionPair(EMPTY, user2)
 
   const game = new Game([member1, member2])
-  game
 
-  .expect(conn1.sendMessage.mock.calls[0].game.type).toBe('join')
+  expect(conn1.sendMessage.mock.calls[0].game.type).toBe('join')
   expect(conn2.sendMessage.mock.calls[0].game.type).toBe('join')
 })
