@@ -31,8 +31,17 @@ it('sends joinGame messages to connections on instantiation', () => {
 
   const game = new Game([member1, member2])
 
-  expect(conn1.sendMessage.mock.calls[0][0].game.type).toBe('join')
-  expect(conn2.sendMessage.mock.calls[0][0].game.type).toBe('join')
+  expect(conn1.sendMessage.mock.calls[0][0].game.type).toEqual('join')
+  expect(conn2.sendMessage.mock.calls[0][0].game.type).toEqual('join')
 
   game.end()
+})
+
+it('sets the lobbyMembers ingame state to the gameid', () => {
+  const [, member1] = getLobbyMemberConnectionPair(EMPTY, user1)
+  const [, member2] = getLobbyMemberConnectionPair(EMPTY, user2)
+
+  const game = new Game([member1, member2])
+
+  expect(member1.state.currentGame).toEqual(game.id)
 })

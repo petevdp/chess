@@ -57,9 +57,10 @@ export class LobbyMember implements LobbyMemberInterface {
     })
   }
 
-  // joinGame(gameId: string, gameState$: ) {
+  joinGame(gameId: string) {
+    this.stateSubject.next({...this.state, currentGame: gameId})
+  }
 
-  // }
 
   get state () {
     return this.stateSubject.value

@@ -32,6 +32,7 @@ class Game {
     if (gameMembers.length !== 2) {
       throw new Error(`wrong number of players! should be: ${this.requiredPlayerCount}`)
     }
+    this.setLobbyMemberJoinedGameState(this.id, gameMembers)
 
     console.log('creating players');
     const gameUpdateSubject = new Subject<GameUpdate>()
@@ -74,6 +75,10 @@ class Game {
         winnerId: null
       }
     })
+  }
+
+  private setLobbyMemberJoinedGameState(id: string, members: LobbyMember[]) {
+    members.forEach(m => m.joinGame(id))
   }
 
   private createGameDetails (gameMembers: LobbyMember[]): GameDetails {
