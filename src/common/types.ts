@@ -66,12 +66,21 @@ export interface GameUpdate {
   end?: EndState;
 }
 
+export interface GameUpdateWithId extends GameUpdate {
+  id: string;
+}
+
 export interface ClientAction {
   type: ActionType;
   move?: ShortMove;
 }
+
+export interface GameSpecificMove extends ShortMove {
+  id: string;
+}
 export interface ClientPlayerAction extends ClientAction {
   playerId: string;
+  move?: GameSpecificMove;
 }
 
 export interface AuthPayload {
@@ -90,7 +99,8 @@ export interface GameDetails {
 }
 
 export interface CompleteGameInfo extends GameDetails {
-  history: string[];
+  // pgn
+  history: string;
 }
 export interface UserLogin {
   username: string;
@@ -129,7 +139,7 @@ export interface GameMessage {
   type: 'update' | 'join';
   update?: GameUpdate;
   // loadGamePartial?: CompleteGameInfo | CompleteGameInfo[];
-  joinGame?: CompleteGameInfo;
+  join?: CompleteGameInfo;
 }
 
 export interface SocketServerMessage {
