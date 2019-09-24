@@ -1,24 +1,22 @@
 import _ from 'lodash'
-import { Observable, merge, BehaviorSubject, of } from 'rxjs'
-import { filter, shareReplay, concatMap } from 'rxjs/operators'
-import { Colour, GameDetails, GameUpdate, CompleteGameInfo, DRAW_REASONS } from '../../common/types'
+import { Observable, merge, BehaviorSubject, of, Subject } from 'rxjs'
+import { filter, shareReplay, concatMap, first, takeWhile } from 'rxjs/operators'
+import { Colour, GameDetails, GameUpdate, CompleteGameInfo, DRAW_REASONS, DrawReason, UserDetails, PlayerDetails } from '../../common/types'
 import { Chess, ChessInstance, ShortMove } from 'chess.js'
 import uuidv4 from 'uuid/v4'
 import { Player, PlayerAction } from './player'
-import { HasDetailsObservable } from '../../common/helpers'
 import { LobbyMember } from './lobbyMember'
 
-export class Game implements HasDetailsObservable<GameDetails> {
+class Game {
   private players: Player[];
   id: string;
+  details: GameDetails
 
   // TODO make type for gamestate
-  gameDetails: GameDetails;
   gameUpdate$: Observable<GameUpdate>;
-  completeGameInfo$: BehaviorSubject<CompleteGameInfo | null>;
 
-  requiredPlayerCount = 2;
-
+  private requiredPlayerCount = 2;
+  private gameController$ = new Subject<GameUpdate>()
   private chess: ChessInstance;
 
   constructor (
@@ -27,62 +25,72 @@ export class Game implements HasDetailsObservable<GameDetails> {
     this.id = uuidv4()
     this.chess = new Chess()
 
-    const colours = _.shuffle(['b', 'w']) as Colour[]
+    this.details = this.createGameDetails(gameMembers)
 
     if (gameMembers.length !== 2) {
       throw new Error(`wrong number of players! should be: ${this.requiredPlayerCount}`)
     }
 
-    this.completeGameInfo$ = new BehaviorSubject(null)
-
-    this.players = _.zip(gameMembers, colours)
-      .map(([member, colour]) => new Player(
-        member.connection,
-        colour,
-        this.completeGameInfo$.asObservable()
-      ))
-
     this.gameUpdate$ = merge(
-      ...this.players.map(p => p.playerActionObservable)
+      ...this.players.map(p => p.playerAction$),
+      this.gameController$
     ).pipe(
       filter(this.validatePlayerAction),
       concatMap((action) => {
         const updates = this.getGameUpdatesFromPlayerAction(action)
         return of(...updates)
       }),
-      // take until and including an update ending the game.
-      // takeWhile(({ end }) => !end, true),
+      takeWhile(update => update.type !== 'end', true),
       shareReplay(1)
     )
 
-    this.gameDetails = {
-      playerDetails: this.players.map(({ details }) => details),
-      id: this.id
-    } as GameDetails
+    this.players = this.createPlayers(gameMembers, this.completeGameInfo)
+  }
 
-    this.completeGameInfo$.next({
-      ...this.completeGameInfo,
-      history: this.chess.history(),
-      state: this.chess.fen()
-    })
-
-    this.gameUpdate$.subscribe(update => {
-      this.players.forEach(p => p.updateGame(update))
-      this.completeGameInfo$.next({
-        ...this.completeGameInfo,
-        history: this.chess.history(),
-        state: this.chess.fen()
-      })
+  /**
+   * Ends the game notifying all clients
+   */
+  end () {
+    this.gameController$.next({
+      type: 'end',
+      end: {
+        reason: 'serverStoppedGame',
+        winnerId: null
+      }
     })
   }
 
+  private createGameDetails (gameMembers: LobbyMember[]): GameDetails {
+    const colours = _.shuffle(['b', 'w']) as Colour[]
+    const userDetails = gameMembers.map(member => member.userDetails)
+    const playerDetails: PlayerDetails[] = _.zip(userDetails, colours).map(([user, colour]) => ({
+      user, colour
+    }))
+
+    return {
+      playerDetails,
+      id: this.id
+    }
+  }
+
+  private createPlayers (
+    gameMembers: LobbyMember[],
+    completeGameInfo: CompleteGameInfo
+  ) {
+    return gameMembers.map(({ connection }) => (
+      new Player(
+        connection,
+        completeGameInfo,
+        this.gameUpdate$
+      )
+    ))
+  }
+
   get completeGameInfo () {
-    return this.completeGameInfo$.getValue() ||
-      {
-        ...this.gameDetails,
-        history: this.chess.history(),
-        state: this.chess.fen()
-      }
+    return {
+      ...this.details,
+      history: this.chess.pgn()
+    }
   }
 
   private findOpponent = (playerId: string) => {
@@ -157,12 +165,12 @@ export class Game implements HasDetailsObservable<GameDetails> {
       }
       return [endUpdate]
     }
-    // TODO add flagging and alternative rulesets
 
-    const determineDrawType = () => {
+    // TODO add flagging and alternative rulesets
+    const determineDrawType = (): DrawReason => {
       for (const reason in DRAW_REASONS) {
         if (this.chess[reason]()) {
-          return reason
+          return reason as DrawReason
         }
       }
       throw new Error('no draw reason')
@@ -178,3 +186,5 @@ export class Game implements HasDetailsObservable<GameDetails> {
     return updates
   }
 }
+
+export default Game

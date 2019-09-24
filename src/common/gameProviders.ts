@@ -89,9 +89,9 @@ export class GameClient {
 
     const respondToOpponentMove: Observable<ShortMove> = opponentMove$.pipe(
       concatMap(async (opponentMove) => {
-        console.log('opponent move')
         const chess = this.makeMoveIfValid(opponentMove)
         const clientMove = await getMove(chess)
+        console.log('made move: ', chess.ascii())
         this.makeMoveIfValid(clientMove)
         return clientMove
       })

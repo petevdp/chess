@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs'
-import { filter, map, tap } from 'rxjs/operators'
+import { filter, map, publish } from 'rxjs/operators'
 
 import { ClientConnection } from '../server/clientConnection'
 
@@ -15,34 +15,35 @@ export interface PlayerAction extends ClientPlayerAction {
   colour: Colour;
 }
 export class Player {
-  playerActionObservable: Observable<PlayerAction>;
-  ready: Promise<void>;
+  playerAction$: Observable<PlayerAction>
+  ready: Promise<void>
+  colour: Colour
 
   constructor (
     private connection: ClientConnection,
-    public colour: Colour,
-    completeGameInfo$: Observable<CompleteGameInfo>
+    completeGameInfo: CompleteGameInfo,
+    gameUpdate$: Observable<GameUpdate>
   ) {
-    this.playerActionObservable = connection.clientMessage$.pipe(
-      filter(msg => !!msg.makeMove),
-      map(({ makeMove }) => ({ ...makeMove, colour: this.colour }))
+    this.colour = completeGameInfo.playerDetails.find(p => p.user.id === this.user.id).colour
+
+    this.playerAction$ = connection.clientMessage$.pipe(
+      filter(msg => !!msg.gameAction),
+      map(({ gameAction }) => ({ ...gameAction, colour: this.colour }))
     )
 
-    console.log('hmm')
-    completeGameInfo$.pipe(
-      tap(i => {
-        console.log('i: ', i)
-      }),
-      filter(info => !!info)
-    ).subscribe({
-      next: info => {
-        if (!info) {
-          // return
+    gameUpdate$.subscribe({
+      next: update => connection.sendMessage({
+        game: {
+          type: 'update',
+          update: { ...update, id: completeGameInfo.id }
         }
-        // this.connection.sendMessage({
-        //   game: {
-        //   }
-        // })
+      })
+    })
+
+    connection.sendMessage({
+      game: {
+        type: 'join',
+        join: completeGameInfo
       }
     })
   }
@@ -53,18 +54,5 @@ export class Player {
 
   get id () {
     return this.user.id
-  }
-
-  get details (): PlayerDetails {
-    return {
-      user: this.user,
-      colour: this.colour
-    }
-  }
-
-  updateGame (gameUpdate: GameUpdate) {
-    this.connection.sendMessage({
-      game: { update: gameUpdate, type: 'update' }
-    })
   }
 }

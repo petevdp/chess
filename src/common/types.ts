@@ -21,12 +21,12 @@ export interface SessionDetails extends UserDetails {
 
 export type Colour = 'b' | 'w';
 
-export type drawReason =
+export type DrawReason =
   'in_stalemate'
   | 'in_threefold_repitition'
   | 'insufficient_material';
 
-export const DRAW_REASONS: drawReason[] = [
+export const DRAW_REASONS: DrawReason[] = [
   'in_stalemate',
   'in_threefold_repitition',
   'insufficient_material'
@@ -36,14 +36,16 @@ export type EndReason =
   'checkmate'
   | 'stalemate'
   | 'resign'
-  | 'disconnect'
-  | drawReason;
+  | 'clientDisconnect'
+  | 'serverStoppedGame'
+  | DrawReason;
 
 export const END_REASONS: EndReason[] = [
   ...DRAW_REASONS,
   'checkmate',
   'resign',
-  'disconnect'
+  'clientDisconnect',
+  'serverStoppedGame'
 ]
 
 export interface EndState {

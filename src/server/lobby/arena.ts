@@ -1,7 +1,7 @@
 import { LobbyMember } from './lobbyMember'
 import { Observable, merge, Subject } from 'rxjs'
 import { scan, map, mergeAll, filter } from 'rxjs/operators'
-import { Game } from './game'
+import Game from './game'
 import { sleep } from '../../common/helpers'
 
 interface UnmatchedState {

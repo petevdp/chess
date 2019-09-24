@@ -8,11 +8,13 @@ import { Chess } from 'chess.js'
 const moveUpdates: GameUpdateWithId[] = [
   {
     type: 'move',
-    move: { from: 'a2', to: 'a4' }
+    move: { from: 'a2', to: 'a4' },
+    id: 'game1'
   },
   {
     type: 'move',
-    move: { from: 'a7', to: 'a5' }
+    move: { from: 'a7', to: 'a5' },
+    id: 'game1'
   }
 ]
 
