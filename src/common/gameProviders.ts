@@ -1,6 +1,6 @@
 import { Observable, concat, EMPTY, from } from 'rxjs'
 import { ChessInstance, Chess, ShortMove } from 'chess.js'
-import { EndState, GameUpdate, ClientAction, CompleteGameInfo, UserDetails, Colour } from './types'
+import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour } from './types'
 import { map, filter, startWith, concatMap, tap } from 'rxjs/operators'
 import { routeBy } from './helpers'
 
@@ -9,7 +9,7 @@ export class GameStream {
   end$: Observable<EndState>
   private chess: ChessInstance
   constructor (
-    gameUpdate$: Observable<GameUpdate>,
+    gameUpdate$: Observable<GameUpdateWithId>,
     gameInfo: CompleteGameInfo
   ) {
     this.chess = new Chess()
@@ -46,7 +46,7 @@ export class GameClient {
   private colour: Colour
 
   constructor (
-    public gameUpdate$: Observable<GameUpdate>,
+    public gameUpdate$: Observable<GameUpdateWithId>,
     gameInfo: CompleteGameInfo,
     user: UserDetails,
     getMove: MoveMaker
@@ -107,12 +107,7 @@ export class GameClient {
 
   private makeMoveIfValid (move: ShortMove) {
     const out = this.chess.move(move)
-    console.log('out: ', out)
     if (!out) {
-      console.log(this.chess.ascii())
-      console.log('move: ', move)
-      console.log('turn: ', this.chess.turn())
-      console.log('colour: ', this.colour)
       throw new Error('invalid move')
     }
     return this.chess

@@ -1,11 +1,11 @@
-import { GameUpdate, CompleteGameInfo, UserDetails, PlayerDetails } from '../types'
+import { GameUpdateWithId, CompleteGameInfo, UserDetails, PlayerDetails } from '../types'
 import { GameStream, GameClient, MoveMaker } from '../gameProviders'
 import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { skip } from 'rxjs/operators'
 import { Chess } from 'chess.js'
 
-const moveUpdates: GameUpdate[] = [
+const moveUpdates: GameUpdateWithId[] = [
   {
     type: 'move',
     move: { from: 'a2', to: 'a4' }
@@ -44,7 +44,7 @@ const resignUpdate = {
     reason: 'resign',
     winnerId: 'player1'
   }
-} as GameUpdate
+} as GameUpdateWithId
 
 const newGame = (chess = new Chess()): CompleteGameInfo => ({
   id: 'game1',

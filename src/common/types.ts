@@ -78,9 +78,11 @@ export interface ClientAction {
 export interface GameSpecificMove extends ShortMove {
   id: string;
 }
+
 export interface ClientPlayerAction extends ClientAction {
   playerId: string;
-  move?: GameSpecificMove;
+  gameId: string;
+  move?: ShortMove;
 }
 
 export interface AuthPayload {
@@ -137,7 +139,7 @@ export interface MemberMessage {
 
 export interface GameMessage {
   type: 'update' | 'join';
-  update?: GameUpdate;
+  update?: GameUpdateWithId;
   // loadGamePartial?: CompleteGameInfo | CompleteGameInfo[];
   join?: CompleteGameInfo;
 }
@@ -148,5 +150,5 @@ export interface SocketServerMessage {
 }
 
 export interface SocketClientMessage {
-  makeMove?: ClientPlayerAction;
+  gameAction?: ClientPlayerAction;
 }
