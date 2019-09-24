@@ -12,6 +12,7 @@ import { ClientConnection } from '../server/clientConnection'
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
   colour: Colour;
+  playerId: string;
 }
 export class Player {
   playerAction$: Observable<PlayerAction>
@@ -26,10 +27,13 @@ export class Player {
 
     this.playerAction$ = connection.clientMessage$.pipe(
       filter(msg => !!msg.gameAction),
-      map(({ gameAction }) => ({
-        ...gameAction,
-        colour: this.colour
-      } as PlayerAction))
+      map(({ gameAction }) => {
+        return {
+          ...gameAction,
+          colour: this.colour,
+          playerId: this.id
+        } as PlayerAction
+      })
     )
 
     gameUpdate$.subscribe({

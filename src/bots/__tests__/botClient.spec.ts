@@ -63,7 +63,6 @@ it('can respond to a game update', done => {
   const expectedClientAction: ClientPlayerAction = {
     gameId: game1.id,
     type: 'move',
-    playerId: 'u2',
     move: expectedMove
   }
 

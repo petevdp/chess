@@ -34,4 +34,6 @@ it('sends joinGame messages to connections on instantiation', () => {
 
   expect(conn1.sendMessage.mock.calls[0].game.type).toBe('join')
   expect(conn2.sendMessage.mock.calls[0].game.type).toBe('join')
+
+  game.end()
 })

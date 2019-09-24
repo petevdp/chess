@@ -1,7 +1,8 @@
 import { getPlayerConnectionPair } from './helpers'
-import { CompleteGameInfo, UserDetails, PlayerDetails, SocketServerMessage, SocketClientMessage, GameUpdate } from '../../../common/types'
-import { Chess } from 'chess.js'
+import { CompleteGameInfo, UserDetails, PlayerDetails, SocketServerMessage, SocketClientMessage, GameUpdate, ClientPlayerAction } from '../../../common/types'
+import { Chess, ShortMove } from 'chess.js'
 import { EMPTY, Subject, of } from 'rxjs'
+import { PlayerAction } from '../player'
 
 const user1: UserDetails = {
   id: 'u1',
@@ -33,9 +34,14 @@ const game1: CompleteGameInfo = {
   history: new Chess().pgn()
 }
 
+const move1: ShortMove = {
+  from: 'a2',
+  to: 'a4'
+}
+
 const update1: GameUpdate = {
   type: 'move',
-  move: { from: 'a2', to: 'a4' }
+  move: move1
 }
 
 const updateMessage1: SocketServerMessage = {
@@ -46,6 +52,18 @@ const updateMessage1: SocketServerMessage = {
       ...update1
     }
   }
+}
+
+const clientPlayerAction1: ClientPlayerAction = {
+  type: 'move',
+  move: move1,
+  gameId: game1.id
+}
+
+const playerAction1: PlayerAction = {
+  ...clientPlayerAction1,
+  playerId: player1.user.id,
+  colour: player1.colour
 }
 
 it('sends join message to client on instantiation', () => {
@@ -60,8 +78,25 @@ it('sends join message to client on instantiation', () => {
 })
 
 it('sends update messages to client', () => {
-  const clientMessageSubject = new Subject<SocketClientMessage>()
-  const [conn] = getPlayerConnectionPair(clientMessageSubject, of(update1), game1, user1)
+  const [conn] = getPlayerConnectionPair(EMPTY, of(update1), game1, user2)
 
   expect(conn.sendMessage).toHaveBeenCalledWith(updateMessage1 as SocketServerMessage)
+})
+
+it('receives actions from client', done => {
+  const clientMessage$ = new Subject<SocketClientMessage>()
+
+  const message: SocketClientMessage = {
+    gameAction: clientPlayerAction1
+  }
+
+  const [, player] = getPlayerConnectionPair(clientMessage$, EMPTY, game1, user1)
+  player.playerAction$.subscribe({
+    next: action => {
+      expect(action).toEqual(playerAction1)
+      done()
+    }
+  })
+
+  clientMessage$.next(message)
 })

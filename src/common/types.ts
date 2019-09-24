@@ -82,7 +82,6 @@ export interface GameSpecificMove extends ShortMove {
 }
 
 export interface ClientPlayerAction extends ClientAction {
-  playerId: string;
   gameId: string;
   move?: ShortMove;
 }
