@@ -37,7 +37,7 @@ const player2: PlayerDetails = {
 const game1: CompleteGameInfo = {
   id: 'game1',
   playerDetails: [player1, player2],
-  history: new Chess().pgn()
+  pgn: new Chess().pgn()
 }
 
 const joinGameMsg: SocketServerMessage = {

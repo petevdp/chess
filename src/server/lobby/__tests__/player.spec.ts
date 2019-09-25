@@ -8,7 +8,7 @@ import { moves, playerDetails } from '../../../common/dummyData'
 const game1: CompleteGameInfo = {
   id: 'game1',
   playerDetails: playerDetails.slice(0, 2),
-  history: new Chess().pgn()
+  pgn: new Chess().pgn()
 }
 
 const update1: GameUpdate = {

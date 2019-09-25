@@ -26,7 +26,7 @@ class Game {
   private gameController$ = new Subject<GameUpdate>()
   private chess: ChessInstance
 
-  constructor (gameMembers: LobbyMember[]) {
+  constructor (gameMembers: [LobbyMember, Colour][]) {
     console.log('new game')
 
     this.id = uuidv4()
@@ -39,7 +39,7 @@ class Game {
         `wrong number of players! should be: ${this.requiredPlayerCount}`
       )
     }
-    this.setLobbyMemberJoinedGameState(this.id, gameMembers)
+    this.setLobbyMemberJoinedGameState(this.id, gameMembers.map(m => m[0]))
 
     console.log('creating players')
     const gameUpdateSubject = new Subject<GameUpdate>()
@@ -54,7 +54,6 @@ class Game {
       ...this.players.map((p) => p.playerAction$)
     ).pipe(
       filter(this.validatePlayerAction),
-      tap(() => 'about to concat'),
       concatMap((action) => {
         const updates = this.getGameUpdatesFromPlayerAction(action)
         return from(updates)
@@ -68,7 +67,6 @@ class Game {
         shareReplay(1)
       )
       .subscribe(gameUpdateSubject)
-    console.log('we got here')
 
     this.gameUpdate$ = gameUpdateSubject.asObservable()
   }
@@ -90,13 +88,13 @@ class Game {
     members.forEach((m) => m.joinGame(id))
   }
 
-  private createGameDetails (gameMembers: LobbyMember[]): GameDetails {
-    const colours = _.shuffle(['b', 'w']) as Colour[]
-    const userDetails = gameMembers.map((member) => member.userDetails)
-    const playerDetails = _.zip(userDetails, colours).map(([user, colour]) => ({
-      user,
+  private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameDetails {
+    // const colours = _.shuffle(['b', 'w']) as Colour[]
+    // const userDetails = gameMembers.map((member) => member.userDetails)
+    const playerDetails: PlayerDetails[] = gameMembers.map(([member, colour]) => ({
+      user: member.connection.user,
       colour
-    })) as PlayerDetails[]
+    }))
 
     return {
       playerDetails,
@@ -105,19 +103,19 @@ class Game {
   }
 
   private createPlayers (
-    gameMembers: LobbyMember[],
+    gameMembers: [LobbyMember, Colour][],
     completeGameInfo: CompleteGameInfo,
     gameUpdate$: Observable<GameUpdate>
   ) {
     return gameMembers.map(
-      ({ connection }) => new Player(connection, completeGameInfo, gameUpdate$)
+      ([{ connection }, colour]) => new Player(connection, completeGameInfo, gameUpdate$, colour)
     )
   }
 
-  get completeGameInfo () {
+  get completeGameInfo (): CompleteGameInfo {
     return {
       ...this.details,
-      history: this.chess.pgn()
+      pgn: this.chess.pgn()
     }
   }
 
@@ -127,8 +125,8 @@ class Game {
 
   private validateMove (move: Move, colour: Colour) {
     return (
-      this.chess.turn() !== colour &&
-      this.chess.moves().includes(move.san)
+      this.chess.turn() !== colour
+      && this.chess.moves().includes(move.san)
     )
   }
 
@@ -186,7 +184,7 @@ class Game {
 
     const player = this.players.find((p) => p.id === playerId)
     console.log(
-      `move made by ${player.user.username}: ${
+      `move made by ${player && player.user.username}: ${
         this.chess.history()[this.chess.history().length - 1]
       }`
     )
@@ -215,11 +213,15 @@ class Game {
         ['in_stalemate', this.chess.in_stalemate()],
         ['in_threefold_repetition', this.chess.in_threefold_repetition()],
         ['insufficient_material', this.chess.insufficient_material()]
+        // ['', this.chess.game_over]
       ]
       const reason = reasons.find((r) => r[1])
+      console.log('draw: ', this.chess.in_draw())
+      console.log('reason: ', reason)
       if (!reason) {
-        throw new Error("reason not valid draw, but isn't")
+        throw new Error(`reason not valid draw, but isn't: ${reasons}`)
       }
+
       return reason[0]
     }
     // must be draw

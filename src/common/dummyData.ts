@@ -58,7 +58,7 @@ export const games = [
 export const fullGame: CompleteGameInfo = {
   id: 'casualGame',
   playerDetails: playerDetails,
-  history: ['[Event "Casual Game"]',
+  pgn: ['[Event "Casual Game"]',
     '[Site "Berlin GER"]',
     '[Date "1852.??.??"]',
     '[EventDate "?"]',

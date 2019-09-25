@@ -52,7 +52,9 @@ export class BotClient {
           filter(({ id }) => id === info.id),
           takeWhile((update) => update.type !== 'end')
         )
-        new GameClient(gameUpdate$, info, user, engine).action$.subscribe({
+        const gameClient = new GameClient(gameUpdate$, info, user, engine)
+
+        gameClient.action$.subscribe({
           next: (action) => {
             sendMessageToServer({
               gameAction: {
@@ -61,6 +63,10 @@ export class BotClient {
               }
             })
           }
+        })
+
+        gameClient.endPromise.then(state => {
+          console.log('endstate: ', state)
         })
       }
     })

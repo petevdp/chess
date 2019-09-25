@@ -55,7 +55,7 @@ const newGameInfo = (chess = new Chess()): CompleteGameInfo => ({
   playerDetails: [
     player1, player2
   ],
-  history: chess.pgn()
+  pgn: chess.pgn()
 })
 
 describe('GameStream', () => {

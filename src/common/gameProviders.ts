@@ -13,7 +13,7 @@ export class GameStream {
     gameInfo: CompleteGameInfo
   ) {
     this.chess = new Chess()
-    this.chess.load_pgn(gameInfo.history)
+    this.chess.load_pgn(gameInfo.pgn)
     this.move$ = gameUpdate$.pipe(
       routeBy<Move>('move'),
       map((move) => {
@@ -53,7 +53,7 @@ export class GameClient {
   ) {
     // const { history } = gameInfo
     this.chess = new Chess()
-    this.chess.load_pgn(gameInfo.history)
+    this.chess.load_pgn(gameInfo.pgn)
 
     this.colour = this.getColour(user, gameInfo)
 
