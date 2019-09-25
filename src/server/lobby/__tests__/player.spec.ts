@@ -1,47 +1,19 @@
 import { getPlayerConnectionPair } from './helpers'
-import { CompleteGameInfo, UserDetails, PlayerDetails, SocketServerMessage, SocketClientMessage, GameUpdate, ClientPlayerAction } from '../../../common/types'
-import { Chess, ShortMove } from 'chess.js'
+import { CompleteGameInfo, SocketServerMessage, SocketClientMessage, GameUpdate, ClientPlayerAction } from '../../../common/types'
+import { Chess } from 'chess.js'
 import { EMPTY, Subject, of } from 'rxjs'
 import { PlayerAction } from '../player'
-
-const user1: UserDetails = {
-  id: 'u1',
-  username: 'user1',
-  type: 'bot'
-}
-
-const player1: PlayerDetails = {
-  user: user1,
-  colour: 'w'
-}
-
-const user2: UserDetails = {
-  id: 'u2',
-  username: 'user2',
-  type: 'bot'
-}
-
-const player2: PlayerDetails = {
-  user: user2,
-  colour: 'b'
-}
+import { moves, playerDetails } from '../../../common/dummyData'
 
 const game1: CompleteGameInfo = {
   id: 'game1',
-  playerDetails: [
-    player1, player2
-  ],
+  playerDetails: playerDetails.slice(0, 2),
   history: new Chess().pgn()
-}
-
-const move1: ShortMove = {
-  from: 'a2',
-  to: 'a4'
 }
 
 const update1: GameUpdate = {
   type: 'move',
-  move: move1
+  move: moves[0]
 }
 
 const updateMessage1: SocketServerMessage = {
@@ -56,18 +28,18 @@ const updateMessage1: SocketServerMessage = {
 
 const clientPlayerAction1: ClientPlayerAction = {
   type: 'move',
-  move: move1,
+  move: moves[0],
   gameId: game1.id
 }
 
 const playerAction1: PlayerAction = {
   ...clientPlayerAction1,
-  playerId: player1.user.id,
-  colour: player1.colour
+  playerId: playerDetails[0].user.id,
+  colour: playerDetails[0].colour
 }
 
 it('sends join message to client on instantiation', () => {
-  const [conn] = getPlayerConnectionPair(EMPTY, EMPTY, game1, user1)
+  const [conn] = getPlayerConnectionPair(EMPTY, EMPTY, game1, playerDetails[0])
 
   expect(conn.sendMessage).toHaveBeenCalledWith({
     game: {
@@ -78,7 +50,7 @@ it('sends join message to client on instantiation', () => {
 })
 
 it('sends update messages to client', () => {
-  const [conn] = getPlayerConnectionPair(EMPTY, of(update1), game1, user2)
+  const [conn] = getPlayerConnectionPair(EMPTY, of(update1), game1, game1.playerDetails[1])
 
   expect(conn.sendMessage).toHaveBeenCalledWith(updateMessage1 as SocketServerMessage)
 })
@@ -90,7 +62,7 @@ it('receives actions from client', done => {
     gameAction: clientPlayerAction1
   }
 
-  const [, player] = getPlayerConnectionPair(clientMessage$, EMPTY, game1, user1)
+  const [, player] = getPlayerConnectionPair(clientMessage$, EMPTY, game1, playerDetails[0])
   player.playerAction$.subscribe({
     next: action => {
       expect(action).toEqual(playerAction1)

@@ -5,8 +5,7 @@ import {
   ClientPlayerAction,
   Colour,
   GameUpdate,
-  CompleteGameInfo,
-  UserDetails
+  CompleteGameInfo
 } from '../../common/types'
 import { ClientConnection } from '../server/clientConnection'
 // has one game associated with it.
@@ -16,15 +15,14 @@ export interface PlayerAction extends ClientPlayerAction {
 }
 export class Player {
   playerAction$: Observable<PlayerAction>
-  colour: Colour
 
   constructor (
     private connection: ClientConnection,
     completeGameInfo: CompleteGameInfo,
-    gameUpdate$: Observable<GameUpdate>
+    gameUpdate$: Observable<GameUpdate>,
+    public colour: Colour
   ) {
-    console.log('new player!');
-    this.colour = this.getColour(completeGameInfo, connection.user)
+    console.log('new player!')
 
     this.playerAction$ = connection.clientMessage$.pipe(
       filter(msg => !!msg.gameAction),
@@ -52,15 +50,6 @@ export class Player {
         join: completeGameInfo
       }
     })
-  }
-
-  private getColour (completeGameInfo: CompleteGameInfo, user: UserDetails) {
-    const { playerDetails } = completeGameInfo
-    const player = playerDetails.find(p => p.user.id === user.id)
-    if (!player) {
-      throw new Error('can\'t find player!')
-    }
-    return player.colour
   }
 
   get user () {
