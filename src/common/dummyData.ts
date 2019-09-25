@@ -1,7 +1,8 @@
 // dummy data for tsts
 
-import { UserDetails, PlayerDetails, GameUpdateWithId, CompleteGameInfo } from "./types"
+import { UserDetails, PlayerDetails, GameUpdateWithId, CompleteGameInfo, SocketClientMessage } from "./types"
 import { Chess, Move } from "chess.js"
+import { Subject, from } from "rxjs"
 
 export const userDetails: UserDetails[] = [
   {
@@ -54,6 +55,34 @@ export const games = [
     history: new Chess().pgn()
   }
 ]
+
+const newClientMessage = (move: Move, gameId: string): SocketClientMessage => ({
+  gameAction: {
+    gameId,
+    type: 'move',
+    move
+  }
+})
+
+/*
+* Simulates a game as messages on the provided subjects.
+*/
+export function simulatePlayerActions (
+  pgn: string,
+  gameId: string,
+  white$: Subject<SocketClientMessage>,
+  black$: Subject<SocketClientMessage>
+) {
+  const chess = new Chess()
+  chess.load_pgn(pgn)
+
+  from(chess.history({ verbose: true })).subscribe(move => {
+    const message = newClientMessage(move, gameId)
+    move.color === 'w'
+      ? white$.next(message)
+      : black$.next(message)
+  })
+}
 
 export const fullGame: CompleteGameInfo = {
   id: 'casualGame',

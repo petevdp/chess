@@ -24,6 +24,7 @@ export type Colour = 'b' | 'w';
 export type DrawReason =
   'in_stalemate'
   | 'in_threefold_repetition'
+  | '50_move_rule'
   | 'insufficient_material';
 
 export const DRAW_REASONS: Array<keyof ChessInstance> = [
