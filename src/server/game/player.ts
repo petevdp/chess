@@ -44,6 +44,10 @@ export class Player {
       })
     })
 
+    gameUpdate$.subscribe(update => {
+      console.log('sending update', update)
+    })
+
     connection.sendMessage({
       game: {
         type: 'join',

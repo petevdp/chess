@@ -3,7 +3,7 @@ import { SocketClientMessage, GameUpdate, CompleteGameInfo, PlayerDetails } from
 import { MockClientConnection } from "../../server/__mocks__/clientConnection"
 import { Player } from "../player"
 import { ClientConnection } from "../../server/clientConnection"
-import { Chess } from "chess.js"
+import { Chess, Move } from "chess.js"
 import { newClientMessage } from "../../../common/dummyData"
 
 export function getPlayerConnectionPair (
@@ -48,4 +48,10 @@ export function simulatePlayerActions (
       ? white$.next(message)
       : black$.next(message)
   })
+}
+
+export function replayChessHistory (history: Move[]) {
+  const chess = new Chess()
+  history.forEach(move => chess.move(move))
+  return chess
 }

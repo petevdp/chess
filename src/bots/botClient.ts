@@ -50,7 +50,7 @@ export class BotClient {
         const gameUpdate$ = gameMessage$.pipe(
           routeBy<GameUpdateWithId>('update'),
           filter(({ id }) => id === info.id),
-          takeWhile((update) => update.type !== 'end')
+          takeWhile((update) => update.type !== 'end', true)
         )
         const gameClient = new GameClient(gameUpdate$, info, user, engine)
 

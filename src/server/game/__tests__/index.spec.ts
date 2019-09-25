@@ -2,8 +2,9 @@ import { SocketClientMessage } from "../../../common/types"
 import { getLobbyMemberConnectionPair } from "../../lobby/__tests__/helpers"
 import { EMPTY, Subject } from "rxjs"
 import Game from ".."
-import { fullGame, userDetails, simulatePlayerActions } from "../../../common/dummyData"
+import { userDetails, allgameInfo } from "../../../common/dummyData"
 import { last } from "rxjs/operators"
+import { simulatePlayerActions } from "./helpers"
 
 it('sends joinGame messages to connections on instantiation', () => {
   const [conn1, member1] = getLobbyMemberConnectionPair(EMPTY, userDetails[0])
@@ -34,6 +35,7 @@ it('outputs a reason for the game ending when the game is over on the board', do
   const [, member2] = getLobbyMemberConnectionPair(connSubject2, userDetails[1])
 
   const game = new Game([[member1, 'w'], [member2, 'b']])
+  const gameInfo = allgameInfo.checkmateGame
 
   game.gameUpdate$.pipe(last()).subscribe(update => {
     console.log(update)
@@ -45,5 +47,5 @@ it('outputs a reason for the game ending when the game is over on the board', do
     console.log('update: ', u)
   })
 
-  simulatePlayerActions(fullGame.pgn, fullGame.id, connSubject1, connSubject2)
+  simulatePlayerActions(gameInfo.pgn, gameInfo.id, connSubject1, connSubject2)
 })

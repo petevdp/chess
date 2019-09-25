@@ -1,4 +1,4 @@
-import { ChessInstance, Move } from "chess.js"
+import { ChessInstance, Move, Chess } from "chess.js"
 import { DrawReason, Colour, GameUpdate, PlayerDetails } from "../../common/types"
 import { PlayerAction } from "./player"
 
@@ -12,6 +12,18 @@ function validateMove (move: Move, colour: Colour, chess: ChessInstance) {
 function validatePlayerAction ({ move, colour }: PlayerAction, chess: ChessInstance) {
   // TODO add more sophisticated validation for other player actions
   return !move || !validateMove(move, colour, chess)
+}
+
+function duplicateGame (chess: ChessInstance) {
+  if (chess.history().length === 0) {
+    return new Chess()
+  }
+  const tmpChess = new Chess()
+  const loaded = tmpChess.load_pgn(chess.pgn())
+  if (!loaded) {
+    throw new Error('bad pgn')
+  }
+  return tmpChess
 }
 
 function determineDrawType (chess: ChessInstance): DrawReason {
@@ -87,17 +99,12 @@ export function getGameUpdatesFromPlayerAction (
     throw new Error('malformed update: move is defined with type move')
   }
 
-  const player = playerDetails.find(p => p.user.id === playerId)
-  console.log(
-      `move made by ${player && player.user.username}: ${
-        move
-      }`
-  )
-  console.log(chess.ascii())
+  const chessCopy = duplicateGame(chess)
+  chessCopy.move(move)
 
   updates.push({ type: 'move', move })
 
-  if (!chess.game_over()) {
+  if (!chessCopy.game_over()) {
     return updates
   }
 
@@ -107,7 +114,7 @@ export function getGameUpdatesFromPlayerAction (
   } as GameUpdate
   updates.push(endUpdate)
 
-  if (chess.in_checkmate()) {
+  if (chessCopy.in_checkmate()) {
     endUpdate.end = {
       winnerId: playerId,
       reason: 'checkmate'
@@ -119,8 +126,10 @@ export function getGameUpdatesFromPlayerAction (
   // must be draw
   endUpdate.end = {
     winnerId: null,
-    reason: determineDrawType(chess)
+    reason: determineDrawType(chessCopy)
   }
 
   return updates
 }
+
+console.log(duplicateGame(new Chess()))
