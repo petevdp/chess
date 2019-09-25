@@ -36,12 +36,14 @@ it('outputs a reason for the game ending when the game is over on the board', do
   const game = new Game([[member1, 'w'], [member2, 'b']])
 
   game.gameUpdate$.pipe(last()).subscribe(update => {
+    console.log(update)
     expect(update.type === 'end')
     done()
   })
+
+  game.gameUpdate$.subscribe(u => {
+    console.log('update: ', u)
+  })
+
   simulatePlayerActions(fullGame.pgn, fullGame.id, connSubject1, connSubject2)
 })
-
-// describe('getGameUpdatesFromPlayerAction', () => {
-//   it('correctly interprets')
-// })

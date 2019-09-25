@@ -2,7 +2,6 @@
 
 import { UserDetails, PlayerDetails, GameUpdateWithId, CompleteGameInfo, SocketClientMessage } from "./types"
 import { Chess, Move } from "chess.js"
-import { Subject, from } from "rxjs"
 
 export const userDetails: UserDetails[] = [
   {
@@ -17,7 +16,7 @@ export const userDetails: UserDetails[] = [
   }
 ]
 
-export const playerDetails: PlayerDetails[] = [
+export const allPlayerDetails: PlayerDetails[] = [
   {
     user: userDetails[0],
     colour: 'w'
@@ -51,12 +50,12 @@ export const moveUpdates: GameUpdateWithId[] = [
 export const games = [
   {
     id: 'game1',
-    playerDetails,
+    playerDetails: allPlayerDetails,
     history: new Chess().pgn()
   }
 ]
 
-const newClientMessage = (move: Move, gameId: string): SocketClientMessage => ({
+export const newClientMessage = (move: Move, gameId: string): SocketClientMessage => ({
   gameAction: {
     gameId,
     type: 'move',
@@ -64,29 +63,9 @@ const newClientMessage = (move: Move, gameId: string): SocketClientMessage => ({
   }
 })
 
-/*
-* Simulates a game as messages on the provided subjects.
-*/
-export function simulatePlayerActions (
-  pgn: string,
-  gameId: string,
-  white$: Subject<SocketClientMessage>,
-  black$: Subject<SocketClientMessage>
-) {
-  const chess = new Chess()
-  chess.load_pgn(pgn)
-
-  from(chess.history({ verbose: true })).subscribe(move => {
-    const message = newClientMessage(move, gameId)
-    move.color === 'w'
-      ? white$.next(message)
-      : black$.next(message)
-  })
-}
-
 export const fullGame: CompleteGameInfo = {
   id: 'casualGame',
-  playerDetails: playerDetails,
+  playerDetails: allPlayerDetails,
   pgn: ['[Event "Casual Game"]',
     '[Site "Berlin GER"]',
     '[Date "1852.??.??"]',

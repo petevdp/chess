@@ -9,10 +9,10 @@ import {
 } from '../../common/types'
 import { Chess, ChessInstance } from 'chess.js'
 import uuidv4 from 'uuid/v4'
-import { Player } from './__tests__/player'
+import { Player } from './player'
 import { LobbyMember } from '../lobby/lobbyMember'
 import { getGameUpdatesFromPlayerAction } from './rules'
-import { playerDetails } from '../../common/dummyData'
+import { allPlayerDetails } from '../../common/dummyData'
 
 class Game {
   private players: Player[]
@@ -56,7 +56,7 @@ class Game {
       concatMap((action) => {
         let updates: GameUpdate[]
         try {
-          updates = getGameUpdatesFromPlayerAction(action, this.chess, playerDetails)
+          updates = getGameUpdatesFromPlayerAction(action, this.chess, allPlayerDetails)
         } catch (error) {
           console.log('error: ', error)
           throw new Error('oh no')

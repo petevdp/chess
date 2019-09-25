@@ -1,6 +1,6 @@
 import { ChessInstance, Move } from "chess.js"
 import { DrawReason, Colour, GameUpdate, PlayerDetails } from "../../common/types"
-import { PlayerAction } from "./__tests__/player"
+import { PlayerAction } from "./player"
 
 function validateMove (move: Move, colour: Colour, chess: ChessInstance) {
   return (

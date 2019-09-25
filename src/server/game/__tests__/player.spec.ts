@@ -1,13 +1,13 @@
-import { getPlayerConnectionPair } from '../../lobby/__tests__/helpers'
 import { CompleteGameInfo, SocketServerMessage, SocketClientMessage, GameUpdate, ClientPlayerAction } from '../../../common/types'
 import { Chess } from 'chess.js'
 import { EMPTY, Subject, of } from 'rxjs'
-import { PlayerAction } from './player'
-import { moves, playerDetails } from '../../../common/dummyData'
+import { PlayerAction } from '../player'
+import { moves, allPlayerDetails } from '../../../common/dummyData'
+import { getPlayerConnectionPair } from './helpers'
 
 const game1: CompleteGameInfo = {
   id: 'game1',
-  playerDetails: playerDetails.slice(0, 2),
+  playerDetails: allPlayerDetails.slice(0, 2),
   pgn: new Chess().pgn()
 }
 
@@ -34,12 +34,12 @@ const clientPlayerAction1: ClientPlayerAction = {
 
 const playerAction1: PlayerAction = {
   ...clientPlayerAction1,
-  playerId: playerDetails[0].user.id,
-  colour: playerDetails[0].colour
+  playerId: allPlayerDetails[0].user.id,
+  colour: allPlayerDetails[0].colour
 }
 
 it('sends join message to client on instantiation', () => {
-  const [conn] = getPlayerConnectionPair(EMPTY, EMPTY, game1, playerDetails[0])
+  const [conn] = getPlayerConnectionPair(EMPTY, EMPTY, game1, allPlayerDetails[0])
 
   expect(conn.sendMessage).toHaveBeenCalledWith({
     game: {
@@ -62,7 +62,7 @@ it('receives actions from client', done => {
     gameAction: clientPlayerAction1
   }
 
-  const [, player] = getPlayerConnectionPair(clientMessage$, EMPTY, game1, playerDetails[0])
+  const [, player] = getPlayerConnectionPair(clientMessage$, EMPTY, game1, allPlayerDetails[0])
   player.playerAction$.subscribe({
     next: action => {
       expect(action).toEqual(playerAction1)
