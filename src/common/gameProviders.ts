@@ -1,5 +1,5 @@
 import { Observable, concat, EMPTY, from } from 'rxjs'
-import { ChessInstance, Chess, ShortMove } from 'chess.js'
+import { ChessInstance, Chess, Move } from 'chess.js'
 import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour } from './types'
 import { map, filter, startWith, concatMap, tap } from 'rxjs/operators'
 import { routeBy } from './helpers'
@@ -16,7 +16,7 @@ export class GameStream {
     this.chess.load_pgn(gameInfo.history)
 
     this.move$ = gameUpdate$.pipe(
-      routeBy<ShortMove>('move'),
+      routeBy<Move>('move'),
       map((move) => {
         const out = this.chess.move(move)
         if (!out) {
@@ -33,11 +33,12 @@ export class GameStream {
 
 // signature for function which can make moves for the client.
 // Make sure this funciton doesn't modify the ChessInstance it's passed.
-export type MoveMaker = (chess: ChessInstance) => Promise<ShortMove>
+export type MoveMaker = (chess: ChessInstance) => Promise<Move>
 
 export interface ClientActionProvider {
   getMove: MoveMaker;
 }
+
 export class GameClient {
   private chess: ChessInstance
 
@@ -59,7 +60,8 @@ export class GameClient {
     this.action$ = this.makeClientMoveObservable(
       gameUpdate$.pipe(
         filter(update => update.type === 'move'),
-        map(({ move }) => move as ShortMove)
+        map(({ move }) => move as Move),
+        filter(move => this.chess.turn() === move.color)
       ),
       getMove
     )
@@ -80,36 +82,48 @@ export class GameClient {
   }
 
   private makeClientMoveObservable (
-    opponentMove$: Observable<ShortMove>,
+    opponentMove$: Observable<Move>,
     getMove: MoveMaker
   ) {
     const moveIfStarting = this.colour === this.chess.turn()
       ? from(getMove(this.chess))
       : EMPTY
 
-    const respondToOpponentMove: Observable<ShortMove> = opponentMove$.pipe(
+    const respondToOpponentMove: Observable<Move> = opponentMove$.pipe(
       concatMap(async (opponentMove) => {
+        console.log('opponent move')
         const chess = this.makeMoveIfValid(opponentMove)
+
+        console.log('my move')
         const clientMove = await getMove(chess)
-        console.log('made move: ', chess.ascii())
         this.makeMoveIfValid(clientMove)
         return clientMove
       })
     )
 
-    const moveToAction = map((move: ShortMove): ClientAction => ({ type: 'move', move }))
+    moveIfStarting.subscribe(move => this.makeMoveIfValid(move))
+
+    const moveToAction = map((move: Move): ClientAction => ({ type: 'move', move }))
 
     return concat(
-      moveIfStarting.pipe(moveToAction),
+      moveIfStarting.pipe(
+        moveToAction,
+        tap(move => console.log('made starting move: ', move))
+      ),
       respondToOpponentMove.pipe(moveToAction)
     )
   }
 
-  private makeMoveIfValid (move: ShortMove) {
+  private makeMoveIfValid (move: Move) {
     const out = this.chess.move(move)
+    console.log('turn: ', this.chess.turn())
+
     if (!out) {
-      throw new Error('invalid move')
+      throw new Error(`invalid move: ${move.to}\n${this.chess.ascii()}`)
     }
+    console.log('move made: ', move)
+    console.log(this.chess.ascii())
+
     return this.chess
   }
 }

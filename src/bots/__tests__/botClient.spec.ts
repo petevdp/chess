@@ -1,8 +1,16 @@
-import { SocketClientMessage, SocketServerMessage, CompleteGameInfo, PlayerDetails, UserDetails, ClientPlayerAction } from "../../common/types"
-import { Chess, ShortMove } from "chess.js"
-import { BotClient } from "../botClient"
-import { MoveMaker } from "../../common/gameProviders"
-import { from } from "rxjs"
+import {
+  SocketClientMessage,
+  SocketServerMessage,
+  CompleteGameInfo,
+  PlayerDetails,
+  UserDetails,
+  ClientPlayerAction
+} from '../../common/types'
+import { Chess } from 'chess.js'
+import { BotClient } from '../botClient'
+import { MoveMaker } from '../../common/gameProviders'
+import { from } from 'rxjs'
+import { moveUpdates, moves } from '../../common/dummyData'
 
 const user1: UserDetails = {
   id: 'u1',
@@ -28,9 +36,7 @@ const player2: PlayerDetails = {
 
 const game1: CompleteGameInfo = {
   id: 'game1',
-  playerDetails: [
-    player1, player2
-  ],
+  playerDetails: [player1, player2],
   history: new Chess().pgn()
 }
 
@@ -41,43 +47,29 @@ const joinGameMsg: SocketServerMessage = {
   }
 }
 
-it('can respond to a game update', done => {
-  const move: ShortMove = {
-    from: 'e2',
-    to: 'e4'
-  }
-
+it('can respond to a game update', (done) => {
   const gameUpdateMessage: SocketServerMessage = {
     game: {
       type: 'update',
-      update: {
-        id: game1.id,
-        type: 'move',
-        move
-      }
+      update: moveUpdates[0]
     }
   }
 
   const message$ = from([joinGameMsg, gameUpdateMessage])
-  const expectedMove: ShortMove = { from: 'e7', to: 'e5' }
+  const expectedMove = moves[1]
   const expectedClientAction: ClientPlayerAction = {
     gameId: game1.id,
     type: 'move',
     move: expectedMove
   }
 
-  const engine: MoveMaker = async () => (expectedMove)
+  const engine: MoveMaker = async () => expectedMove
   const response = (msg: SocketClientMessage) => {
     expect(msg.gameAction).toEqual(expectedClientAction)
     done()
   }
 
-  const client = new BotClient(
-    user2,
-    message$,
-    response,
-    engine
-  )
+  const client = new BotClient(user2, message$, response, engine)
 
   client.disconnect()
 })

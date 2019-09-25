@@ -3,17 +3,18 @@ import { GameStream, GameClient, MoveMaker } from '../gameProviders'
 import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { skip } from 'rxjs/operators'
-import { Chess } from 'chess.js'
+import { Chess, Move } from 'chess.js'
 
+const chess = new Chess()
 const moveUpdates: GameUpdateWithId[] = [
   {
     type: 'move',
-    move: { from: 'a2', to: 'a4' },
+    move: chess.move('a4') as Move,
     id: 'game1'
   },
   {
     type: 'move',
-    move: { from: 'a7', to: 'a5' },
+    move: chess.move('a5') as Move,
     id: 'game1'
   }
 ]
@@ -155,6 +156,13 @@ describe('GameClient', () => {
         }
       })
     })
+  })
+
+  describe('clientActions', () => {
+    it('only emits actions from player', done => {
+      const client = new GameClient(
+      )
+    }
   })
 
   describe('endPromise', () => {

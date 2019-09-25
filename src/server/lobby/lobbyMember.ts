@@ -2,16 +2,16 @@ import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
 import { LobbyMemberDetails, UserDetails } from '../../common/types'
-import { HasDetailsObservable } from '../../common/helpers'
 interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
 }
 
-export interface LobbyMemberInterface extends HasDetailsObservable<LobbyMemberDetails> {
-  userDetails: UserDetails;
-  details$: Observable<LobbyMemberDetails>;
+export interface LobbyMemberInterface {
+  details: LobbyMemberDetails;
+  update$: Observable<LobbyMember|null>;
   connection: ClientConnectionInterface;
+  userDetails: UserDetails;
 
   // updateGamePartial: (update: GameUpdate) => void;
   // loadGamePartials: (info: CompleteGameInfo[]) => void;
@@ -19,9 +19,8 @@ export interface LobbyMemberInterface extends HasDetailsObservable<LobbyMemberDe
   // spectateGame: (id: string) => Promise<boolean>
 }
 
-// TODO: switch from socket.io to bare ws + observables.
 export class LobbyMember implements LobbyMemberInterface {
-  details$: Observable<LobbyMemberDetails>;
+  update$: Observable<LobbyMember|null>;
 
   private stateSubject: BehaviorSubject<MemberState>;
 
@@ -30,20 +29,25 @@ export class LobbyMember implements LobbyMemberInterface {
 
     this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false } as MemberState)
 
-    this.details$ = this.stateSubject.pipe(map((memberState: MemberState) => ({
-      ...memberState,
-      ...this.userDetails
-    })))
+    this.update$ = this.stateSubject.pipe(map(state => {
+      if (state.leftLobby) {
+        return null
+      }
+      return this
+    }))
 
     clientMessage$.subscribe({
       complete: () => {
         this.stateSubject.next({ ...this.state, leftLobby: true })
+        this.stateSubject.complete()
       }
     })
   }
 
   resolveMatchedOrDisconnected () {
     return new Promise<void>(resolve => {
+      console.log('currentGame: ', this.state.currentGame)
+
       if (this.state.currentGame) {
         return resolve()
       }
@@ -57,10 +61,9 @@ export class LobbyMember implements LobbyMemberInterface {
     })
   }
 
-  joinGame(gameId: string) {
-    this.stateSubject.next({...this.state, currentGame: gameId})
+  joinGame (gameId: string) {
+    this.stateSubject.next({ ...this.state, currentGame: gameId })
   }
-
 
   get state () {
     return this.stateSubject.value
@@ -68,6 +71,13 @@ export class LobbyMember implements LobbyMemberInterface {
 
   get userDetails () {
     return this.connection.user
+  }
+
+  get details (): LobbyMemberDetails {
+    return {
+      ...this.state,
+      ...this.userDetails
+    }
   }
 
   get id () {

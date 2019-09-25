@@ -1,40 +1,36 @@
 import { Observable, Subject } from 'rxjs'
-import { mergeAll, map, shareReplay, scan, filter } from 'rxjs/operators'
+import { scan } from 'rxjs/operators'
 
 import { LobbyMember } from './lobbyMember'
 import { LobbyMemberDetails } from '../../common/types'
 import { ClientConnection } from '../server/clientConnection'
 import { Arena } from './arena'
 
+export type MemberUpdate = [string, LobbyMember|null]
 export class Lobby {
   private arena: Arena;
   private memberDetails$: Observable<Map<string, LobbyMemberDetails>>;
 
-  private memberUpdateSubject: Subject<[string, LobbyMember|null]>;
+  private memberUpdateSubject: Subject<MemberUpdate>;
 
   constructor () {
     this.memberUpdateSubject = new Subject()
 
     this.memberDetails$ = this.memberUpdateSubject.pipe(
-      filter(([, member]) => !!member),
-      map(([, member]) => member.details$),
-      mergeAll(),
-      scan((acc, details) => {
-        if (details.leftLobby) {
-          console.log('deleting ', details.username)
-          acc.delete(details.id)
-          return acc
+      scan((detailsMap, [id, member]) => {
+        if (!member) {
+          detailsMap.delete(id)
+          return detailsMap
         }
-        acc.set(details.id, details)
-        return acc
-      }, new Map<string, LobbyMemberDetails>()),
-      shareReplay(1)
+        detailsMap.set(id, member.details)
+        return detailsMap
+      }, new Map<string, LobbyMemberDetails>())
     )
 
     this.arena = new Arena(this.memberUpdateSubject.asObservable())
 
     this.arena.games$.subscribe(game => {
-      console.log('new game: ', game.gameDetails)
+      console.log('new game: ', game.details)
     })
   }
 
@@ -46,12 +42,8 @@ export class Lobby {
       member.updateLobbyMemberDetails(details)
     })
 
-    member.details$.subscribe({
-      complete: () => {
-        this.memberUpdateSubject.next([member.id, null])
-      }
+    member.update$.subscribe({
+      next: update => this.memberUpdateSubject.next([update.id, update])
     })
-
-    this.memberUpdateSubject.next([member.id, member])
   }
 }

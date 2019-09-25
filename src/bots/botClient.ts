@@ -12,7 +12,7 @@ import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
 import { filter, takeWhile } from 'rxjs/operators'
-import { randomMoveEngine } from './engines'
+import { firstMoveEngine, randomMoveEngine } from './engines'
 
 const LOGIN_ROUTE = 'http://localhost:3000/api/login'
 const SOCKET_ROUTE = 'http://localhost:3000'
@@ -50,7 +50,7 @@ export class BotClient {
         const gameUpdate$ = gameMessage$.pipe(
           routeBy<GameUpdateWithId>('update'),
           filter(({ id }) => id === info.id),
-          takeWhile(update => update.type !== 'end')
+          takeWhile((update) => update.type !== 'end')
         )
         new GameClient(gameUpdate$, info, user, engine).action$.subscribe({
           next: (action) => {
@@ -95,5 +95,6 @@ export async function newClient (username: string, engine: MoveMaker) {
   return client
 }
 
-newClient('bill', randomMoveEngine)
-newClient('bob', randomMoveEngine)
+const [username] = process.argv.slice(2)
+
+newClient(username, randomMoveEngine)

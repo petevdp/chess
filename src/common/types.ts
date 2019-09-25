@@ -1,4 +1,4 @@
-import { ShortMove, ChessInstance } from 'chess.js'
+import { ChessInstance, Move } from 'chess.js'
 
 export interface Details {
   id: string;
@@ -64,7 +64,7 @@ export type ActionType = 'move' | 'resign' | 'disconnect' | 'offerDraw';
 
 export interface GameUpdate {
   type: 'move' | 'end' | 'offerDraw';
-  move?: ShortMove;
+  move?: Move;
   end?: EndState;
 }
 
@@ -74,16 +74,16 @@ export interface GameUpdateWithId extends GameUpdate {
 
 export interface ClientAction {
   type: ActionType;
-  move?: ShortMove;
+  move?: Move;
 }
 
-export interface GameSpecificMove extends ShortMove {
+export interface GameSpecificMove extends Move {
   id: string;
 }
 
 export interface ClientPlayerAction extends ClientAction {
   gameId: string;
-  move?: ShortMove;
+  move?: Move;
 }
 
 export interface AuthPayload {

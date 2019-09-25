@@ -9,13 +9,13 @@ export function routeBy<OUT> (routeProperty: string): OperatorFunction<any, OUT>
   )
 }
 export interface HasDetailsObservable<D> {
-  details$: Observable<D>;
+  update$: Observable<D>;
 }
 
 export function allDetails<D extends Details> (obj$: Observable<HasDetailsObservable<D>>) {
   console.log('piping')
   return obj$.pipe(
-    map((obj) => obj.details$),
+    map((obj) => obj.update$),
     mergeAll(),
     scan((map, details) => map.set(details.id, details), new Map<string, D>()),
     map(detailsMap => Object.values(detailsMap)),

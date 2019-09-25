@@ -1,28 +1,33 @@
 import _ from 'lodash'
-import { Observable, merge, of, Subject } from 'rxjs'
-import { filter, shareReplay, concatMap, takeWhile } from 'rxjs/operators'
-import { Colour, GameDetails, GameUpdate, CompleteGameInfo, DrawReason, PlayerDetails } from '../../common/types'
-import { Chess, ChessInstance, ShortMove } from 'chess.js'
+import { Observable, merge, Subject, from } from 'rxjs'
+import { filter, shareReplay, concatMap, takeWhile, tap } from 'rxjs/operators'
+import {
+  Colour,
+  GameDetails,
+  GameUpdate,
+  CompleteGameInfo,
+  DrawReason,
+  PlayerDetails
+} from '../../common/types'
+import { Chess, ChessInstance, Move } from 'chess.js'
 import uuidv4 from 'uuid/v4'
 import { Player, PlayerAction } from './player'
 import { LobbyMember } from './lobbyMember'
 
 class Game {
-  private players: Player[];
-  id: string;
+  private players: Player[]
+  id: string
   details: GameDetails
 
   // TODO make type for gamestate
-  gameUpdate$: Observable<GameUpdate>;
+  gameUpdate$: Observable<GameUpdate>
 
-  private requiredPlayerCount = 2;
+  private requiredPlayerCount = 2
   private gameController$ = new Subject<GameUpdate>()
-  private chess: ChessInstance;
+  private chess: ChessInstance
 
-  constructor (
-    gameMembers: LobbyMember[]
-  ) {
-    console.log('new game');
+  constructor (gameMembers: LobbyMember[]) {
+    console.log('new game')
 
     this.id = uuidv4()
     this.chess = new Chess()
@@ -30,42 +35,46 @@ class Game {
     this.details = this.createGameDetails(gameMembers)
 
     if (gameMembers.length !== 2) {
-      throw new Error(`wrong number of players! should be: ${this.requiredPlayerCount}`)
+      throw new Error(
+        `wrong number of players! should be: ${this.requiredPlayerCount}`
+      )
     }
     this.setLobbyMemberJoinedGameState(this.id, gameMembers)
 
-    console.log('creating players');
+    console.log('creating players')
     const gameUpdateSubject = new Subject<GameUpdate>()
 
-    this.players = this.createPlayers(gameMembers, this.completeGameInfo, gameUpdateSubject)
-
-
-    const playerUpdates = merge(
-      ...this.players.map(p => p.playerAction$),
-    ).pipe(
-      filter(this.validatePlayerAction),
-      concatMap((action) => {
-        const updates = this.getGameUpdatesFromPlayerAction(action)
-        return of(...updates)
-      }),
+    this.players = this.createPlayers(
+      gameMembers,
+      this.completeGameInfo,
+      gameUpdateSubject
     )
 
-    merge(
-      playerUpdates,
-      this.gameController$
+    const playerUpdates = merge(
+      ...this.players.map((p) => p.playerAction$)
     ).pipe(
-      takeWhile(update => update.type !== 'end', true),
-      shareReplay(1)
-    ).subscribe({
-      next: gameUpdateSubject.next,
-      complete: gameUpdateSubject.complete
-    })
+      filter(this.validatePlayerAction),
+      tap(() => 'about to concat'),
+      concatMap((action) => {
+        const updates = this.getGameUpdatesFromPlayerAction(action)
+        return from(updates)
+      })
+    )
+
+    merge(playerUpdates, this.gameController$)
+      .pipe(
+        tap(() => 'sending update'),
+        takeWhile((update) => update.type !== 'end', true),
+        shareReplay(1)
+      )
+      .subscribe(gameUpdateSubject)
+    console.log('we got here')
 
     this.gameUpdate$ = gameUpdateSubject.asObservable()
   }
 
   /**
-   * Ends the game notifying all clients
+   * Ends the game, notifying all clients
    */
   end () {
     this.gameController$.next({
@@ -77,15 +86,16 @@ class Game {
     })
   }
 
-  private setLobbyMemberJoinedGameState(id: string, members: LobbyMember[]) {
-    members.forEach(m => m.joinGame(id))
+  private setLobbyMemberJoinedGameState (id: string, members: LobbyMember[]) {
+    members.forEach((m) => m.joinGame(id))
   }
 
   private createGameDetails (gameMembers: LobbyMember[]): GameDetails {
     const colours = _.shuffle(['b', 'w']) as Colour[]
-    const userDetails = gameMembers.map(member => member.userDetails)
+    const userDetails = gameMembers.map((member) => member.userDetails)
     const playerDetails = _.zip(userDetails, colours).map(([user, colour]) => ({
-      user, colour
+      user,
+      colour
     })) as PlayerDetails[]
 
     return {
@@ -99,14 +109,9 @@ class Game {
     completeGameInfo: CompleteGameInfo,
     gameUpdate$: Observable<GameUpdate>
   ) {
-
-    return gameMembers.map(({ connection }) => (
-      new Player(
-        connection,
-        completeGameInfo,
-        gameUpdate$
-      )
-    ))
+    return gameMembers.map(
+      ({ connection }) => new Player(connection, completeGameInfo, gameUpdate$)
+    )
   }
 
   get completeGameInfo () {
@@ -117,12 +122,14 @@ class Game {
   }
 
   private findOpponent = (playerId: string) => {
-    return this.players.find(p => p.id !== playerId)
+    return this.players.find((p) => p.id !== playerId)
   }
 
-  private validateMove (move: ShortMove, colour: Colour) {
-    return this.chess.turn() !== colour &&
-      this.chess.moves({ square: move.from }).includes(move.to)
+  private validateMove (move: Move, colour: Colour) {
+    return (
+      this.chess.turn() !== colour &&
+      this.chess.moves().includes(move.san)
+    )
   }
 
   private validatePlayerAction = ({ move, colour }: PlayerAction) => {
@@ -136,7 +143,9 @@ class Game {
    * Output is an array because we want to seperate game
    * endstates and the moves that ended them.
    */
-  private getGameUpdatesFromPlayerAction (playerAction: PlayerAction): GameUpdate[] {
+  private getGameUpdatesFromPlayerAction (
+    playerAction: PlayerAction
+  ): GameUpdate[] {
     const { type, playerId } = playerAction
     const updates = [] as GameUpdate[]
     const getOpponentId = () => {
@@ -172,8 +181,16 @@ class Game {
     }
 
     // type === move
-    const  move = playerAction.move as ShortMove
+    const move = playerAction.move as Move
     this.chess.move(move)
+
+    const player = this.players.find((p) => p.id === playerId)
+    console.log(
+      `move made by ${player.user.username}: ${
+        this.chess.history()[this.chess.history().length - 1]
+      }`
+    )
+    console.log(this.chess.ascii())
 
     updates.push({ type: 'move', move })
 
@@ -199,9 +216,9 @@ class Game {
         ['in_threefold_repetition', this.chess.in_threefold_repetition()],
         ['insufficient_material', this.chess.insufficient_material()]
       ]
-      const reason = reasons.find(r => r[1])
+      const reason = reasons.find((r) => r[1])
       if (!reason) {
-        throw new Error('reason not valid draw, but isn\'t')
+        throw new Error("reason not valid draw, but isn't")
       }
       return reason[0]
     }

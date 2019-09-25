@@ -1,6 +1,7 @@
-import { UserDetails, LobbyMemberDetails, SocketServerMessage } from '../../../common/types'
-import { EMPTY, NEVER } from 'rxjs'
+import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage } from '../../../common/types'
+import { EMPTY, NEVER, Subject } from 'rxjs'
 import { getLobbyMemberConnectionPair } from './helpers'
+import { skip } from 'rxjs/operators'
 
 const user1 = {
   id: 'id1',
@@ -39,6 +40,11 @@ it('can update member details', () => {
 })
 
 describe('state', () => {
+  it('is set to the correct values on instantiation', () => {
+    const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
+    expect(member.state).toEqual({currentGame: null, leftLobby: false})
+  })
+
   it('set leftLobby to true when clientMessage$ completes', () => {
     const [clientConnection, member] = getLobbyMemberConnectionPair(EMPTY, user1)
     expect(member.state.leftLobby).toBeTruthy()
@@ -49,5 +55,33 @@ describe('state', () => {
     const [clientConnection, member] = getLobbyMemberConnectionPair(NEVER, user1)
     expect(member.state.leftLobby).toBeFalsy()
     clientConnection.clean()
+  })
+})
+
+describe('updates', () => {
+  it('broadcasts update when state is updated', done => {
+    const subject = new Subject<SocketClientMessage>()
+    const [, member] = getLobbyMemberConnectionPair(subject, user1)
+
+    member.update$.subscribe({
+      next: () => {
+        done()
+        subject.complete()
+      }
+    })
+    member.joinGame('game')
+  })
+
+  it('broadcasts null update when user leaves, and then completes', done => {
+    const subject = new Subject<SocketClientMessage>()
+    const [, member] = getLobbyMemberConnectionPair(subject, user1)
+
+    member.update$.pipe(skip(1)).subscribe({
+      next: update => {
+        expect(update).toBeNull()
+      },
+      complete: () => done()
+    })
+    subject.complete()
   })
 })
