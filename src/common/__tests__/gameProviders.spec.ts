@@ -4,6 +4,7 @@ import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { skip } from 'rxjs/operators'
 import { Chess, Move } from 'chess.js'
+import { fullGame } from '../dummyData'
 
 const chess = new Chess()
 const moveUpdates: GameUpdateWithId[] = [
@@ -49,7 +50,7 @@ const resignUpdate = {
   }
 } as GameUpdateWithId
 
-const newGame = (chess = new Chess()): CompleteGameInfo => ({
+const newGameInfo = (chess = new Chess()): CompleteGameInfo => ({
   id: 'game1',
   playerDetails: [
     player1, player2
@@ -59,7 +60,7 @@ const newGame = (chess = new Chess()): CompleteGameInfo => ({
 
 describe('GameStream', () => {
   it('publishes updated ChessInstance on moves', done => {
-    const game = newGame()
+    const game = newGameInfo()
     const stream = new GameStream(of(moveUpdates[0]), game)
     stream.move$.pipe(skip(1)).subscribe(chess => {
       expect(chess.history()[0]).toEqual('a4')
@@ -68,7 +69,7 @@ describe('GameStream', () => {
   })
 
   it('maintains state between moves', done => {
-    const game = newGame()
+    const game = newGameInfo()
     const stream = new GameStream(from(moveUpdates), game)
     const resultFEN = 'rnbqkbnr/1ppppppp/8/p7/P7/8/1PPPPPPP/RNBQKBNR w KQkq a6 0 2'
     stream.move$.pipe(skip(2)).subscribe(chess => {
@@ -78,7 +79,7 @@ describe('GameStream', () => {
   })
 
   it('broadcasts an endState', done => {
-    const game = newGame()
+    const game = newGameInfo()
     const stream = new GameStream(of(resignUpdate), game)
     stream.end$.subscribe(endState => {
       expect(endState).toEqual(resignUpdate.end)
@@ -86,12 +87,12 @@ describe('GameStream', () => {
     })
   })
 
-  it('allows custom starting positions', done => {
-    const someFEN = 'rnbqkbnr/1ppppppp/8/p7/P7/8/1PPPPPPP/RNBQKBNR w KQkq a6 0 2'
-    const game = newGame(new Chess(someFEN))
-    const stream = new GameStream(EMPTY, game)
+  it('can load games in progress', done => {
+    const chess = new Chess()
+    chess.move('a4')
+    const stream = new GameStream(EMPTY, newGameInfo(chess))
     stream.move$.subscribe(chess => {
-      expect(chess.fen()).toEqual(someFEN)
+      expect(chess.fen()).toEqual(chess.fen())
       done()
     })
   })
@@ -107,7 +108,7 @@ describe('GameClient', () => {
 
       const client = new GameClient(
         of(moveUpdates[0]),
-        newGame(),
+        newGameInfo(),
         user2,
         mockMoveMaker
       )
@@ -123,7 +124,7 @@ describe('GameClient', () => {
       const mockMoveMaker = jest.fn(Engines.firstMoveEngine)
       const client = new GameClient(
         EMPTY,
-        newGame(),
+        newGameInfo(),
         user2,
         mockMoveMaker
       )
@@ -142,7 +143,7 @@ describe('GameClient', () => {
       }
       const client = new GameClient(
         NEVER,
-        newGame(),
+        newGameInfo(),
         user1,
         moveMaker
       )
@@ -156,20 +157,26 @@ describe('GameClient', () => {
         }
       })
     })
-  })
 
-  describe('clientActions', () => {
-    it('only emits actions from player', done => {
-      const client = new GameClient(
-      )
-    }
+    it('does not call moveMaker when there are no legal moves', done => {
+      const mockMovemaker = jest.fn(Engines.firstMoveEngine)
+
+      const client = new GameClient(EMPTY, fullGame, fullGame.playerDetails[1].user, mockMovemaker)
+
+      client.action$.subscribe({
+        complete: () => {
+          expect(mockMovemaker).toBeCalledTimes(0)
+          done()
+        }
+      })
+    })
   })
 
   describe('endPromise', () => {
     it('ends when issued an gameUpdate of type end', done => {
       const client = new GameClient(
         of(resignUpdate),
-        newGame(),
+        newGameInfo(),
         user2,
         Engines.firstMoveEngine
       )

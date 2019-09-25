@@ -14,7 +14,6 @@ export class GameStream {
   ) {
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.history)
-
     this.move$ = gameUpdate$.pipe(
       routeBy<Move>('move'),
       map((move) => {
@@ -52,8 +51,10 @@ export class GameClient {
     user: UserDetails,
     getMove: MoveMaker
   ) {
+    // const { history } = gameInfo
     this.chess = new Chess()
-    this.chess.load(gameInfo.history)
+    this.chess.load_pgn(gameInfo.history)
+
     this.colour = this.getColour(user, gameInfo)
 
     // TODO implement actions other than moves
@@ -85,7 +86,10 @@ export class GameClient {
     opponentMove$: Observable<Move>,
     getMove: MoveMaker
   ) {
-    const moveIfStarting = this.colour === this.chess.turn()
+    const starting = this.colour === this.chess.turn()
+      && this.chess.moves().length > 0
+
+    const moveIfStarting = starting
       ? from(getMove(this.chess))
       : EMPTY
 

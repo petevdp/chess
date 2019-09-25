@@ -102,7 +102,6 @@ export interface GameDetails {
 }
 
 export interface CompleteGameInfo extends GameDetails {
-  // pgn
   history: string;
 }
 export interface UserLogin {
