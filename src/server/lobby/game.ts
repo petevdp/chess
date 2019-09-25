@@ -89,10 +89,8 @@ class Game {
   }
 
   private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameDetails {
-    // const colours = _.shuffle(['b', 'w']) as Colour[]
-    // const userDetails = gameMembers.map((member) => member.userDetails)
     const playerDetails: PlayerDetails[] = gameMembers.map(([member, colour]) => ({
-      user: member.connection.user,
+      user: member.userDetails,
       colour
     }))
 
@@ -208,22 +206,6 @@ class Game {
     }
 
     // TODO add flagging and alternative rulesets
-    const determineDrawType = (): DrawReason => {
-      const reasons: [DrawReason, boolean][] = [
-        ['in_stalemate', this.chess.in_stalemate()],
-        ['in_threefold_repetition', this.chess.in_threefold_repetition()],
-        ['insufficient_material', this.chess.insufficient_material()]
-        // ['', this.chess.game_over]
-      ]
-      const reason = reasons.find((r) => r[1])
-      console.log('draw: ', this.chess.in_draw())
-      console.log('reason: ', reason)
-      if (!reason) {
-        throw new Error(`reason not valid draw, but isn't: ${reasons}`)
-      }
-
-      return reason[0]
-    }
     // must be draw
     endUpdate.end = {
       winnerId: null,
@@ -233,7 +215,23 @@ class Game {
     updates.push(endUpdate)
     return updates
   }
+
+  private determineDrawType (chess: ChessInstance): DrawReason {
+    if (chess.in_stalemate()) {
+      return 'in_stalemate'
     }
+    if (!chess.in_draw()) {
+      throw new Error('not in draw!')
+    }
+
+    if (chess.insufficient_material()) {
+      return 'insufficient_material'
+    }
+    if (chess.in_threefold_repetition()) {
+      return 'in_threefold_repetition'
+    }
+    return '50_move_rule'
+  }
 }
 
 export default Game

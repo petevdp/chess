@@ -59,6 +59,6 @@ export class Arena {
         return true
       })
     ])
-    return !unSuccessfulResolution && new Game(members)
+    return !unSuccessfulResolution && new Game([[members[0], 'w'], [members[1], 'b']])
   }
 }
