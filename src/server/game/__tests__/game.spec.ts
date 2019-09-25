@@ -1,7 +1,7 @@
 import { SocketClientMessage } from "../../../common/types"
-import { getLobbyMemberConnectionPair } from "./helpers"
+import { getLobbyMemberConnectionPair } from "../../lobby/__tests__/helpers"
 import { EMPTY, Subject } from "rxjs"
-import Game from "../game"
+import Game from ".."
 import { fullGame, userDetails, simulatePlayerActions } from "../../../common/dummyData"
 import { last } from "rxjs/operators"
 
@@ -42,6 +42,6 @@ it('outputs a reason for the game ending when the game is over on the board', do
   simulatePlayerActions(fullGame.pgn, fullGame.id, connSubject1, connSubject2)
 })
 
-describe('draw calculation', () => {
-  it('')
-})
+// describe('getGameUpdatesFromPlayerAction', () => {
+//   it('correctly interprets')
+// })

@@ -1,8 +1,8 @@
-import { getPlayerConnectionPair } from './helpers'
+import { getPlayerConnectionPair } from '../../lobby/__tests__/helpers'
 import { CompleteGameInfo, SocketServerMessage, SocketClientMessage, GameUpdate, ClientPlayerAction } from '../../../common/types'
 import { Chess } from 'chess.js'
 import { EMPTY, Subject, of } from 'rxjs'
-import { PlayerAction } from '../player'
+import { PlayerAction } from './player'
 import { moves, playerDetails } from '../../../common/dummyData'
 
 const game1: CompleteGameInfo = {

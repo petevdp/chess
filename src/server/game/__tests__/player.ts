@@ -6,8 +6,8 @@ import {
   Colour,
   GameUpdate,
   CompleteGameInfo
-} from '../../common/types'
-import { ClientConnection } from '../server/clientConnection'
+} from '../../../common/types'
+import { ClientConnection } from '../../server/clientConnection'
 // has one game associated with it.
 export interface PlayerAction extends ClientPlayerAction {
   colour: Colour;

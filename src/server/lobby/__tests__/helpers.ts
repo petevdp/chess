@@ -3,7 +3,7 @@ import { SocketClientMessage, UserDetails, CompleteGameInfo, GameUpdate, PlayerD
 import { MockClientConnection } from "../../server/__mocks__/clientConnection"
 import { LobbyMember } from "../lobbyMember"
 import { ClientConnection } from "../../server/clientConnection"
-import { Player } from "../player"
+import { Player } from "../../game/__tests__/player"
 
 export function getLobbyMemberConnectionPair (
   clientMessage$: Observable<SocketClientMessage>,
