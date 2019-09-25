@@ -227,12 +227,13 @@ class Game {
     // must be draw
     endUpdate.end = {
       winnerId: null,
-      reason: determineDrawType()
+      reason: this.determineDrawType(this.chess)
     }
 
     updates.push(endUpdate)
     return updates
   }
+    }
 }
 
 export default Game
