@@ -10,8 +10,7 @@ import { Chess } from 'chess.js'
 import { BotClient } from '../botClient'
 import { MoveMaker } from '../../common/gameProviders'
 import { from } from 'rxjs'
-import { moveUpdates, moves, endUpdates, joinUpdate } from '../../common/dummyData'
-import { firstMoveEngine } from '../engines'
+import { moveUpdates, moves } from '../../common/dummyData'
 
 const user1: UserDetails = {
   id: 'u1',
