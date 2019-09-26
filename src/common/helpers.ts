@@ -1,6 +1,10 @@
 import { OperatorFunction, Observable } from 'rxjs'
-import { Details } from './types'
+import { Details, GameUpdate } from './types'
 import { filter, map, mergeAll, shareReplay, scan } from 'rxjs/operators'
+import { Move, ChessInstance } from 'chess.js'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Chess = require('chess.js')
 
 export function routeBy<OUT> (routeProperty: string): OperatorFunction<any, OUT> {
   return (input$) => input$.pipe(
@@ -23,3 +27,16 @@ export function allDetails<D extends Details> (obj$: Observable<HasDetailsObserv
 }
 
 export const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+
+export function getGameUpdatesFromMoveArr (moves: Move[]): GameUpdate[] {
+  return moves.map(move => ({ type: 'end', move } as GameUpdate))
+}
+
+export function getGameUpdatesFromPgn (pgn: string): GameUpdate[] {
+  const chess = new Chess() as ChessInstance
+  const succ = chess.load_pgn(pgn)
+  if (!succ) {
+    throw new Error('unable to process pgn')
+  }
+  return getGameUpdatesFromMoveArr(chess.history({ verbose: true }))
+}

@@ -1,7 +1,11 @@
 // dummy data for tsts
 
 import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage } from "./types"
-import { Chess, Move } from "chess.js"
+
+import { Move, ChessInstance } from "chess.js"
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Chess = require('chess.js')
 
 export const userDetails: UserDetails[] = [
   {
@@ -32,7 +36,7 @@ export const allPlayerDetails: PlayerDetails[] = [
   }
 ]
 
-const chess = new Chess()
+const chess = new Chess() as ChessInstance
 
 export const moves: Move[] = [
   chess.move('a4') as Move,
@@ -74,7 +78,7 @@ export const allgameInfo = {
   newGame: {
     id: 'game1',
     playerDetails: allPlayerDetails,
-    history: new Chess().pgn()
+    pgn: new Chess().pgn()
   },
   checkmateGame: {
     id: 'casualGame',

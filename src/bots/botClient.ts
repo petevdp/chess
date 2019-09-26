@@ -50,7 +50,12 @@ export class BotClient {
           filter(({ id }) => id === info.id),
           takeWhile((update) => update.type !== 'end', true)
         )
-        const gameClient = new GameClient(gameUpdate$, info, user, engine)
+        const gameClient = new GameClient(
+          gameUpdate$,
+          info,
+          user,
+          engine
+        )
 
         gameClient.action$.subscribe({
           next: (action) => {

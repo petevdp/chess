@@ -1,15 +1,19 @@
 import { Observable, concat, EMPTY, from } from 'rxjs'
-import { ChessInstance, Chess, Move } from 'chess.js'
-import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour } from './types'
+import { ChessInstance, Move } from 'chess.js'
+import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate } from './types'
 import { map, filter, startWith, concatMap, tap } from 'rxjs/operators'
 import { routeBy } from './helpers'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Chess = require('chess.js')
 
 export class GameStream {
   move$: Observable<ChessInstance>
   end$: Observable<EndState>
   private chess: ChessInstance
+
   constructor (
-    gameUpdate$: Observable<GameUpdateWithId>,
+    gameUpdate$: Observable<GameUpdate>,
     gameInfo: CompleteGameInfo
   ) {
     this.chess = new Chess()
@@ -39,11 +43,10 @@ export interface ClientActionProvider {
 }
 
 export class GameClient {
-  private chess: ChessInstance
-
   action$: Observable<ClientAction>
   endPromise: Promise<EndState>
   private colour: Colour
+  private chess: ChessInstance
 
   constructor (
     public gameUpdate$: Observable<GameUpdateWithId>,
@@ -51,7 +54,6 @@ export class GameClient {
     user: UserDetails,
     getMove: MoveMaker
   ) {
-    // const { history } = gameInfo
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
 

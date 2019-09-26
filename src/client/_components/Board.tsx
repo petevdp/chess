@@ -5,5 +5,5 @@ export interface BoardProps {
 }
 
 export const Board: React.FC<BoardProps> = () => {
-  return <div>board, <Chessboard /></div>
+  return <Chessboard />
 }
