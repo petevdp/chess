@@ -46,8 +46,6 @@ export class LobbyMember implements LobbyMemberInterface {
 
   resolveMatchedOrDisconnected () {
     return new Promise<void>(resolve => {
-      console.log('currentGame: ', this.state.currentGame)
-
       if (this.state.currentGame) {
         return resolve()
       }

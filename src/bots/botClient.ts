@@ -12,7 +12,7 @@ import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
 import { filter, takeWhile } from 'rxjs/operators'
-import { firstMoveEngine, randomMoveEngine } from './engines'
+import { randomMoveEngine } from './engines'
 
 const LOGIN_ROUTE = 'http://localhost:3000/api/login'
 const SOCKET_ROUTE = 'http://localhost:3000'
@@ -63,10 +63,6 @@ export class BotClient {
               }
             })
           }
-        })
-
-        gameClient.endPromise.then(state => {
-          console.log('endstate: ', state)
         })
       }
     })

@@ -68,7 +68,6 @@ export class GameClient {
     )
 
     this.endPromise = gameUpdate$.pipe(routeBy<EndState>('end'), tap(() => {
-      console.log('ending')
     })).toPromise()
   }
 
@@ -95,10 +94,8 @@ export class GameClient {
 
     const respondToOpponentMove: Observable<Move> = opponentMove$.pipe(
       concatMap(async (opponentMove) => {
-        console.log('opponent move')
         const chess = this.makeMoveIfValid(opponentMove)
 
-        console.log('my move')
         const clientMove = await getMove(chess)
         this.makeMoveIfValid(clientMove)
         return clientMove
@@ -111,8 +108,7 @@ export class GameClient {
 
     return concat(
       moveIfStarting.pipe(
-        moveToAction,
-        tap(move => console.log('made starting move: ', move))
+        moveToAction
       ),
       respondToOpponentMove.pipe(moveToAction)
     )
@@ -120,13 +116,10 @@ export class GameClient {
 
   private makeMoveIfValid (move: Move) {
     const out = this.chess.move(move)
-    console.log('turn: ', this.chess.turn())
 
     if (!out) {
       throw new Error(`invalid move: ${move.to}\n${this.chess.ascii()}`)
     }
-    console.log('move made: ', move)
-    console.log(this.chess.ascii())
 
     return this.chess
   }

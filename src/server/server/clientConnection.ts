@@ -18,7 +18,6 @@ export class ClientConnection implements ClientConnectionInterface {
       ws
         .on('message', msg => subscriber.next(JSON.parse(msg as string) as SocketClientMessage))
         .on('error', () => {
-          console.log('I\'m disconnecting')
           subscriber.complete()
         })
     })
@@ -30,7 +29,7 @@ export class ClientConnection implements ClientConnectionInterface {
 
   sendMessage (message: SocketServerMessage) {
     if (!this.isActive) {
-      return console.log('socket disconnected!')
+      return
     }
     this.ws.send(JSON.stringify(message))
   }

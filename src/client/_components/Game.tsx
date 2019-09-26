@@ -5,6 +5,6 @@ export interface GameProps {
   ayy: 'lmao';
 }
 
-export function Game (props: GameProps) {
+export function Game () {
   return <Board />
 }

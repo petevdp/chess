@@ -27,8 +27,6 @@ class Game {
   private chess: ChessInstance
 
   constructor (gameMembers: [LobbyMember, Colour][]) {
-    console.log('new game')
-
     this.id = uuidv4()
     this.chess = new Chess()
 
@@ -41,7 +39,6 @@ class Game {
     }
     this.setLobbyMemberJoinedGameState(this.id, gameMembers.map(m => m[0]))
 
-    console.log('creating players')
     const gameUpdateSubject = new Subject<GameUpdate>()
 
     this.players = this.createPlayers(
@@ -58,7 +55,6 @@ class Game {
         try {
           updates = getGameUpdatesFromPlayerAction(action, this.chess, allPlayerDetails)
         } catch (error) {
-          console.log('error: ', error)
           throw new Error('oh no')
         }
 

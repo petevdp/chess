@@ -22,8 +22,6 @@ export class Player {
     gameUpdate$: Observable<GameUpdate>,
     public colour: Colour
   ) {
-    console.log('new player!')
-
     this.playerAction$ = connection.clientMessage$.pipe(
       filter(msg => !!msg.gameAction),
       map(({ gameAction }) => {
@@ -45,7 +43,6 @@ export class Player {
     })
 
     gameUpdate$.subscribe(update => {
-      console.log('sending update', update)
     })
 
     connection.sendMessage({

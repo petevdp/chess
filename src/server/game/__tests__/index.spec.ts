@@ -38,13 +38,11 @@ it('outputs a reason for the game ending when the game is over on the board', do
   const gameInfo = allgameInfo.checkmateGame
 
   game.gameUpdate$.pipe(last()).subscribe(update => {
-    console.log(update)
     expect(update.type === 'end')
     done()
   })
 
   game.gameUpdate$.subscribe(u => {
-    console.log('update: ', u)
   })
 
   simulatePlayerActions(gameInfo.pgn, gameInfo.id, connSubject1, connSubject2)

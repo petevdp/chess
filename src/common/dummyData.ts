@@ -1,6 +1,6 @@
 // dummy data for tsts
 
-import { UserDetails, PlayerDetails, GameUpdateWithId, CompleteGameInfo, SocketClientMessage } from "./types"
+import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage } from "./types"
 import { Chess, Move } from "chess.js"
 
 export const userDetails: UserDetails[] = [

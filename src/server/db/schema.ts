@@ -13,5 +13,4 @@ pool.connect(async connection => {
       type varchar(36)
     )
   `)
-  console.log('completed')
 })

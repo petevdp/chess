@@ -64,9 +64,8 @@ function LobbyServiceProvider ({ authService }: LobbyServiceProviderProps) {
     if (!currentUser) {
       return
     }
-    console.log('service provider triggered')
     const socketService = new SocketService()
-    const lobbyService = new LobbyService(socketService, currentUser.id)
+    const lobbyService = new LobbyService(socketService)
     setLobbyService(lobbyService)
     return () => {
       // lobbyService depends on socketService

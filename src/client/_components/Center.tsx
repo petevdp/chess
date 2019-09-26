@@ -1,9 +1,9 @@
-import React, { ReactChildren } from "react"
+import React, { ReactChild } from "react"
 
 import { Row, Col } from "react-bootstrap"
 
 interface CenterProps {
-  children: ReactChildren;
+  children: ReactChild;
 }
 
 export function Center ({ children }: CenterProps) {

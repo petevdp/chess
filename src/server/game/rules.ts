@@ -131,5 +131,3 @@ export function getGameUpdatesFromPlayerAction (
 
   return updates
 }
-
-console.log(duplicateGame(new Chess()))

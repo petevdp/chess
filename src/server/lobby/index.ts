@@ -29,13 +29,11 @@ export class Lobby {
 
     this.arena = new Arena(this.memberUpdateSubject.asObservable())
 
-    this.arena.games$.subscribe(game => {
-      console.log('new game: ', game.details)
-    })
+    // this.arena.games$.subscribe(game => {
+    // })
   }
 
   addLobbyMember = (client: ClientConnection) => {
-    console.log('adding lobby member')
     const member = new LobbyMember(client)
 
     this.memberDetails$.subscribe(details => {
@@ -43,7 +41,7 @@ export class Lobby {
     })
 
     member.update$.subscribe({
-      next: update => this.memberUpdateSubject.next([update.id, update])
+      next: update => this.memberUpdateSubject.next([member.id, update])
     })
   }
 }

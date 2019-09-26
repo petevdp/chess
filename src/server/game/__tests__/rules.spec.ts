@@ -44,8 +44,6 @@ describe('getGameUpdatesFromPlayerAction', () => {
       playerId: winningPlayer
     }
     const updates = getGameUpdatesFromPlayerAction(action, mateInOne, allPlayerDetails)
-    console.log(updates)
-    console.log('winning: ', winningMove)
 
     expect(updates).toEqual([
       {

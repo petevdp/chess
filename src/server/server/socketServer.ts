@@ -2,6 +2,7 @@ import { Subject } from 'rxjs'
 import express from 'express'
 import WebSocket from 'ws'
 import Http from 'http'
+import { Response } from 'express-serve-static-core'
 
 interface RawConnection {
   socket: WebSocket;
@@ -16,18 +17,13 @@ export const SocketServer = (
 
   const client$ = new Subject<RawConnection>()
   httpServer.on('upgrade', (request, socket, head) => {
-    console.log('parsing session')
-
-    sessionParser(request, {}, () => {
+    sessionParser(request, {} as Response, () => {
       const { session } = request
-      console.log('session: ', session)
 
       if (!session.userId) {
         socket.destroy()
-        console.log('no worky worky')
         return
       }
-      console.log('session is parsed')
 
       // emit connection event with parsed session
       wss.handleUpgrade(request, socket, head, socket => {

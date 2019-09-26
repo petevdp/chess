@@ -44,7 +44,6 @@ app.use('/api', api(queries))
 const client$ = SocketServer(http, session)
 
 client$.subscribe(async ({ socket, session }) => {
-  console.log('session: ', session)
   const [err, user] = await to(queries.getUser({ id: session.userId }))
   if (err) {
     console.log(err.toString())
