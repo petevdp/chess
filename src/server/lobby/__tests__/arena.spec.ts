@@ -1,4 +1,4 @@
-import { getLobbyMemberConnectionPair } from "./helpers"
+import { getLobbyMemberConnectionPair } from "../testHelpers"
 import { EMPTY, from, Subject } from "rxjs"
 import { userDetails } from '../../../common/dummyData'
 import { Arena } from "../arena"

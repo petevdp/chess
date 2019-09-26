@@ -1,10 +1,10 @@
 import { SocketClientMessage } from "../../../common/types"
-import { getLobbyMemberConnectionPair } from "../../lobby/__tests__/helpers"
+import { getLobbyMemberConnectionPair } from "../../lobby/testHelpers"
 import { EMPTY, Subject } from "rxjs"
 import Game from ".."
 import { userDetails, allgameInfo } from "../../../common/dummyData"
 import { last } from "rxjs/operators"
-import { simulatePlayerActions } from "./helpers"
+import { simulatePlayerActions } from "../testHelpers"
 
 it('sends joinGame messages to connections on instantiation', () => {
   const [conn1, member1] = getLobbyMemberConnectionPair(EMPTY, userDetails[0])
@@ -40,9 +40,6 @@ it('outputs a reason for the game ending when the game is over on the board', do
   game.gameUpdate$.pipe(last()).subscribe(update => {
     expect(update.type === 'end')
     done()
-  })
-
-  game.gameUpdate$.subscribe(u => {
   })
 
   simulatePlayerActions(gameInfo.pgn, gameInfo.id, connSubject1, connSubject2)

@@ -3,7 +3,7 @@ import { PlayerAction } from '../player'
 import { Chess } from "chess.js"
 import { getGameUpdatesFromPlayerAction } from "../rules"
 import { GameUpdate } from "../../../common/types"
-import { replayChessHistory } from "./helpers"
+import { replayChessHistory } from "../testHelpers"
 
 describe('getGameUpdatesFromPlayerAction', () => {
   it('returns a corresponding move update', () => {

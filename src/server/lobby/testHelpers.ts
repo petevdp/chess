@@ -1,8 +1,8 @@
 import { Observable } from "rxjs"
-import { SocketClientMessage, UserDetails } from "../../../common/types"
-import { MockClientConnection } from "../../server/__mocks__/clientConnection"
-import { LobbyMember } from "../lobbyMember"
-import { ClientConnection } from "../../server/clientConnection"
+import { SocketClientMessage, UserDetails } from "../../common/types"
+import { MockClientConnection } from "../server/__mocks__/clientConnection"
+import { LobbyMember } from "./lobbyMember"
+import { ClientConnection } from "../server/clientConnection"
 
 export function getLobbyMemberConnectionPair (
   clientMessage$: Observable<SocketClientMessage>,

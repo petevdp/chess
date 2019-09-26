@@ -28,9 +28,9 @@ export class Lobby {
     )
 
     this.arena = new Arena(this.memberUpdateSubject.asObservable())
-
-    // this.arena.games$.subscribe(game => {
-    // })
+    this.arena.games$.subscribe(() => {
+      console.log('new game')
+    })
   }
 
   addLobbyMember = (client: ClientConnection) => {

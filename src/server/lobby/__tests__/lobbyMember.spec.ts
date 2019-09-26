@@ -1,6 +1,6 @@
 import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage } from '../../../common/types'
 import { EMPTY, NEVER, Subject } from 'rxjs'
-import { getLobbyMemberConnectionPair } from './helpers'
+import { getLobbyMemberConnectionPair } from '../testHelpers'
 import { skip } from 'rxjs/operators'
 
 const user1 = {
@@ -42,7 +42,7 @@ it('can update member details', () => {
 describe('state', () => {
   it('is set to the correct values on instantiation', () => {
     const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
-    expect(member.state).toEqual({currentGame: null, leftLobby: false})
+    expect(member.state).toEqual({ currentGame: null, leftLobby: false })
   })
 
   it('set leftLobby to true when clientMessage$ completes', () => {

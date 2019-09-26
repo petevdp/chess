@@ -3,7 +3,7 @@ import { Chess } from 'chess.js'
 import { EMPTY, Subject, of } from 'rxjs'
 import { PlayerAction } from '../player'
 import { moves, allPlayerDetails } from '../../../common/dummyData'
-import { getPlayerConnectionPair } from './helpers'
+import { getPlayerConnectionPair } from '../testHelpers'
 
 const game1: CompleteGameInfo = {
   id: 'game1',

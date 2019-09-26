@@ -2,7 +2,6 @@ import express from 'express'
 import path from 'path'
 import dotenv from 'dotenv'
 import HttpServer from 'http'
-import uuidv4 from 'uuid/v4'
 import to from 'await-to-js'
 
 import config from '../server.config'
@@ -16,6 +15,7 @@ import ExpressSessionFactory from 'express-session'
 import { api } from './api'
 
 import ExpressWs from 'express-ws'
+import { UserDetails } from '../../common/types'
 
 // loads .env file into process.env
 dotenv.config({ path: path.resolve('../.env') })
@@ -23,8 +23,7 @@ dotenv.config({ path: path.resolve('../.env') })
 const session = ExpressSessionFactory({
   secret: 'my-secret',
   resave: false,
-  saveUninitialized: true,
-  genid: uuidv4
+  saveUninitialized: true
 })
 
 const app = express()
@@ -49,7 +48,7 @@ client$.subscribe(async ({ socket, session }) => {
     console.log(err.toString())
     return
   }
-  const clientConnection = new ClientConnection(socket, user)
+  const clientConnection = new ClientConnection(socket, user as UserDetails)
   lobby.addLobbyMember(clientConnection)
 })
 
