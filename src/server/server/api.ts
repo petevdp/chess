@@ -4,8 +4,6 @@ import to from 'await-to-js'
 import bodyParser from 'body-parser'
 import { check, validationResult } from 'express-validator'
 import { UserDetails } from '../../common/types'
-import session from 'express-session'
-import { Session } from 'inspector'
 
 export const api = (dbQueries: DBQueries) => {
   const api = express()

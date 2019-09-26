@@ -1,5 +1,4 @@
 import uuidv4 from 'uuid/v4'
-import errors from 'errors'
 import { createPool, sql, DatabasePoolConnectionType, QueryResultType, QueryResultRowType, DatabasePoolType } from 'slonik'
 import { UserDetails, UserDetailsPartial, UserType } from '../../common/types'
 
@@ -21,22 +20,30 @@ export class DBQueries {
   async getUser (detailsPartial: UserDetailsPartial) {
     return this.pool.connect(connection => this._getUser(detailsPartial, connection))
       .catch(() => {
-        throw new errors.GetUserError(`Couldn't get user with details ${detailsPartial}`)
+        throw new Error(`Couldn't get user with details ${detailsPartial}`)
       })
   }
 
-  async _getUser ({ username, id }: UserDetailsPartial, connection) {
+  async _getUser (
+    { username, id }: UserDetailsPartial,
+    connection: DatabasePoolConnectionType
+  ) {
+    let row: QueryResultRowType<string> | null
     if (id) {
-      return connection.maybeOne(sql`
+      row = await connection.maybeOne(sql`
         SELECT * FROM users WHERE id = ${id}
       `)
-    }
-    if (username) {
-      return connection.maybeOne(sql`
+    } else if (username) {
+      row = await connection.maybeOne(sql`
         SELECT * FROM users WHERE username = ${username}
       `)
+    } else {
+      throw new Error('needs at least one for query')
     }
-    throw errors.create({ name: 'ParamEmptyError', description: 'needs at least one for query' })
+    if (!row) {
+      return false
+    }
+    return row as unknown as UserDetails
   };
 
   private async _addUser (
@@ -44,8 +51,8 @@ export class DBQueries {
     username: string,
     type: UserType,
     id = null
-  ): Promise<UserDetails> {
-    return connection.maybeOne(sql`
+  ): Promise<void> {
+    connection.query(sql`
           INSERT INTO users(id, username, type)
           VALUES(${id || uuidv4()}, ${username}, ${type})
         `)
@@ -62,15 +69,9 @@ export class DBQueries {
       let user = await this._getUser({ username }, connection)
       if (!user) {
         await this._addUser(connection, username, type)
-        user = await this._getUser({ username }, connection)
+        user = await this._getUser({ username }, connection) as UserDetails
       }
       return user
     })
   }
 }
-
-// errors
-errors.create({
-  name: 'GetUserError',
-  defaultMessage: 'failed to retrieve user'
-})
