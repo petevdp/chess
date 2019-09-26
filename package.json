@@ -48,7 +48,9 @@
     "start:server": "cd src/server && ts-node-dev --respawn --transpileOnly ./server && wait-on tcp:5000",
     "start": "run-p --race start:server start:app",
     "build": "react-scripts build",
-    "test": "jest",
+    "test:server": "jest src/server",
+    "test:client": "jest src/client",
+    "test:bots": "jest src/bots",
     "eject": "react-scripts eject",
     "compile": "tsc -p .",
     "lint": "eslint src --ext .ts,.tsx,.js",
@@ -60,7 +62,6 @@
     "extconfignds": "react-app"
   },
   "devDependencies": {
-    "@types/axios": "^0.14.0",
     "@types/chess.js": "^0.10.0",
     "@types/dotenv": "^6.1.1",
     "@types/express": "^4.17.1",
@@ -92,7 +93,6 @@
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "jest": "^24.9.0",
     "prettier": "^1.18.2",
     "supertest": "^4.0.2",
     "ts-jest": "^24.1.0",
