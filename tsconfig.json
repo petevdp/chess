@@ -4,27 +4,32 @@
     "downlevelIteration": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    "typeRoots": ["./node_modules/@types", "src/common/typing"]
+    "typeRoots": [
+      "./node_modules/@types",
+      "src/common/typing"
+    ]
   },
   "include": [
-    // includes everything, even files we only want to be linted
     "src"
   ],
   "exclude": [
-    // Now exclude what we do not want in our project
     "node_modules"
   ]
 }
