@@ -4,7 +4,6 @@ import dotenv from 'dotenv'
 import HttpServer from 'http'
 import to from 'await-to-js'
 
-import config from '../server.config'
 import { DBQueries } from '../db/queries'
 import { SocketServer } from './socketServer'
 import { ClientConnection } from './clientConnection'
@@ -16,6 +15,7 @@ import { api } from './api'
 
 import ExpressWs from 'express-ws'
 import { UserDetails } from '../../common/types'
+import { SERVER_PORT } from '../../common/config'
 
 // loads .env file into process.env
 dotenv.config({ path: path.resolve('../.env') })
@@ -52,6 +52,6 @@ client$.subscribe(async ({ socket, session }) => {
   lobby.addLobbyMember(clientConnection)
 })
 
-http.listen(config.PORT, () => {
-  console.log(`Listening on ${config.PORT}`)
+http.listen(SERVER_PORT, () => {
+  console.log(`Listening on ${SERVER_PORT}`)
 })

@@ -2,14 +2,11 @@ import { BehaviorSubject, Observable } from 'rxjs'
 import axios from 'axios'
 import to from 'await-to-js'
 
-import config from '../app.config'
 import { UserLogin, UserDetails } from '../../common/types'
 import { useObservable } from 'rxjs-hooks'
-const { API_ROUTE } = config
+import { AUTH_PATH, LOGIN_PATH, LOGOUT_PATH } from '../../common/config'
 
 export class AuthService {
-  private loginRoute = `${API_ROUTE}/login`;
-
   currentUserSubject = new BehaviorSubject<UserDetails | null>(null);
   currentUser$: Observable<UserDetails | null>;
 
@@ -23,7 +20,7 @@ export class AuthService {
   }
 
   async attemptAuthentication () {
-    const [, response] = await to(axios.get<UserDetails>(`${API_ROUTE}/authenticate`))
+    const [, response] = await to(axios.get<UserDetails>(AUTH_PATH))
     console.log('attempting auth')
     if (!response) {
       return
@@ -38,7 +35,7 @@ export class AuthService {
 
   async login (userLogin: UserLogin) {
     console.log('logging in')
-    const [err, res] = await to(axios.put(this.loginRoute, userLogin))
+    const [err, res] = await to(axios.put(LOGIN_PATH, userLogin))
     if (err) {
       this.currentUserSubject.next(null)
       return false
@@ -49,7 +46,7 @@ export class AuthService {
   }
 
   logout = async () => {
-    const res = await axios.put(`${API_ROUTE}/logout`)
+    const res = await axios.put(LOGOUT_PATH)
     this.currentUserSubject.next(null)
     return res.status === 200
   }

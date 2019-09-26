@@ -1,13 +1,12 @@
-import IOClient from 'socket.io-client'
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
 import { SocketServerMessage, SocketClientMessage } from '../../common/types'
-
 import { useObservable } from 'rxjs-hooks'
+import { SOCKET_URL_CLIENT } from '../../common/config'
 
 export class SocketService {
   serverMessage$: Observable<SocketServerMessage>;
   private serverMessageSubject: BehaviorSubject<SocketServerMessage>;
-  private socket: SocketIOClient.Socket;
+  private socket: WebSocket
 
   clientMessageSubject = new Subject<SocketClientMessage>();
 
@@ -18,43 +17,26 @@ export class SocketService {
     this.serverMessage$ = this.serverMessageSubject.asObservable()
 
     // TODO: if this connection fails, we need to handle it gracefully
-    this.socket = IOClient('http://localhost:3000')
+    this.socket = new WebSocket(SOCKET_URL_CLIENT)
 
-    this.socket.on('message', (msg: SocketServerMessage) => {
-      this.serverMessageSubject.next(msg)
-      console.log('msg: ', msg)
-    })
-      .on('disconnect', () => {
-        console.log('socket disconnected!')
-      })
+    this.socket.onmessage = event => {
+      const message = JSON.parse(event.data) as SocketServerMessage
+      this.serverMessageSubject.next(message)
+    }
   }
 
   useSocketStatus () {
-    const connected = useObservable(() => new Observable(subscriber => {
-      this.socket
-        .on('connect', () => subscriber.next('connect'))
-        .on('reconnect', () => subscriber.next('reconnect'))
-        .on('disconnect', (reason: string) => {
-          if (reason === 'ping timeout') {
-            subscriber.next('ping timeout')
-            return
-          }
-
-          // if there wasn't a ping timout, the socket was closed intentionally
-          if (reason === 'io server disconnect') {
-            subscriber.next('io server disconnnect')
-          } else {
-            subscriber.next('io client disconnect')
-          }
-          this.serverMessageSubject.complete()
-          subscriber.complete()
-        })
-    }), this.socket.connected)
+    const connected = useObservable(() => new Observable<boolean>(subscriber => {
+      this.socket.onopen = () => subscriber.next(true)
+      this.socket.onclose = (event) => {
+        console.log('socket disconnected: ', event.reason)
+        subscriber.next(false)
+      }
+    }), this.socket.readyState === WebSocket.OPEN)
     return connected
   }
 
   complete () {
-    // observables will be cleaned up on disconnect handler
-    this.socket.disconnect()
+    this.socket.close()
   }
 }

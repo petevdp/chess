@@ -13,9 +13,7 @@ import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
 import { filter, takeWhile } from 'rxjs/operators'
 import { randomMoveEngine } from './engines'
-
-const LOGIN_ROUTE = 'http://localhost:3000/api/login'
-const SOCKET_ROUTE = 'http://localhost:3000'
+import { SOCKET_URL, LOGIN_URL } from '../common/config'
 
 function getSocketServerMessageObservable (socket: WebSocket) {
   return new Observable<SocketServerMessage>((subscriber) => {
@@ -76,10 +74,10 @@ export class BotClient {
 }
 
 export async function newClient (username: string, engine: MoveMaker) {
-  const res = await axios.put(LOGIN_ROUTE, { username, userType: 'bot' })
+  const res = await axios.put(LOGIN_URL, { username, userType: 'bot' })
 
   const user = res.data as UserDetails
-  const socket = new WebSocket(SOCKET_ROUTE, {
+  const socket = new WebSocket(SOCKET_URL, {
     headers: {
       cookie: res.headers['set-cookie']
     }
