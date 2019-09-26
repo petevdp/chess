@@ -1,5 +1,5 @@
 import { Observable, Subject } from 'rxjs'
-import { scan } from 'rxjs/operators'
+import { scan, filter } from 'rxjs/operators'
 
 import { LobbyMember } from './lobbyMember'
 import { LobbyMemberDetails } from '../../common/types'
@@ -27,13 +27,15 @@ export class Lobby {
       }, new Map<string, LobbyMemberDetails>())
     )
 
-    this.arena = new Arena(this.memberUpdateSubject.asObservable())
-    this.arena.games$.subscribe(() => {
-      console.log('new game')
+    this.arena = new Arena(this.memberUpdateSubject.pipe(
+      filter(([, member]) => !member || member.userDetails.type === 'bot')
+    ))
+    this.arena.games$.subscribe(game => {
+      console.log('new game: ', game.details)
     })
   }
 
-  addLobbyMember = (client: ClientConnection) => {
+  addLobbyMember (client: ClientConnection) {
     const member = new LobbyMember(client)
 
     this.memberDetails$.subscribe(details => {
