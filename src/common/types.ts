@@ -1,5 +1,4 @@
 import { ChessInstance, Move } from 'chess.js'
-import { MemberUpdate } from '../server/lobby'
 
 export interface Details {
   id: string;

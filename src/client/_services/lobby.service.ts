@@ -15,8 +15,14 @@ export class LobbyService {
     this.lobbyMemberDetailsMap$ = this.lobbyMessage$.pipe(
       filter(msg => !!msg.memberDetailsUpdate),
       map(msg => msg.memberDetailsUpdate),
-      scan((map, update) => {
-        update.forEach(u => map.set(...u))
+      scan((map, updates) => {
+        updates.forEach(([id, details]) => {
+          if (!details) {
+            map.delete(id)
+            return
+          }
+          map.set(id, details)
+        })
         return map
       }, new Map<string, LobbyMemberDetails>()),
       shareReplay(1)
