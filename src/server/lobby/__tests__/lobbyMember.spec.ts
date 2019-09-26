@@ -27,11 +27,11 @@ it('can update member details', () => {
   const update = new Map<string, LobbyMemberDetails>([
     [lobbyMember1.id, lobbyMember1]
   ])
-  member.updateLobbyMemberDetails(update)
+  member.updateLobbyMemberDetails([...update])
 
   const message = {
     member: {
-      memberUpdate: [...update]
+      memberDetailsUpdate: [...update]
     }
   } as SocketServerMessage
 

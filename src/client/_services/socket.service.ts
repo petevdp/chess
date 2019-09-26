@@ -21,6 +21,8 @@ export class SocketService {
 
     this.socket.onmessage = event => {
       const message = JSON.parse(event.data) as SocketServerMessage
+      console.log('message received: ', message)
+
       this.serverMessageSubject.next(message)
     }
   }

@@ -13,8 +13,8 @@ export class LobbyService {
     const { serverMessage$: message$ } = socketService
     this.lobbyMessage$ = message$.pipe(routeBy('member')) as Observable<MemberMessage>
     this.lobbyMemberDetailsMap$ = this.lobbyMessage$.pipe(
-      filter(msg => !!msg.memberUpdate),
-      map(msg => msg.memberUpdate),
+      filter(msg => !!msg.memberDetailsUpdate),
+      map(msg => msg.memberDetailsUpdate),
       scan((map, update) => {
         update.forEach(u => map.set(...u))
         return map

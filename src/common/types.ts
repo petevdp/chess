@@ -1,4 +1,5 @@
 import { ChessInstance, Move } from 'chess.js'
+import { MemberUpdate } from '../server/lobby'
 
 export interface Details {
   id: string;
@@ -60,6 +61,8 @@ export interface LobbyMemberDetails extends UserDetails {
   currentGame: string | null;
   leftLobby: boolean;
 }
+
+export type LobbyMemberDetailsUpdate = [string, LobbyMemberDetails|null]
 
 export type ActionType = 'move' | 'resign' | 'disconnect' | 'offerDraw';
 
@@ -135,7 +138,7 @@ export interface ChallengeResponse {
 }
 
 export interface MemberMessage {
-  memberUpdate: Array<[string, LobbyMemberDetails]>;
+  memberDetailsUpdate: LobbyMemberDetailsUpdate[];
 }
 
 export interface GameMessage {

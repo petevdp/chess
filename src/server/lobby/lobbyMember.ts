@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
-import { LobbyMemberDetails, UserDetails } from '../../common/types'
+import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate } from '../../common/types'
 interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
@@ -82,10 +82,12 @@ export class LobbyMember implements LobbyMemberInterface {
     return this.userDetails.id
   }
 
-  updateLobbyMemberDetails = (update: Map<string, LobbyMemberDetails>) => {
+  updateLobbyMemberDetails = (update: LobbyMemberDetailsUpdate[]) => {
+    // console.log('received update: ', update)
+
     this.connection.sendMessage({
       member: {
-        memberUpdate: [...update]
+        memberDetailsUpdate: update
       }
     })
   }

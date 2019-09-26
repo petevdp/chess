@@ -13,6 +13,11 @@ export const userDetails: UserDetails[] = [
     id: 'u2',
     username: 'user2',
     type: 'bot'
+  },
+  {
+    id: 'u3',
+    username: 'user3',
+    type: 'bot'
   }
 ]
 
