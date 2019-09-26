@@ -14,10 +14,17 @@ export class ClientConnection implements ClientConnectionInterface {
   clientMessage$: Observable<SocketClientMessage>;
 
   constructor (private ws: WebSocket, public user: UserDetails) {
+    console.log('new connection!')
+
     this.clientMessage$ = new Observable(subscriber => {
       ws
         .on('message', msg => subscriber.next(JSON.parse(msg as string) as SocketClientMessage))
         .on('error', () => {
+          console.log('completed socket message$')
+          subscriber.complete()
+        })
+        .on('close', () => {
+          console.log(`${user.username} disconnected`)
           subscriber.complete()
         })
     })
