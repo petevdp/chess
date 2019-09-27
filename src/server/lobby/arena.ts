@@ -2,7 +2,7 @@ import { LobbyMember } from './lobbyMember'
 import { Observable, merge, Subject, of, Subscription, from } from 'rxjs'
 import { scan, map, mergeAll, filter, mergeMap, mapTo, tap } from 'rxjs/operators'
 import Game from '../game'
-import { sleep } from '../../common/helpers'
+import { sleep, filterNullMapEntries } from '../../common/helpers'
 import { MemberUpdate } from '.'
 import { EndState } from '../../common/types'
 
@@ -13,7 +13,7 @@ interface UnmatchedState {
 
 export class Arena {
   games$: Observable<Game>;
-  activeGamesMap$: Observable<Map<string, Game>>;
+  activeGamesMap$: Observable<Map<string, (Game | null)>>;
   private unmatched$: Subject<MemberUpdate>
   private lobbyMemberSubscription: Subscription
 
@@ -28,7 +28,6 @@ export class Arena {
 
     this.games$ = this.unmatched$.pipe(
       scan((acc, [id, member]) => {
-        console.log('member: ', id)
         const { allUnmatched } = acc
 
         if (!member) {
@@ -67,8 +66,16 @@ export class Arena {
 
     this.activeGamesMap$ = gameAdditionsAndCompletions.pipe(
       scan((acc, [id, game]) => {
+        // first filter map entries that are null, so entries that have
+        // already been signaled to be deleted by the client are removed.
+        acc = filterNullMapEntries(acc)
         if (!game) {
-          acc.delete(id)
+          if (!acc.has(id)) {
+            throw new Error('trying to delete game that doesn\'t exist')
+          }
+
+          // This signals for this entry to be deleted on the client.
+          acc.set(id, null)
           return acc
         }
         acc.set(id, game)

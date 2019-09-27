@@ -61,19 +61,14 @@ describe('activeGamesmap', () => {
     memberUpdate$.next([member2.id, member2])
   })
 
-  it('deletes game from the map when a game is ended', done => {
+  it('ended games are set to null', done => {
     arena.activeGamesMap$.pipe(skip(1)).subscribe(gamesMap => {
-      expect(gamesMap.size).toEqual(0)
+      expect(gamesMap.values().next().value).toBeNull()
       done()
     })
 
     arena.games$.pipe(first()).subscribe(game => {
       game.end()
-    })
-
-    arena.activeGamesMap$.pipe(skip(1)).subscribe(gamesMap => {
-      expect(gamesMap.size).toEqual(0)
-      done()
     })
 
     memberUpdate$.next([member1.id, member1])
