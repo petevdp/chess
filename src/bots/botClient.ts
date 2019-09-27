@@ -100,6 +100,7 @@ export async function newClient (username: string, engine: MoveMaker) {
   return client
 }
 
-const [username] = process.argv.slice(2)
-
-newClient(username, randomMoveEngine)
+if (require.main === module) {
+  const [username] = process.argv.slice(2)
+  newClient(username, randomMoveEngine)
+}

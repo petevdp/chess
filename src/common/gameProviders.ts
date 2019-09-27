@@ -2,10 +2,9 @@ import { Observable, concat, EMPTY, from } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
 import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate } from './types'
 import { map, filter, startWith, concatMap, tap } from 'rxjs/operators'
-import { routeBy } from './helpers'
+import { routeBy, getChessConstructor } from './helpers'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Chess = require('chess.js')
+const Chess = getChessConstructor()
 
 export class GameStream {
   move$: Observable<ChessInstance>

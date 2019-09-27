@@ -3,9 +3,9 @@
 import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage } from "./types"
 
 import { Move, ChessInstance } from "chess.js"
+import { getChessConstructor } from "./helpers"
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Chess = require('chess.js')
+const Chess = getChessConstructor()
 
 export const userDetails: UserDetails[] = [
   {

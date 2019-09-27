@@ -40,3 +40,16 @@ export function getGameUpdatesFromPgn (pgn: string): GameUpdate[] {
   }
   return getGameUpdatesFromMoveArr(chess.history({ verbose: true }))
 }
+
+/*
+* this hacky mess is required in shared modules because chess.js appears to behave differently
+* on browser and nodejs by exposing a different import interface.
+* Might be a create react app thing or a chess.js thing, not sure.
+*/
+export function getChessConstructor (): any {
+  if (typeof module.exports === 'object') {
+    return require('chess.js').Chess
+  } else {
+    return require('chess.js')
+  }
+}
