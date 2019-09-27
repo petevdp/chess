@@ -1,7 +1,7 @@
 import { Observable, concat, EMPTY, from } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
 import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate } from './types'
-import { map, filter, startWith, concatMap, tap } from 'rxjs/operators'
+import { map, filter, startWith, concatMap, tap, mapTo } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
 
 const Chess = getChessConstructor()
@@ -9,11 +9,12 @@ const Chess = getChessConstructor()
 export class GameStream {
   move$: Observable<ChessInstance>
   end$: Observable<EndState>
+  update$: Observable<GameStream>
   private chess: ChessInstance
 
   constructor (
     gameUpdate$: Observable<GameUpdate>,
-    gameInfo: CompleteGameInfo
+    private gameInfo: CompleteGameInfo
   ) {
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
@@ -29,7 +30,13 @@ export class GameStream {
       startWith(this.chess)
     )
 
+    this.update$ = concat(gameUpdate$.pipe(mapTo(this)))
+
     this.end$ = gameUpdate$.pipe(routeBy<EndState>('end'))
+  }
+
+  get gameId () {
+    return this.gameInfo.id
   }
 }
 
@@ -119,7 +126,7 @@ export class GameClient {
     const out = this.chess.move(move)
 
     if (!out) {
-      throw new Error(`invalid move: ${move.to}\n${this.chess.ascii()}`)
+      throw new Error(`invalid move: ${move}\n${this.chess.ascii()}`)
     }
 
     return this.chess

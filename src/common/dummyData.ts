@@ -1,9 +1,10 @@
 // dummy data for tsts
 
-import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage } from "./types"
+import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage, SocketServerMessage, LobbyMemberDetailsUpdate, LobbyMemberDetails, GameMessage } from "./types"
 
 import { Move, ChessInstance } from "chess.js"
 import { getChessConstructor } from "./helpers"
+import { SocketService } from "../client/_services/socket.service"
 
 const Chess = getChessConstructor()
 
@@ -22,6 +23,14 @@ export const userDetails: UserDetails[] = [
     id: 'u3',
     username: 'user3',
     type: 'bot'
+  }
+]
+
+export const allMemberDetails: LobbyMemberDetails[] = [
+  {
+    ...userDetails[0],
+    currentGame: null,
+    leftLobby: false
   }
 ]
 
@@ -74,6 +83,29 @@ export const newClientMessage = (move: Move, gameId: string): SocketClientMessag
   }
 })
 
+export const allMemberDetailsUpdates: LobbyMemberDetailsUpdate[] = [
+  [
+    allMemberDetails[0].id,
+    allMemberDetails[0]
+  ]
+]
+
+export const allGameServerMessages: SocketServerMessage[] = [
+]
+
+export const gameUpdateMessage = {
+  game: {
+    type: 'update',
+    update: moveUpdates[0]
+  }
+}
+
+export const allMemberServerMessages: SocketServerMessage[] = [
+  {
+    member: { memberDetailsUpdate: [allMemberDetailsUpdates[0]] }
+  }
+]
+
 export const allgameInfo = {
   newGame: {
     id: 'game1',
@@ -104,7 +136,7 @@ export const allgameInfo = {
   }
 }
 
-export const joinUpdate = {
+export const joinMessage: GameMessage = {
   type: 'join',
   join: allgameInfo.newGame
 }

@@ -70,13 +70,15 @@ class Game {
 
     merge(playerUpdates, this.gameController$)
       .pipe(
-        tap(() => 'sending update'),
         takeWhile((update) => update.type !== 'end', true),
         shareReplay(1)
       )
       .subscribe(gameUpdateSubject)
 
     this.gameUpdate$ = gameUpdateSubject.asObservable()
+    gameUpdateSubject.subscribe(update => {
+      console.log('update: ', update)
+    })
   }
 
   /**

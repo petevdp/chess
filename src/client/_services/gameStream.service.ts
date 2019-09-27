@@ -2,21 +2,23 @@ import { GameStream } from "../../common/gameProviders"
 import { useObservable } from "rxjs-hooks"
 import { Observable } from "rxjs"
 import { CompleteGameInfo, GameUpdate } from "../../common/types"
-import { map } from "rxjs/operators"
+import { map, mapTo } from "rxjs/operators"
 
-export default class GameStreamService {
+export default class GameStreamService extends GameStream {
   private position$: Observable<string | undefined>;
-  private gameStream: GameStream
+  public serviceUpdate$: Observable<GameStreamService>;
 
   constructor (
     gameUpdate$: Observable<GameUpdate>,
     gameInfo: CompleteGameInfo
   ) {
-    this.gameStream = new GameStream(gameUpdate$, gameInfo)
+    super(gameUpdate$, gameInfo)
 
-    this.position$ = this.gameStream.move$.pipe(
+    this.position$ = this.move$.pipe(
       map(chess => chess.fen())
     )
+
+    this.serviceUpdate$ = this.update$.pipe(mapTo(this))
   }
 
   usePosition () {
