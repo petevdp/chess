@@ -141,10 +141,10 @@ export interface MemberMessage {
 }
 
 export interface GameMessage {
-  type: 'update' | 'join';
+  type: 'update' | 'join' | 'display';
   update?: GameUpdateWithId;
-  // loadGamePartial?: CompleteGameInfo | CompleteGameInfo[];
   join?: CompleteGameInfo;
+  display?: CompleteGameInfo[];
 }
 
 export interface SocketServerMessage {

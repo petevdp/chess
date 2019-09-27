@@ -4,7 +4,7 @@ import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { skip } from 'rxjs/operators'
 import { Chess, Move } from 'chess.js'
-import { allgameInfo } from '../dummyData'
+import { allGameInfo } from '../dummyData'
 
 const chess = new Chess()
 const moveUpdates: GameUpdateWithId[] = [
@@ -160,7 +160,7 @@ describe('GameClient', () => {
 
     it('does not call moveMaker when there are no legal moves', done => {
       const mockMovemaker = jest.fn(Engines.firstMoveEngine)
-      const game = allgameInfo.checkmateGame
+      const game = allGameInfo.checkmateGame
 
       const client = new GameClient(EMPTY, game, game.playerDetails[1].user, mockMovemaker)
 

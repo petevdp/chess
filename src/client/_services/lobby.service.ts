@@ -1,9 +1,9 @@
 import { MemberMessage, GameMessage, CompleteGameInfo, GameUpdateWithId, LobbyMemberDetails } from '../../common/types'
-import { Observable } from 'rxjs'
+import { Observable, merge } from 'rxjs'
 import { SocketService } from './socket.service'
 import { routeBy } from '../../common/helpers'
 import { useObservable } from 'rxjs-hooks'
-import { scan, shareReplay, filter, map, mergeMap, takeWhile, endWith, tap, startWith } from 'rxjs/operators'
+import { scan, shareReplay, filter, map, mergeMap, takeWhile, endWith, tap, startWith, concatMap } from 'rxjs/operators'
 import GameStreamService from './gameStream.service'
 
 export type GameStreamServiceUpdate = [string, (GameStreamService|null)]
@@ -35,16 +35,17 @@ export class LobbyService {
     const gameMessage$ = message$.pipe(routeBy<GameMessage>('game'))
 
     const gameStream$ = gameMessage$.pipe(
-      routeBy<CompleteGameInfo>('join'),
-      tap(() => { console.log('join message') }),
-      map(info => {
-        const gameUpdate$ = gameMessage$.pipe(
-          routeBy<GameUpdateWithId>('update'),
-          filter(({ id }) => id === info.id),
-          takeWhile((update) => update.type !== 'end', true)
-        )
-
-        return new GameStreamService(gameUpdate$, info)
+      routeBy<CompleteGameInfo[]>('display'),
+      tap(() => { console.log('display message') }),
+      concatMap(gameInfoArr => {
+        return merge(gameInfoArr.map(info => {
+          const gameUpdate$ = gameMessage$.pipe(
+            routeBy<GameUpdateWithId>('update'),
+            filter(({ id }) => id === info.id),
+            takeWhile((update) => update.type !== 'end', true)
+          )
+          return new GameStreamService(gameUpdate$, info)
+        }))
       })
     )
     gameStream$.subscribe(gameStream => {

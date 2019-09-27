@@ -2,7 +2,7 @@ import { SocketClientMessage } from "../../../common/types"
 import { getLobbyMemberConnectionPair } from "../../lobby/testHelpers"
 import { EMPTY, Subject } from "rxjs"
 import Game from ".."
-import { userDetails, allgameInfo } from "../../../common/dummyData"
+import { userDetails, allGameInfo } from "../../../common/dummyData"
 import { last } from "rxjs/operators"
 import { simulatePlayerActions } from "../testHelpers"
 
@@ -35,7 +35,7 @@ it('outputs a reason for the game ending when the game is over on the board', do
   const [, member2] = getLobbyMemberConnectionPair(connSubject2, userDetails[1])
 
   const game = new Game([[member1, 'w'], [member2, 'b']])
-  const gameInfo = allgameInfo.checkmateGame
+  const gameInfo = allGameInfo.checkmateGame
 
   game.gameUpdate$.pipe(last()).subscribe(update => {
     expect(update.type === 'end')

@@ -1,7 +1,7 @@
 import { MockSocketService } from '../__mocks__/socket.service'
 import { LobbyService } from '../lobby.service'
 import { SocketService } from '../socket.service'
-import { allMemberServerMessages, allMemberDetailsUpdates, gameUpdateMessage, joinMessage } from '../../../common/dummyData'
+import { allMemberServerMessages, allMemberDetailsUpdates, gameUpdateMessage, joinMessage, displayMessage } from '../../../common/dummyData'
 import { takeLast, first } from 'rxjs/operators'
 import { SocketServerMessage } from '../../../common/types'
 
@@ -30,11 +30,10 @@ describe('lobbyMemberDetailsMap', () => {
 describe('gameStreamMap', () => {
   it('creates a gameStreamService when a new game comes in', done => {
     const service = new LobbyService(mockSocketService as unknown as SocketService)
-    const gameJoinMessage: SocketServerMessage = {
-      game: joinMessage
-    }
-    const msg = joinMessage as any
-    const id = msg.join.id
+
+    const message: SocketServerMessage = { game: displayMessage }
+    const msg = displayMessage as any
+    const id = msg.display[0].id
     service.gameStreamMap$.subscribe(mapUpdate => { console.log('mapUpdate: ', [...mapUpdate]) })
 
     service.gameStreamMap$.pipe(first()).subscribe(gameStreamMap => {
@@ -42,6 +41,6 @@ describe('gameStreamMap', () => {
       done()
     })
 
-    mockSocketService.serverMessage$.next(gameJoinMessage)
+    mockSocketService.serverMessage$.next(message)
   })
 })

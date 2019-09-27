@@ -16,6 +16,8 @@ export class GameStream {
     gameUpdate$: Observable<GameUpdate>,
     private gameInfo: CompleteGameInfo
   ) {
+    console.log('pgn: ', gameInfo.pgn)
+
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
     this.move$ = gameUpdate$.pipe(

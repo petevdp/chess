@@ -106,7 +106,7 @@ export const allMemberServerMessages: SocketServerMessage[] = [
   }
 ]
 
-export const allgameInfo = {
+export const allGameInfo = {
   newGame: {
     id: 'game1',
     playerDetails: allPlayerDetails,
@@ -138,5 +138,10 @@ export const allgameInfo = {
 
 export const joinMessage: GameMessage = {
   type: 'join',
-  join: allgameInfo.newGame
+  join: allGameInfo.newGame
+}
+
+export const displayMessage: GameMessage = {
+  type: 'display',
+  display: [allGameInfo.newGame]
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Chessboard from 'chessboardjsx'
 import GameStreamService from '../_services/gameStream.service'
-import { allgameInfo } from '../../common/dummyData'
+import { allGameInfo } from '../../common/dummyData'
 import { getGameUpdatesFromPgn } from '../../common/helpers'
 import { Button } from 'react-bootstrap'
 import { Subject } from 'rxjs'
@@ -27,7 +27,7 @@ export function StreamedGame (
 }
 
 function * emitMove () {
-  const updates = getGameUpdatesFromPgn(allgameInfo.checkmateGame.pgn)
+  const updates = getGameUpdatesFromPgn(allGameInfo.checkmateGame.pgn)
   for (const update of updates) {
     yield update
   }
@@ -40,7 +40,7 @@ function nextMoveOnClick () {
   updates$.next(moveEmitter.next().value as GameUpdate)
 }
 
-const info = allgameInfo.newGame
+const info = allGameInfo.newGame
 
 export function TestStreamedGame () {
   const [
