@@ -1,11 +1,12 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { shareReplay, concatMap, takeWhile, tap } from 'rxjs/operators'
+import { shareReplay, concatMap, takeWhile, tap, first } from 'rxjs/operators'
 import {
   Colour,
   GameDetails,
   GameUpdate,
   CompleteGameInfo,
-  PlayerDetails
+  PlayerDetails,
+  EndState
 } from '../../common/types'
 import { Chess, ChessInstance } from 'chess.js'
 import uuidv4 from 'uuid/v4'
@@ -13,6 +14,7 @@ import { Player } from './player'
 import { LobbyMember } from '../lobby/lobbyMember'
 import { getGameUpdatesFromPlayerAction } from './rules'
 import { allPlayerDetails } from '../../common/dummyData'
+import { routeBy } from '../../common/helpers'
 
 class Game {
   private players: Player[]
@@ -21,6 +23,7 @@ class Game {
 
   // TODO make type for gamestate
   gameUpdate$: Observable<GameUpdate>
+  endPromise: Promise<EndState>
 
   private requiredPlayerCount = 2
   private gameController$ = new Subject<GameUpdate>()
@@ -79,6 +82,11 @@ class Game {
     gameUpdateSubject.subscribe(update => {
       console.log('update: ', update)
     })
+
+    this.endPromise = this.gameUpdate$.pipe(
+      routeBy<EndState>('end'),
+      first()
+    ).toPromise()
   }
 
   /**
@@ -92,6 +100,13 @@ class Game {
         winnerId: null
       }
     })
+  }
+
+  get completeGameInfo (): CompleteGameInfo {
+    return {
+      ...this.details,
+      pgn: this.chess.pgn()
+    }
   }
 
   private setLobbyMemberJoinedGameState (id: string, members: LobbyMember[]) {
@@ -118,13 +133,6 @@ class Game {
     return gameMembers.map(
       ([{ connection }, colour]) => new Player(connection, completeGameInfo, gameUpdate$, colour)
     )
-  }
-
-  get completeGameInfo (): CompleteGameInfo {
-    return {
-      ...this.details,
-      pgn: this.chess.pgn()
-    }
   }
 }
 

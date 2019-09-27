@@ -4,7 +4,6 @@ import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage, Sock
 
 import { Move, ChessInstance } from "chess.js"
 import { getChessConstructor } from "./helpers"
-import { SocketService } from "../client/_services/socket.service"
 
 const Chess = getChessConstructor()
 
