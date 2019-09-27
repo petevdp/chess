@@ -1,9 +1,10 @@
 import { LobbyMember } from './lobbyMember'
-import { Observable, merge, Subject } from 'rxjs'
-import { scan, map, mergeAll, filter } from 'rxjs/operators'
+import { Observable, merge, Subject, of, Subscription, from } from 'rxjs'
+import { scan, map, mergeAll, filter, mergeMap, mapTo, tap } from 'rxjs/operators'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
+import { EndState } from '../../common/types'
 
 interface UnmatchedState {
   potentialGames: Array<Promise<Game | false>>;
@@ -12,18 +13,22 @@ interface UnmatchedState {
 
 export class Arena {
   games$: Observable<Game>;
+  activeGamesMap$: Observable<Map<string, Game>>;
+  private unmatched$: Subject<MemberUpdate>
+  private lobbyMemberSubscription: Subscription
 
   constructor (lobbyMember$: Observable<MemberUpdate>) {
-    const unmatched$ = new Subject<MemberUpdate>()
+    this.unmatched$ = new Subject<MemberUpdate>()
 
-    lobbyMember$.subscribe({
+    this.lobbyMemberSubscription = lobbyMember$.subscribe({
       next: update => {
-        unmatched$.next(update)
+        this.unmatched$.next(update)
       }
     })
 
-    this.games$ = unmatched$.pipe(
+    this.games$ = this.unmatched$.pipe(
       scan((acc, [id, member]) => {
+        console.log('member: ', id)
         const { allUnmatched } = acc
 
         if (!member) {
@@ -49,6 +54,32 @@ export class Arena {
       mergeAll(),
       filter(game => !!game)
     ) as Observable<Game>
+
+    const gameAdditionsAndCompletions: Observable<[string, (Game|null)]> = this.games$.pipe(
+      mergeMap((game) => {
+        return merge(
+          of([game.id, game]),
+          from(game.endPromise).pipe(mapTo<EndState, [string, null]>([game.id, null]))
+        ) as Observable<[string, (Game|null)]>
+      }),
+      tap(() => console.log('after concat'))
+    )
+
+    this.activeGamesMap$ = gameAdditionsAndCompletions.pipe(
+      scan((acc, [id, game]) => {
+        if (!game) {
+          acc.delete(id)
+          return acc
+        }
+        acc.set(id, game)
+        return acc
+      }, new Map())
+    )
+  }
+
+  complete () {
+    this.lobbyMemberSubscription.unsubscribe()
+    this.unmatched$.complete()
   }
 
   private async resolvePotentialGame (members: LobbyMember[]) {
