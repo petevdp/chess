@@ -1,5 +1,5 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { shareReplay, concatMap, takeWhile, tap, first } from 'rxjs/operators'
+import { shareReplay, concatMap, takeWhile, first } from 'rxjs/operators'
 import {
   Colour,
   GameDetails,
@@ -79,9 +79,9 @@ class Game {
       .subscribe(gameUpdateSubject)
 
     this.gameUpdate$ = gameUpdateSubject.asObservable()
-    gameUpdateSubject.subscribe(update => {
-      console.log('update: ', update)
-    })
+    // gameUpdateSubject.subscribe(update => {
+    //   console.log('update: ', update)
+    // })
 
     this.endPromise = this.gameUpdate$.pipe(
       routeBy<EndState>('end'),

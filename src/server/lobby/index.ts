@@ -1,8 +1,8 @@
 import { Observable, Subject, BehaviorSubject } from 'rxjs'
-import { scan, filter, tap, map } from 'rxjs/operators'
+import { scan, filter, tap, map, startWith } from 'rxjs/operators'
 
 import { LobbyMember } from './lobbyMember'
-import { LobbyMemberDetails, LobbyMemberDetailsUpdate } from '../../common/types'
+import { LobbyMemberDetails, LobbyMemberDetailsUpdate, GameMessage, CompleteGameInfo } from '../../common/types'
 import { ClientConnection } from '../server/clientConnection'
 import { Arena } from './arena'
 
@@ -11,15 +11,17 @@ export type MemberUpdate = [string, LobbyMember|null]
 export class Lobby {
   private arena: Arena;
   memberDetailsUpdates$: Observable<LobbyMemberDetailsUpdate>;
+  memberDetailsMap$: BehaviorSubject<Map<string, LobbyMemberDetails>>;
+  activeGameMessage$: Observable<GameMessage>
 
-  memberDetailsMap$ = new BehaviorSubject<Map<string, LobbyMemberDetails>>(new Map());
-
-  private memberUpdateSubject: Subject<MemberUpdate>;
+  private memberUpdate$: Subject<MemberUpdate>;
 
   constructor () {
-    this.memberUpdateSubject = new Subject()
-    this.memberDetailsUpdates$ = this.memberUpdateSubject.pipe(
-      map((update) => {
+    this.memberUpdate$ = new Subject()
+    this.memberDetailsMap$ = new BehaviorSubject(new Map())
+
+    this.memberDetailsUpdates$ = this.memberUpdate$.pipe(
+      map((update): LobbyMemberDetailsUpdate => {
         const [id, member] = update
         if (!member) {
           return [id, null]
@@ -43,26 +45,40 @@ export class Lobby {
       complete: () => this.memberDetailsMap$.complete()
     })
 
-    this.arena = new Arena(this.memberUpdateSubject.pipe(
+    this.arena = new Arena(this.memberUpdate$.pipe(
       filter(([, member]) => !member || member.userDetails.type === 'bot')
     ))
-    this.arena.games$.subscribe(game => {
-      console.log('new game: ', game.details)
-    })
+
+    this.activeGameMessage$ = this.arena.activeGames$.pipe(
+      map((gamesMap): GameMessage => {
+        return {
+          type: 'display',
+          display: gamesMap.map(g => g.completeGameInfo)
+        }
+      })
+    )
   }
 
   addLobbyMember (client: ClientConnection) {
-    const member = new LobbyMember(client)
+    const member = new LobbyMember(client, this.activeGameInfoArr)
 
     member.update$.subscribe({
-      next: update => this.memberUpdateSubject.next([member.id, update])
+      next: update => this.memberUpdate$.next([member.id, update])
     })
 
-    member.updateLobbyMemberDetails([...this.memberDetailsMap])
+    member.broadcastLobbyMemberDetails([...this.memberDetailsMap])
 
     this.memberDetailsUpdates$.subscribe(update => {
-      member.updateLobbyMemberDetails([update])
+      member.broadcastLobbyMemberDetails([update])
     })
+
+    this.activeGameMessage$.subscribe(msg => {
+      member.broadcastActiveGameMessage(msg)
+    })
+  }
+
+  get activeGameInfoArr (): CompleteGameInfo[] {
+    return this.arena.activeGames.map(g => g.completeGameInfo)
   }
 
   get memberDetailsMap () {
@@ -70,6 +86,6 @@ export class Lobby {
   }
 
   complete () {
-    this.memberUpdateSubject.complete()
+    this.memberUpdate$.complete()
   }
 }
