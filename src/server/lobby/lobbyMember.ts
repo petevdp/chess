@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
-import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate } from '../../common/types'
+import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, CompleteGameInfo, GameUpdateWithId, GameMessage } from '../../common/types'
 interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
@@ -24,7 +24,10 @@ export class LobbyMember implements LobbyMemberInterface {
 
   private stateSubject: BehaviorSubject<MemberState>;
 
-  constructor (public connection: ClientConnection) {
+  constructor (
+    public connection: ClientConnection,
+    activeGames: CompleteGameInfo[]
+  ) {
     const { clientMessage$ } = connection
 
     this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false } as MemberState)
@@ -42,17 +45,23 @@ export class LobbyMember implements LobbyMemberInterface {
         this.stateSubject.complete()
       }
     })
+    connection.sendMessage({
+      game: {
+        type: 'display',
+        display: activeGames
+      }
+    })
   }
 
   resolveMatchedOrDisconnected () {
-    return new Promise<void>(resolve => {
+    return new Promise<boolean>(resolve => {
       if (this.state.currentGame) {
-        return resolve()
+        return resolve(true)
       }
       this.stateSubject.subscribe({
         next: ({ currentGame, leftLobby }) => {
           if (currentGame || leftLobby) {
-            resolve()
+            resolve(true)
           }
         }
       })
@@ -82,13 +91,23 @@ export class LobbyMember implements LobbyMemberInterface {
     return this.userDetails.id
   }
 
-  updateLobbyMemberDetails = (update: LobbyMemberDetailsUpdate[]) => {
-    // console.log('received update: ', update)
+  broadcastLobbyMemberDetails = (update: LobbyMemberDetailsUpdate[]) => {
+    console.log('received update: ', update)
 
     this.connection.sendMessage({
       member: {
         memberDetailsUpdate: update
       }
+    })
+  }
+
+  // should be used to keep the lobby displayed games up to date, not to join games
+  broadcastActiveGameMessages (message: GameMessage) {
+    if (message.type === 'join') {
+      throw new Error('don\'t join games from lobbyMembers update channel')
+    }
+    this.connection.sendMessage({
+      game: message
     })
   }
 }

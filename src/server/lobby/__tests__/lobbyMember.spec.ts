@@ -2,6 +2,7 @@ import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessa
 import { EMPTY, NEVER, Subject } from 'rxjs'
 import { getLobbyMemberConnectionPair } from '../testHelpers'
 import { skip } from 'rxjs/operators'
+import { allGameInfo, moveUpdates, displayMessage } from '../../../common/dummyData'
 
 const user1 = {
   id: 'id1',
@@ -21,22 +22,48 @@ beforeEach(() => {
 afterEach(() => {
 })
 
-it('can update member details', () => {
-  const [clientConnection, member] = getLobbyMemberConnectionPair(EMPTY, user1)
+describe('initial client messages', () => {
+  it('sends a display message containing the given activeGames', () => {
+    const [conn] = getLobbyMemberConnectionPair(EMPTY, user1, [allGameInfo.newGame])
+    expect(conn.sendMessage).toHaveBeenCalledWith({
+      game: {
+        type: 'display',
+        display: [allGameInfo.newGame]
+      }
+    } as SocketServerMessage)
+  })
+})
+describe('broadcasting', () => {
+  it('can broadcast member details', () => {
+    const [clientConnection, member] = getLobbyMemberConnectionPair(EMPTY, user1)
 
-  const update = new Map<string, LobbyMemberDetails>([
-    [lobbyMember1.id, lobbyMember1]
-  ])
-  member.updateLobbyMemberDetails([...update])
+    const update = new Map<string, LobbyMemberDetails>([
+      [lobbyMember1.id, lobbyMember1]
+    ])
+    member.broadcastLobbyMemberDetails([...update])
 
-  const message = {
-    member: {
-      memberDetailsUpdate: [...update]
-    }
-  } as SocketServerMessage
+    const message = {
+      member: {
+        memberDetailsUpdate: [...update]
+      }
+    } as SocketServerMessage
 
-  expect(clientConnection.sendMessage.mock.calls[0][0]).toEqual(message)
-  clientConnection.clean()
+    console.log('mock calls', clientConnection.sendMessage.mock.calls)
+
+    expect(clientConnection.sendMessage).toHaveBeenCalledWith(message)
+    clientConnection.clean()
+  })
+
+  it('can broadcast GameMessages', () => {
+    const [conn, member] = getLobbyMemberConnectionPair(EMPTY, user1)
+    const message = displayMessage
+    member.broadcastActiveGameMessages(message)
+
+    expect(conn.sendMessage).toHaveBeenCalledWith({
+      game: message
+    })
+    conn.clean()
+  })
 })
 
 describe('state', () => {
@@ -58,8 +85,8 @@ describe('state', () => {
   })
 })
 
-describe('updates', () => {
-  it('broadcasts update when state is updated', done => {
+describe('update$', () => {
+  it('emits update when state is updated', done => {
     const subject = new Subject<SocketClientMessage>()
     const [, member] = getLobbyMemberConnectionPair(subject, user1)
 

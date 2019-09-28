@@ -54,6 +54,8 @@ export interface EndState {
   reason: EndReason;
 }
 
+export type GameDisplayUpdate = CompleteGameInfo
+
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 export interface LobbyMemberDetails extends UserDetails {
@@ -144,7 +146,7 @@ export interface GameMessage {
   type: 'update' | 'join' | 'display';
   update?: GameUpdateWithId;
   join?: CompleteGameInfo;
-  display?: CompleteGameInfo[];
+  display?: GameDisplayUpdate[];
 }
 
 export interface SocketServerMessage {
