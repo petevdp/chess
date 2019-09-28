@@ -88,11 +88,11 @@ describe('GameStream', () => {
   })
 
   it('can load games in progress', done => {
-    const chess = new Chess()
-    chess.move('a4')
-    const stream = new GameStream(EMPTY, newGameInfo(chess))
-    stream.move$.subscribe(chess => {
-      expect(chess.fen()).toEqual(chess.fen())
+    const inputChess = new Chess()
+    const stream = new GameStream(EMPTY, newGameInfo(inputChess))
+
+    stream.move$.subscribe(streamChess => {
+      expect(inputChess.fen()).toEqual(streamChess.fen())
       done()
     })
   })
