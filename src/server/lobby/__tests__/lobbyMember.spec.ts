@@ -57,7 +57,7 @@ describe('broadcasting', () => {
   it('can broadcast GameMessages', () => {
     const [conn, member] = getLobbyMemberConnectionPair(EMPTY, user1)
     const message = displayMessage
-    member.broadcastActiveGameMessages(message)
+    member.broadcastActiveGameMessage(message)
 
     expect(conn.sendMessage).toHaveBeenCalledWith({
       game: message

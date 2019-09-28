@@ -25,7 +25,7 @@ it('creates a new game when two members join the arena', done => {
   update$.complete()
 })
 
-describe('activeGamesmap', () => {
+describe('activeGames$', () => {
   let conn1: MockClientConnection
   let conn2: MockClientConnection
 
@@ -51,9 +51,9 @@ describe('activeGamesmap', () => {
     arena.complete()
   })
 
-  it('adds a game to the map when a new game is emitted', (done) => {
-    arena.activeGamesMap$.pipe(first()).subscribe((gamesMap) => {
-      expect(gamesMap.size).toEqual(1)
+  it('emits an array containing a game a game is created', (done) => {
+    arena.activeGames$.pipe(skip(1)).subscribe((games) => {
+      expect(games).toHaveLength(1)
       done()
     })
 
@@ -61,9 +61,9 @@ describe('activeGamesmap', () => {
     memberUpdate$.next([member2.id, member2])
   })
 
-  it('ended games are set to null', done => {
-    arena.activeGamesMap$.pipe(skip(1)).subscribe(gamesMap => {
-      expect(gamesMap.values().next().value).toBeNull()
+  it('removes deleted games from the array', done => {
+    arena.activeGames$.pipe(skip(2)).subscribe(games => {
+      expect(games).toHaveLength(0)
       done()
     })
 

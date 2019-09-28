@@ -1,8 +1,8 @@
 import { LobbyMember } from './lobbyMember'
-import { Observable, merge, Subject, of, Subscription, from } from 'rxjs'
-import { scan, map, mergeAll, filter, mergeMap, mapTo, tap } from 'rxjs/operators'
+import { Observable, merge, Subject, of, Subscription, from, BehaviorSubject } from 'rxjs'
+import { scan, map, mergeAll, filter, mergeMap, mapTo, tap, shareReplay } from 'rxjs/operators'
 import Game from '../game'
-import { sleep, filterNullMapEntries } from '../../common/helpers'
+import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
 import { EndState } from '../../common/types'
 
@@ -13,7 +13,8 @@ interface UnmatchedState {
 
 export class Arena {
   games$: Observable<Game>;
-  activeGamesMap$: Observable<Map<string, (Game | null)>>;
+  activeGames$: Observable<Game[]>
+  private _activeGames$: BehaviorSubject<Game[]>
   private unmatched$: Subject<MemberUpdate>
   private lobbyMemberSubscription: Subscription
 
@@ -51,7 +52,8 @@ export class Arena {
       }, { potentialGames: [], allUnmatched: new Map() } as UnmatchedState),
       map(({ potentialGames }) => merge(...potentialGames)),
       mergeAll(),
-      filter(game => !!game)
+      filter(game => !!game),
+      shareReplay<Game | false>(1)
     ) as Observable<Game>
 
     const gameAdditionsAndCompletions: Observable<[string, (Game|null)]> = this.games$.pipe(
@@ -63,30 +65,39 @@ export class Arena {
       }),
       tap(() => console.log('after concat'))
     )
+    this._activeGames$ = new BehaviorSubject([] as Game[])
+    this.activeGames$ = this._activeGames$.asObservable()
+    this._activeGames$.subscribe((u) => {
+      console.log('activeGame update', u.length)
+    })
 
-    this.activeGamesMap$ = gameAdditionsAndCompletions.pipe(
+    gameAdditionsAndCompletions.pipe(
       scan((acc, [id, game]) => {
         // first filter map entries that are null, so entries that have
         // already been signaled to be deleted by the client are removed.
-        acc = filterNullMapEntries(acc)
         if (!game) {
           if (!acc.has(id)) {
             throw new Error('trying to delete game that doesn\'t exist')
           }
 
           // This signals for this entry to be deleted on the client.
-          acc.set(id, null)
+          acc.delete(id)
           return acc
         }
         acc.set(id, game)
         return acc
-      }, new Map())
-    )
+      }, new Map()),
+      map(gameMap => [...gameMap.values()])
+    ).subscribe(this._activeGames$)
   }
 
   complete () {
     this.lobbyMemberSubscription.unsubscribe()
     this.unmatched$.complete()
+  }
+
+  get activeGames () {
+    return this._activeGames$.value
   }
 
   private async resolvePotentialGame (members: LobbyMember[]) {
@@ -97,6 +108,8 @@ export class Arena {
         return true
       })
     ])
+    console.log('new game: ', !unSuccessfulResolution)
+
     return !unSuccessfulResolution && new Game([[members[0], 'w'], [members[1], 'b']])
   }
 }
