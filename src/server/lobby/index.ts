@@ -38,8 +38,7 @@ export class Lobby {
         }
         detailsMap.set(id, details)
         return detailsMap
-      }, new Map<string, LobbyMemberDetails>()),
-      tap(details => console.log('num details: ', [...details.values()].length))
+      }, new Map<string, LobbyMemberDetails>())
     ).subscribe({
       next: map => this.memberDetailsMap$.next(map),
       complete: () => this.memberDetailsMap$.complete()

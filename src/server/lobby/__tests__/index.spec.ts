@@ -43,7 +43,7 @@ describe('member details connection updates', () => {
       }
     }
 
-    expect(mockConnection2.sendMessage).toHaveBeenLastCalledWith(message)
+    expect(mockConnection2.sendMessage).toHaveBeenCalledWith(message)
 
     lobby.complete()
     s1.complete()
