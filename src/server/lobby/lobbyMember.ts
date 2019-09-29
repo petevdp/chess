@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
-import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, CompleteGameInfo, GameUpdateWithId, GameMessage } from '../../common/types'
+import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, CompleteGameInfo, GameMessage } from '../../common/types'
 interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
@@ -102,7 +102,7 @@ export class LobbyMember implements LobbyMemberInterface {
   }
 
   // should be used to keep the lobby displayed games up to date, not to join games
-  broadcastActiveGameMessages (message: GameMessage) {
+  broadcastActiveGameMessage (message: GameMessage) {
     if (message.type === 'join') {
       throw new Error('don\'t join games from lobbyMembers update channel')
     }
