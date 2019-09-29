@@ -1,14 +1,16 @@
 import { MockSocketService } from '../__mocks__/socket.service'
 import { LobbyService } from '../lobby.service'
 import { SocketService } from '../socket.service'
-import { allMemberServerMessages, allMemberDetailsUpdates, gameUpdateMessage, joinMessage, displayMessage } from '../../../common/dummyData'
-import { takeLast, first } from 'rxjs/operators'
+import { allMemberServerMessages, allMemberDetailsUpdates, displayMessages } from '../../../common/dummyData'
 import { SocketServerMessage } from '../../../common/types'
+import { skip } from 'rxjs/operators'
 
 let mockSocketService: MockSocketService
+let lobbyService: LobbyService
 
 beforeEach(() => {
   mockSocketService = new MockSocketService()
+  lobbyService = new LobbyService(mockSocketService as unknown as SocketService)
 })
 
 afterEach(() => {
@@ -17,9 +19,7 @@ afterEach(() => {
 
 describe('lobbyMemberDetailsMap', () => {
   it('updates lobbymemberDetailsMap on lobbymember message', done => {
-    const service = new LobbyService(mockSocketService as unknown as SocketService)
-
-    service.lobbyMemberDetailsMap$.subscribe(detailsMap => {
+    lobbyService.lobbyMemberDetailsMap$.subscribe(detailsMap => {
       expect([...detailsMap][0]).toEqual(allMemberDetailsUpdates[0])
       done()
     })
@@ -27,20 +27,52 @@ describe('lobbyMemberDetailsMap', () => {
   })
 })
 
-describe('gameStreamMap', () => {
-  it('creates a gameStreamService when a new game comes in', done => {
-    const service = new LobbyService(mockSocketService as unknown as SocketService)
+describe('streamedGameStateArr$', () => {
+  const displayMessage1: SocketServerMessage = {
+    game: displayMessages[0]
+  }
 
-    const message: SocketServerMessage = { game: displayMessage }
-    const msg = displayMessage as any
-    const id = msg.display[0].id
-    service.gameStreamMap$.subscribe(mapUpdate => { console.log('mapUpdate: ', [...mapUpdate]) })
+  const displayMessage2: SocketServerMessage = {
+    game: displayMessages[1]
+  }
 
-    service.gameStreamMap$.pipe(first()).subscribe(gameStreamMap => {
-      expect(gameStreamMap.get(id)).toBeTruthy()
+  const dispMsg = displayMessages[0] as any
+  const game1Id = dispMsg.display[0].id
+
+  const endMessage: SocketServerMessage = {
+    game: {
+      type: 'update',
+      update: {
+        type: 'end',
+        id: game1Id
+      }
+    }
+  }
+
+  it('emits an array of length 1 when it receives a display command with one game', done => {
+    lobbyService.streamedGameStateArr$.subscribe(arr => {
+      expect(arr).toHaveLength(1)
       done()
     })
+    mockSocketService.serverMessage$.next(displayMessage1)
+  })
 
-    mockSocketService.serverMessage$.next(message)
+  it('does not emit ended gameStates on the next iteration', done => {
+    lobbyService.streamedGameStateArr$.pipe(skip(2)).subscribe(arr => {
+      expect(!arr.some(({ id }) => id !== game1Id))
+      done()
+    })
+    mockSocketService.serverMessage$.next(displayMessage1)
+    mockSocketService.serverMessage$.next(endMessage)
+    mockSocketService.serverMessage$.next(displayMessage2)
+  })
+
+  it('does not duplicate games if it recieves the same game twice', done => {
+    lobbyService.streamedGameStateArr$.pipe(skip(1)).subscribe(arr => {
+      expect(arr).toHaveLength(1)
+      done()
+    })
+    mockSocketService.serverMessage$.next(displayMessage1)
+    mockSocketService.serverMessage$.next(displayMessage1)
   })
 })

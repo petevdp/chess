@@ -63,16 +63,16 @@ export const moveUpdates: GameUpdateWithId[] = [
   }
 ]
 
-export const endUpdates = new Map<string, GameUpdateWithId>([
-  ['checkmate', {
+export const endUpdates: GameUpdateWithId[] = [
+  {
     id: 'game1',
     type: 'end',
     end: {
       reason: 'checkmate',
       winnerId: userDetails[0].id
     }
-  }]
-])
+  }
+]
 
 export const newClientMessage = (move: Move, gameId: string): SocketClientMessage => ({
   gameAction: {
@@ -140,7 +140,18 @@ export const joinMessage: GameMessage = {
   join: allGameInfo.newGame
 }
 
-export const displayMessage: GameMessage = {
-  type: 'display',
-  display: [allGameInfo.newGame]
+export const displayMessages: GameMessage[] = [
+  {
+    type: 'display',
+    display: [allGameInfo.newGame]
+  },
+  {
+    type: 'display',
+    display: [allGameInfo.checkmateGame]
+  }
+]
+
+export const endUpdateMessage: GameMessage = {
+  type: 'update',
+  update: endUpdates[0]
 }

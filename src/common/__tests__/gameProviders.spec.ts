@@ -58,7 +58,7 @@ const newGameInfo = (chess = new Chess()): CompleteGameInfo => ({
   pgn: chess.pgn()
 })
 
-describe.only('GameStream', () => {
+describe('GameStream', () => {
   it('publishes updated ChessInstance on moves', () => {
     const game = newGameInfo()
     const stream = new GameStream(of(moveUpdates[0]), game)

@@ -1,7 +1,7 @@
-import { Observable, concat, EMPTY, from, merge, BehaviorSubject } from 'rxjs'
+import { Observable, concat, EMPTY, from, BehaviorSubject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
-import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDetails, PlayerDetails } from './types'
-import { map, filter, startWith, concatMap, tap, mapTo } from 'rxjs/operators'
+import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDetails } from './types'
+import { map, filter, concatMap, tap } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
 
 const Chess = getChessConstructor()
@@ -17,7 +17,7 @@ export interface GameStateWithDetails extends GameDetails{
 }
 
 export class GameStream {
-  gameStateWithDetails$: Observable<GameState>
+  gameStateWithDetails$: Observable<GameStateWithDetails>
   gameDetails: GameDetails
   private chess: ChessInstance
   private state$: BehaviorSubject<GameState>
