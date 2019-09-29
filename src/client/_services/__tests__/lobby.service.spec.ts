@@ -27,7 +27,7 @@ describe('lobbyMemberDetailsMap', () => {
   })
 })
 
-describe('streamedGameStateArr$', () => {
+describe('streamedGameStateMap$', () => {
   const displayMessage1: SocketServerMessage = {
     game: displayMessages[0]
   }
@@ -50,16 +50,16 @@ describe('streamedGameStateArr$', () => {
   }
 
   it('emits an array of length 1 when it receives a display command with one game', done => {
-    lobbyService.streamedGameStateArr$.subscribe(arr => {
-      expect(arr).toHaveLength(1)
+    lobbyService.streamedGameStateMap$.subscribe(stateMap => {
+      expect(stateMap.size).toEqual(1)
       done()
     })
     mockSocketService.serverMessage$.next(displayMessage1)
   })
 
   it('does not emit ended gameStates on the next iteration', done => {
-    lobbyService.streamedGameStateArr$.pipe(skip(2)).subscribe(arr => {
-      expect(!arr.some(({ id }) => id !== game1Id))
+    lobbyService.streamedGameStateMap$.pipe(skip(2)).subscribe(stateMap => {
+      expect(!stateMap.has(game1Id)).toBeFalsy()
       done()
     })
     mockSocketService.serverMessage$.next(displayMessage1)
@@ -68,8 +68,8 @@ describe('streamedGameStateArr$', () => {
   })
 
   it('does not duplicate games if it recieves the same game twice', done => {
-    lobbyService.streamedGameStateArr$.pipe(skip(1)).subscribe(arr => {
-      expect(arr).toHaveLength(1)
+    lobbyService.streamedGameStateMap$.pipe(skip(1)).subscribe(stateMap => {
+      expect(stateMap.size).toEqual(1)
       done()
     })
     mockSocketService.serverMessage$.next(displayMessage1)

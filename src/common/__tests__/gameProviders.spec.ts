@@ -2,7 +2,6 @@ import { GameUpdateWithId, CompleteGameInfo, UserDetails, PlayerDetails } from '
 import { GameStream, GameClient, MoveMaker } from '../gameProviders'
 import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
-import { skip } from 'rxjs/operators'
 import { Chess, Move } from 'chess.js'
 import { allGameInfo } from '../dummyData'
 

@@ -8,8 +8,8 @@ import { GameStream, GameStateWithDetails } from '../../common/gameProviders'
 
 type CompleteGameInfoUpdate = [string, (CompleteGameInfo|null)]
 export class LobbyService {
-  lobbyMemberDetailsMap$: Observable<Map<string, LobbyMemberDetails>>;
-  streamedGameStateArr$: Observable<GameStateWithDetails[]>
+  lobbyMemberDetailsMap$: Observable<Map<string, LobbyMemberDetails>>
+  streamedGameStateMap$: Observable<Map<string, GameStateWithDetails>>
 
   constructor (socketService: SocketService) {
     const { serverMessage$: message$ } = socketService
@@ -70,14 +70,13 @@ export class LobbyService {
       })
     )
 
-    this.streamedGameStateArr$ = gameStream$.pipe(
+    this.streamedGameStateMap$ = gameStream$.pipe(
       mergeMap(gameStream => gameStream.gameStateWithDetails$),
       scan((acc, gameState) => {
         acc = this.deleteStaleGameState(acc)
         acc.set(gameState.id, gameState)
         return acc
-      }, new Map<string, GameStateWithDetails>()),
-      map(gameStateMap => [...gameStateMap.values()])
+      }, new Map<string, GameStateWithDetails>())
     )
   }
 
@@ -94,7 +93,7 @@ export class LobbyService {
   }
 
   useStreamedGameStates = () => {
-    return useObservable(() => this.streamedGameStateArr$, [])
+    return useObservable(() => this.streamedGameStateMap$, new Map())
   }
 
   useLobbyMemberDetails () {
