@@ -2,7 +2,7 @@ import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessa
 import { EMPTY, NEVER, Subject } from 'rxjs'
 import { getLobbyMemberConnectionPair } from '../testHelpers'
 import { skip } from 'rxjs/operators'
-import { allGameInfo, moveUpdates, displayMessage } from '../../../common/dummyData'
+import { allGameInfo, displayMessages } from '../../../common/dummyData'
 
 const user1 = {
   id: 'id1',
@@ -56,7 +56,7 @@ describe('broadcasting', () => {
 
   it('can broadcast GameMessages', () => {
     const [conn, member] = getLobbyMemberConnectionPair(EMPTY, user1)
-    const message = displayMessage
+    const message = displayMessages[0]
     member.broadcastActiveGameMessage(message)
 
     expect(conn.sendMessage).toHaveBeenCalledWith({
