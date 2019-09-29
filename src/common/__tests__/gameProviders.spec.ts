@@ -58,43 +58,32 @@ const newGameInfo = (chess = new Chess()): CompleteGameInfo => ({
   pgn: chess.pgn()
 })
 
-describe('GameStream', () => {
-  it('publishes updated ChessInstance on moves', done => {
+describe.only('GameStream', () => {
+  it('publishes updated ChessInstance on moves', () => {
     const game = newGameInfo()
     const stream = new GameStream(of(moveUpdates[0]), game)
-    stream.move$.pipe(skip(1)).subscribe(chess => {
-      expect(chess.history()[0]).toEqual('a4')
-      done()
-    })
+
+    expect(stream.state.chess.history()[0]).toEqual('a4')
   })
 
-  it('maintains state between moves', done => {
+  it('maintains state between moves', () => {
     const game = newGameInfo()
     const stream = new GameStream(from(moveUpdates), game)
     const resultFEN = 'rnbqkbnr/1ppppppp/8/p7/P7/8/1PPPPPPP/RNBQKBNR w KQkq a6 0 2'
-    stream.move$.pipe(skip(2)).subscribe(chess => {
-      expect(chess.fen()).toEqual(resultFEN)
-      done()
-    })
+    expect(stream.state.chess.fen()).toEqual(resultFEN)
   })
 
-  it('broadcasts an endState', done => {
+  it('emits endStates', () => {
     const game = newGameInfo()
     const stream = new GameStream(of(resignUpdate), game)
-    stream.end$.subscribe(endState => {
-      expect(endState).toEqual(resignUpdate.end)
-      done()
-    })
+
+    expect(stream.state.end).toEqual(resignUpdate.end)
   })
 
-  it('can load games in progress', done => {
+  it('can load games in progress', () => {
     const inputChess = new Chess()
     const stream = new GameStream(EMPTY, newGameInfo(inputChess))
-
-    stream.move$.subscribe(streamChess => {
-      expect(inputChess.fen()).toEqual(streamChess.fen())
-      done()
-    })
+    expect(stream.state.chess.fen()).toEqual(inputChess.fen())
   })
 })
 

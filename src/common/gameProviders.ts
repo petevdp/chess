@@ -1,16 +1,26 @@
-import { Observable, concat, EMPTY, from } from 'rxjs'
+import { Observable, concat, EMPTY, from, merge, BehaviorSubject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
-import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate } from './types'
+import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDetails, PlayerDetails } from './types'
 import { map, filter, startWith, concatMap, tap, mapTo } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
 
 const Chess = getChessConstructor()
 
+export interface GameState {
+  chess: ChessInstance;
+  end?: EndState;
+}
+
+export interface GameStateWithDetails extends GameDetails{
+  chess: ChessInstance;
+  end?: EndState;
+}
+
 export class GameStream {
-  move$: Observable<ChessInstance>
-  end$: Observable<EndState>
-  update$: Observable<GameStream>
+  gameStateWithDetails$: Observable<GameState>
+  gameDetails: GameDetails
   private chess: ChessInstance
+  private state$: BehaviorSubject<GameState>
 
   constructor (
     gameUpdate$: Observable<GameUpdate>,
@@ -20,25 +30,61 @@ export class GameStream {
 
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
-    this.move$ = gameUpdate$.pipe(
-      routeBy<Move>('move'),
-      map((move) => {
-        const out = this.chess.move(move)
-        if (!out) {
-          throw new Error('invalid move')
+
+    this.gameDetails = {
+      id: gameInfo.id,
+      playerDetails: gameInfo.playerDetails
+    }
+
+    this.state$ = new BehaviorSubject({
+      chess: this.chess,
+      end: undefined
+    } as GameState)
+
+    gameUpdate$.pipe(
+      filter(u => u.type !== 'offerDraw'),
+      map(update => {
+        const { type } = update
+        if (type === 'move') {
+          const out = this.chess.move(update.move as Move)
+          if (!out) {
+            throw new Error('invalid move sent to GameStream')
+          }
+          return this.state
         }
-        return this.chess
-      }),
-      startWith(this.chess)
+        if (type === 'end') {
+          return {
+            ...this.state,
+            end: update.end
+          }
+        }
+        throw new Error('move and end should be the only update types let through')
+      })
+    ).subscribe({
+      next: state => {
+        this.state$.next(state)
+        if (state.end) {
+          console.log('game over')
+          this.state$.complete()
+        }
+      },
+      complete: () => this.state$.complete()
+    })
+
+    this.gameStateWithDetails$ = this.state$.pipe(
+      map(state => ({
+        ...state,
+        ...this.gameDetails
+      }))
     )
-
-    this.update$ = concat(gameUpdate$.pipe(mapTo(this)))
-
-    this.end$ = gameUpdate$.pipe(routeBy<EndState>('end'))
   }
 
   get gameId () {
     return this.gameInfo.id
+  }
+
+  get state (): GameState {
+    return this.state$.value
   }
 }
 
