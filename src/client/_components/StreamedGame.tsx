@@ -1,21 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React, { } from 'react'
 import Chessboard from 'chessboardjsx'
-import GameStreamService from '../_services/gameStream.service'
-import { allGameInfo } from '../../common/dummyData'
-import { getGameUpdatesFromPgn } from '../../common/helpers'
-import { Button } from 'react-bootstrap'
-import { Subject } from 'rxjs'
-import { GameUpdate } from '../../common/types'
+import { GameStateWithDetails } from '../../common/gameProviders'
 
-interface StreamedGameProps {
-  gameStreamService: GameStreamService;
+export interface StreamedGameProps {
+  gameState: GameStateWithDetails;
 }
 
 export function StreamedGame (
-  { gameStreamService }: StreamedGameProps
+  { gameState }: StreamedGameProps
 ) {
-  const position = gameStreamService.usePosition()
-
+  const position = gameState.chess.fen()
   return (
     <Chessboard
       position={position}
@@ -23,43 +17,5 @@ export function StreamedGame (
       transitionDuration={0}
       draggable={false}
     />
-  )
-}
-
-function * emitMove () {
-  const updates = getGameUpdatesFromPgn(allGameInfo.checkmateGame.pgn)
-  for (const update of updates) {
-    yield update
-  }
-}
-
-const updates$ = new Subject<GameUpdate>()
-const moveEmitter = emitMove()
-
-function nextMoveOnClick () {
-  updates$.next(moveEmitter.next().value as GameUpdate)
-}
-
-const info = allGameInfo.newGame
-
-export function TestStreamedGame () {
-  const [
-    gameStreamService,
-    updateService
-  ] = useState<GameStreamService | null>(null)
-  useEffect(() => {
-    updateService(new GameStreamService(updates$, info))
-  }, [])
-
-  if (!gameStreamService) {
-    return <div>gameStreamService uninitialized</div>
-  }
-  return (
-    <React.Fragment>
-      <StreamedGame
-        gameStreamService={gameStreamService}
-      />
-      <Button onClick={nextMoveOnClick} > Play game</Button>
-    </React.Fragment>
   )
 }

@@ -42,5 +42,6 @@ export class ClientConnection implements ClientConnectionInterface {
   }
 
   complete () {
+    this.ws.close()
   }
 }

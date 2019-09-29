@@ -4,7 +4,8 @@ import { Lobby } from '../index'
 import { MockClientConnection } from '../../server/__mocks__/clientConnection'
 import { ClientConnection } from '../../server/clientConnection'
 import { SocketClientMessage, SocketServerMessage } from '../../../common/types'
-import { last, skip } from 'rxjs/operators'
+import { last, skip, toArray } from 'rxjs/operators'
+import Game from '../../game'
 // import { last } from 'rxjs/operators'
 
 describe('memberDetailsMap$', () => {
@@ -38,8 +39,10 @@ describe('member details connection updates', () => {
     lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
 
     const message: SocketServerMessage = {
-      member: {
-        memberDetailsUpdate: [...lobby.memberDetailsMap]
+      lobby: {
+        member: {
+          memberDetailsUpdate: [...lobby.memberDetailsMap]
+        }
       }
     }
 
@@ -70,8 +73,10 @@ describe('member details connection updates', () => {
 
     lobby.memberDetailsUpdates$.pipe(last()).subscribe((update) => {
       const message: SocketServerMessage = {
-        member: {
-          memberDetailsUpdate: [update]
+        lobby: {
+          member: {
+            memberDetailsUpdate: [update]
+          }
         }
       }
       expect(mockConnection2.sendMessage).toHaveBeenLastCalledWith(message)
@@ -87,19 +92,28 @@ describe('member details connection updates', () => {
   })
 })
 
-describe('activeGameInfoArr', () => {
-  it('includes a newly created GameMessage whenever one is created', (done) => {
-    const user1 = userDetails[0]
-    const mockConnection1 = new MockClientConnection(NEVER, user1)
+describe('displayedGameMessage$', () => {
+  const user1 = userDetails[0]
+  const user2 = userDetails[1]
 
-    const user2 = userDetails[1]
-    const mockConnection2 = new MockClientConnection(NEVER, user2)
+  const mockConnection1 = new MockClientConnection(NEVER, user1)
+  const mockConnection2 = new MockClientConnection(NEVER, user2)
 
-    const lobby = new Lobby()
+  let lobby: Lobby
 
-    lobby.activeGameMessage$.pipe(skip(1)).subscribe(msg => {
-      console.log('display: ', msg)
-      expect(msg.display).toHaveLength(1)
+  beforeEach(() => {
+    lobby = new Lobby()
+  })
+
+  afterEach(() => {
+    mockConnection2.clean()
+    mockConnection1.clean()
+    lobby.complete()
+  })
+
+  it('emits DisplayGameMessage.add whenever a game is created', (done) => {
+    lobby.displayedGameMessage$.subscribe(msg => {
+      expect(msg.add).toHaveLength(1)
       done()
     })
 
@@ -107,5 +121,56 @@ describe('activeGameInfoArr', () => {
     lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
 
     lobby.complete()
+  })
+
+  it('emits any updates to the game', done => {
+    const l = lobby as any
+
+    l.arena.games$.subscribe((game: Game) => {
+      console.log('new game in test')
+      game.gameUpdate$.subscribe((msg) => console.log('gameUpdate: ', msg))
+      game.end()
+      game.endPromise.then(() => console.log('endpromise resolved'))
+    })
+
+    lobby.displayedGameMessage$.pipe(skip(1)).subscribe({
+      next: msg => {
+        expect(msg).toHaveProperty('update')
+        done()
+      },
+      complete: () => console.log('completed for some reason')
+    })
+
+    lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
+    lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
+
+    lobby.complete()
+  })
+
+  it.only('emits a given update only once', done => {
+    const l = lobby as any
+
+    l.arena.games$.subscribe((game: Game) => {
+      console.log('new game in test')
+      game.gameUpdate$.subscribe((msg) => console.log('gameUpdate: ', msg))
+      game.end()
+      game.endPromise.then(() => {
+        lobby.complete()
+      })
+    })
+
+    lobby.displayedGameMessage$.pipe(
+      skip(1),
+      toArray()
+    ).subscribe(arr => {
+      console.log('arr: ', arr)
+      console.log('len: ', arr.length)
+
+      expect(arr).toHaveLength(1)
+      done()
+    })
+
+    lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
+    lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
   })
 })

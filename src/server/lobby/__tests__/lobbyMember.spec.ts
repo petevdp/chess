@@ -2,7 +2,7 @@ import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessa
 import { EMPTY, NEVER, Subject } from 'rxjs'
 import { getLobbyMemberConnectionPair } from '../testHelpers'
 import { skip } from 'rxjs/operators'
-import { allGameInfo, displayMessages } from '../../../common/dummyData'
+import { displayedGameMessages } from '../../../common/dummyData'
 
 const user1 = {
   id: 'id1',
@@ -22,17 +22,6 @@ beforeEach(() => {
 afterEach(() => {
 })
 
-describe('initial client messages', () => {
-  it('sends a display message containing the given activeGames', () => {
-    const [conn] = getLobbyMemberConnectionPair(EMPTY, user1, [allGameInfo.newGame])
-    expect(conn.sendMessage).toHaveBeenCalledWith({
-      game: {
-        type: 'display',
-        display: [allGameInfo.newGame]
-      }
-    } as SocketServerMessage)
-  })
-})
 describe('broadcasting', () => {
   it('can broadcast member details', () => {
     const [clientConnection, member] = getLobbyMemberConnectionPair(EMPTY, user1)
@@ -42,11 +31,13 @@ describe('broadcasting', () => {
     ])
     member.broadcastLobbyMemberDetails([...update])
 
-    const message = {
-      member: {
-        memberDetailsUpdate: [...update]
+    const message: SocketServerMessage = {
+      lobby: {
+        member: {
+          memberDetailsUpdate: [...update]
+        }
       }
-    } as SocketServerMessage
+    }
 
     console.log('mock calls', clientConnection.sendMessage.mock.calls)
 
@@ -56,12 +47,14 @@ describe('broadcasting', () => {
 
   it('can broadcast GameMessages', () => {
     const [conn, member] = getLobbyMemberConnectionPair(EMPTY, user1)
-    const message = displayMessages[0]
-    member.broadcastActiveGameMessage(message)
+    const message = displayedGameMessages[0]
+    member.broadcastDisplayedGameMessage(message)
 
     expect(conn.sendMessage).toHaveBeenCalledWith({
-      game: message
-    })
+      lobby: {
+        displayedGame: message
+      }
+    } as SocketServerMessage)
     conn.clean()
   })
 })

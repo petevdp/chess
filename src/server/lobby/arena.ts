@@ -1,6 +1,6 @@
 import { LobbyMember } from './lobbyMember'
 import { Observable, merge, Subject, of, Subscription, from, BehaviorSubject } from 'rxjs'
-import { scan, map, mergeAll, filter, mergeMap, mapTo, tap, shareReplay } from 'rxjs/operators'
+import { scan, map, mergeAll, filter, mergeMap, mapTo, shareReplay } from 'rxjs/operators'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
@@ -13,8 +13,7 @@ interface UnmatchedState {
 
 export class Arena {
   games$: Observable<Game>;
-  activeGames$: Observable<Game[]>
-  private _activeGames$: BehaviorSubject<Game[]>
+  activeGames$: BehaviorSubject<Game[]>
   private unmatched$: Subject<MemberUpdate>
   private lobbyMemberSubscription: Subscription
 
@@ -24,7 +23,8 @@ export class Arena {
     this.lobbyMemberSubscription = lobbyMember$.subscribe({
       next: update => {
         this.unmatched$.next(update)
-      }
+      },
+      complete: () => this.unmatched$.complete()
     })
 
     this.games$ = this.unmatched$.pipe(
@@ -62,12 +62,10 @@ export class Arena {
           of([game.id, game]),
           from(game.endPromise).pipe(mapTo<EndState, [string, null]>([game.id, null]))
         ) as Observable<[string, (Game|null)]>
-      }),
-      tap(() => console.log('after concat'))
+      })
     )
-    this._activeGames$ = new BehaviorSubject([] as Game[])
-    this.activeGames$ = this._activeGames$.asObservable()
-    this._activeGames$.subscribe((u) => {
+    this.activeGames$ = new BehaviorSubject([] as Game[])
+    this.activeGames$.subscribe((u) => {
       console.log('activeGame update', u.length)
     })
 
@@ -88,16 +86,17 @@ export class Arena {
         return acc
       }, new Map()),
       map(gameMap => [...gameMap.values()])
-    ).subscribe(this._activeGames$)
+    ).subscribe(this.activeGames$)
   }
 
   complete () {
     this.lobbyMemberSubscription.unsubscribe()
     this.unmatched$.complete()
+    this.activeGames$.complete()
   }
 
   get activeGames () {
-    return this._activeGames$.value
+    return this.activeGames$.value
   }
 
   private async resolvePotentialGame (members: LobbyMember[]) {

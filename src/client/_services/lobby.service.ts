@@ -1,19 +1,19 @@
-import { MemberMessage, GameMessage, CompleteGameInfo, GameUpdateWithId, LobbyMemberDetails } from '../../common/types'
-import { Observable, Subject, from } from 'rxjs'
+import { MemberMessage, CompleteGameInfo, GameUpdateWithId, LobbyMemberDetails, LobbyMessage, DisplayedGameMessage } from '../../common/types'
+import { Observable, from, BehaviorSubject } from 'rxjs'
 import { SocketService } from './socket.service'
 import { routeBy } from '../../common/helpers'
 import { useObservable } from 'rxjs-hooks'
-import { scan, shareReplay, filter, map, takeWhile, concatMap, mergeMap } from 'rxjs/operators'
-import { GameStream, GameStateWithDetails } from '../../common/gameProviders'
+import { scan, shareReplay, filter, map, takeWhile, concatMap, mergeMap, tap } from 'rxjs/operators'
+import { GameStream, GameStateWithDetails, GameState } from '../../common/gameProviders'
 
-type CompleteGameInfoUpdate = [string, (CompleteGameInfo|null)]
 export class LobbyService {
   lobbyMemberDetailsMap$: Observable<Map<string, LobbyMemberDetails>>
-  streamedGameStateMap$: Observable<Map<string, GameStateWithDetails>>
+  streamedGameStateArr$: BehaviorSubject<GameStateWithDetails[]>
 
   constructor (socketService: SocketService) {
     const { serverMessage$: message$ } = socketService
-    const memberMessage$: Observable<MemberMessage> = message$.pipe(routeBy('member'))
+    const lobbyMessage$: Observable<LobbyMessage> = message$.pipe(routeBy('lobby'))
+    const memberMessage$: Observable<MemberMessage> = lobbyMessage$.pipe(routeBy('member'))
 
     this.lobbyMemberDetailsMap$ = memberMessage$.pipe(
       filter(msg => !!msg.memberDetailsUpdate),
@@ -31,69 +31,69 @@ export class LobbyService {
       shareReplay(1)
     )
 
-    const gameMessage$ = message$.pipe(routeBy<GameMessage>('game'))
+    const displayedGameMessage$ = lobbyMessage$.pipe(routeBy<DisplayedGameMessage>('displayedGame'))
 
-    const gameDisplayUpdate$: Subject<CompleteGameInfoUpdate> = new Subject()
-
-    gameMessage$.pipe(
-      routeBy<CompleteGameInfo[]>('display'),
-      concatMap(infoArr => from(infoArr)),
-      map((info): CompleteGameInfoUpdate => [info.id, info])
-    ).subscribe({
-      next: update => gameDisplayUpdate$.next(update)
-    })
-
-    const gameUpdate$ = gameMessage$.pipe(
+    const displayedGameUpdate$ = displayedGameMessage$.pipe(
       routeBy<GameUpdateWithId>('update')
     )
 
-    const currentlyDisplayed = new Map<string, CompleteGameInfo>()
+    const displayedGameAddition$ = displayedGameMessage$.pipe(
+      routeBy<CompleteGameInfo[]>('add')
+    )
 
-    const gameStream$ = gameDisplayUpdate$.pipe(
-      filter(([id]) => !currentlyDisplayed.has(id)),
-      map<CompleteGameInfoUpdate, GameStream>(([, info]) => {
-        if (!info) {
-          throw new Error('nulls should be filtered out')
-        }
+    displayedGameAddition$.subscribe(add => console.log('addition: ', add.map(({ id }) => id)))
 
-        const gameSpecificUpdate$ = gameUpdate$.pipe(
-          filter(({ id }) => id === info.id),
-          takeWhile(u => u.type !== 'end', true)
+    const gameState$ = displayedGameAddition$.pipe(
+      concatMap((additions) => from(additions)),
+      filter(info => !this.streamedGameStateIdArr.includes(info.id)),
+      mergeMap((info: CompleteGameInfo) => {
+        const gameUpdate$ = displayedGameUpdate$.pipe(
+          filter(update => update.id === info.id),
+          tap((u) => console.log('update: ', u.type, u.end)),
+          takeWhile(update => update.type !== 'end', true)
         )
-
-        gameSpecificUpdate$.subscribe({
-          complete: () => currentlyDisplayed.delete(info.id)
-        })
-
-        console.log('new gameStream')
-        return new GameStream(gameSpecificUpdate$, info)
+        console.log('new gamestream')
+        const gameStream = new GameStream(gameUpdate$, info)
+        return gameStream.gameStateWithDetails$
       })
     )
 
-    this.streamedGameStateMap$ = gameStream$.pipe(
-      mergeMap(gameStream => gameStream.gameStateWithDetails$),
-      scan((acc, gameState) => {
+    this.streamedGameStateArr$ = new BehaviorSubject([] as GameStateWithDetails[])
+
+    gameState$.pipe(
+      scan<GameStateWithDetails, Map<string, GameStateWithDetails>>((acc, state) => {
         acc = this.deleteStaleGameState(acc)
-        acc.set(gameState.id, gameState)
+        acc.set(state.id, state)
         return acc
-      }, new Map<string, GameStateWithDetails>())
-    )
+      }, new Map<string, GameStateWithDetails>()),
+      map<Map<string, GameStateWithDetails>, GameStateWithDetails[]>(stateMap => [...stateMap.values()])
+    ).subscribe({
+      next: arr => this.streamedGameStateArr$.next(arr)
+    })
   }
 
   private deleteStaleGameState (gameStateMap: Map<string, GameStateWithDetails>) {
-    [...gameStateMap].forEach(([id, gameState]) => {
-      if (gameState.end) {
+    [...gameStateMap].forEach(([id, state]) => {
+      if (state.end) {
         gameStateMap.delete(id)
       }
     })
     return gameStateMap
   }
 
+  get streamedGameStateArr () {
+    return this.streamedGameStateArr$.value
+  }
+
+  get streamedGameStateIdArr () {
+    return this.streamedGameStateArr.map(state => state.id)
+  }
+
   queueForGame = () => {
   }
 
   useStreamedGameStates = () => {
-    return useObservable(() => this.streamedGameStateMap$, new Map())
+    return useObservable(() => this.streamedGameStateArr$, [])
   }
 
   useLobbyMemberDetails () {

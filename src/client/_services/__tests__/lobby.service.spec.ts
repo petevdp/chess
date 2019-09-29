@@ -1,7 +1,7 @@
 import { MockSocketService } from '../__mocks__/socket.service'
 import { LobbyService } from '../lobby.service'
 import { SocketService } from '../socket.service'
-import { allMemberServerMessages, allMemberDetailsUpdates, displayMessages } from '../../../common/dummyData'
+import { allMemberServerMessages, allMemberDetailsUpdates, displayedGameMessages, endUpdates } from '../../../common/dummyData'
 import { SocketServerMessage } from '../../../common/types'
 import { skip } from 'rxjs/operators'
 
@@ -27,52 +27,54 @@ describe('lobbyMemberDetailsMap', () => {
   })
 })
 
-describe('streamedGameStateMap$', () => {
-  const displayMessage1: SocketServerMessage = {
-    game: displayMessages[0]
+describe('displayedGameMessage$', () => {
+  const displayServerMessage1: SocketServerMessage = {
+    lobby: {
+      displayedGame: displayedGameMessages[0]
+    }
   }
 
-  const displayMessage2: SocketServerMessage = {
-    game: displayMessages[1]
+  const displayServerMessage2: SocketServerMessage = {
+    lobby: {
+      displayedGame: displayedGameMessages[1]
+    }
   }
 
-  const dispMsg = displayMessages[0] as any
-  const game1Id = dispMsg.display[0].id
+  const dispMsg = displayedGameMessages[0] as any
+  const game1Id: string = dispMsg.add[0].id
 
-  const endMessage: SocketServerMessage = {
-    game: {
-      type: 'update',
-      update: {
-        type: 'end',
-        id: game1Id
+  const endServerMessage: SocketServerMessage = {
+    lobby: {
+      displayedGame: {
+        type: 'update',
+        update: {
+          type: 'end',
+          id: game1Id,
+          end: {
+            reason: 'resign',
+            winnerId: 'lmao'
+          }
+        }
       }
     }
   }
 
-  it('emits an array of length 1 when it receives a display command with one game', done => {
-    lobbyService.streamedGameStateMap$.subscribe(stateMap => {
-      expect(stateMap.size).toEqual(1)
-      done()
-    })
-    mockSocketService.serverMessage$.next(displayMessage1)
+  it('includes state of games given by a display message', () => {
+    mockSocketService.serverMessage$.next(displayServerMessage1)
+    expect(lobbyService.streamedGameStateArr.find(({ id }) => id === game1Id)).toBeTruthy()
   })
 
-  it('does not emit ended gameStates on the next iteration', done => {
-    lobbyService.streamedGameStateMap$.pipe(skip(2)).subscribe(stateMap => {
-      expect(!stateMap.has(game1Id)).toBeFalsy()
-      done()
-    })
-    mockSocketService.serverMessage$.next(displayMessage1)
-    mockSocketService.serverMessage$.next(endMessage)
-    mockSocketService.serverMessage$.next(displayMessage2)
+  it('does not emit ended gameStates on the next iteration', () => {
+    mockSocketService.serverMessage$.next(displayServerMessage1)
+    mockSocketService.serverMessage$.next(endServerMessage)
+    mockSocketService.serverMessage$.next(displayServerMessage2)
+    console.log('ids: ', lobbyService.streamedGameStateIdArr)
+    expect(lobbyService.streamedGameStateIdArr.includes(game1Id)).toBeFalsy()
   })
 
-  it('does not duplicate games if it recieves the same game twice', done => {
-    lobbyService.streamedGameStateMap$.pipe(skip(1)).subscribe(stateMap => {
-      expect(stateMap.size).toEqual(1)
-      done()
-    })
-    mockSocketService.serverMessage$.next(displayMessage1)
-    mockSocketService.serverMessage$.next(displayMessage1)
+  it('does not duplicate games if it recieves the same game twice', () => {
+    mockSocketService.serverMessage$.next(displayServerMessage1)
+    mockSocketService.serverMessage$.next(displayServerMessage1)
+    expect(lobbyService.streamedGameStateArr.length).toEqual(1)
   })
 })

@@ -1,6 +1,6 @@
 // dummy data for tsts
 
-import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage, SocketServerMessage, LobbyMemberDetailsUpdate, LobbyMemberDetails, GameMessage } from "./types"
+import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage, SocketServerMessage, LobbyMemberDetailsUpdate, LobbyMemberDetails, GameMessage, DisplayedGameMessage } from "./types"
 
 import { Move, ChessInstance } from "chess.js"
 import { getChessConstructor } from "./helpers"
@@ -101,7 +101,9 @@ export const gameUpdateMessage = {
 
 export const allMemberServerMessages: SocketServerMessage[] = [
   {
-    member: { memberDetailsUpdate: [allMemberDetailsUpdates[0]] }
+    lobby: {
+      member: { memberDetailsUpdate: [allMemberDetailsUpdates[0]] }
+    }
   }
 ]
 
@@ -140,14 +142,14 @@ export const joinMessage: GameMessage = {
   join: allGameInfo.newGame
 }
 
-export const displayMessages: GameMessage[] = [
+export const displayedGameMessages: DisplayedGameMessage[] = [
   {
-    type: 'display',
-    display: [allGameInfo.newGame]
+    type: 'add',
+    add: [allGameInfo.newGame]
   },
   {
-    type: 'display',
-    display: [allGameInfo.checkmateGame]
+    type: 'add',
+    add: [allGameInfo.checkmateGame]
   }
 ]
 

@@ -78,10 +78,7 @@ class Game {
       )
       .subscribe(gameUpdateSubject)
 
-    this.gameUpdate$ = gameUpdateSubject.asObservable()
-    // gameUpdateSubject.subscribe(update => {
-    //   console.log('update: ', update)
-    // })
+    this.gameUpdate$ = gameUpdateSubject.asObservable().pipe(shareReplay(1))
 
     this.endPromise = this.gameUpdate$.pipe(
       routeBy<EndState>('end'),
@@ -93,6 +90,8 @@ class Game {
    * Ends the game, notifying all clients
    */
   end () {
+    console.log('ending game')
+
     this.gameController$.next({
       type: 'end',
       end: {

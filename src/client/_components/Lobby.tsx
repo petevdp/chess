@@ -4,6 +4,7 @@ import { LobbyService } from '../_services/lobby.service'
 import { LobbyMemberDetails } from '../../common/types'
 import { SocketService } from '../_services/socket.service'
 import { ListGroup, Button } from 'react-bootstrap'
+import AllStreams from './AllStreams'
 
 interface LobbyProps {
   lobbyService: LobbyService;
@@ -15,6 +16,7 @@ function Lobby ({ lobbyService }: LobbyProps) {
     <React.Fragment>
       <Button onClick={lobbyService.queueForGame}>Queue for Game</Button>
       <ActiveMembersDisplayList {...{ allMemberDetails }}/>
+      <AllStreams {... { lobbyService }} />
     </React.Fragment>
   )
 }
@@ -44,10 +46,10 @@ interface ActiveMemberDisplayProps {
 }
 
 function MemberDisplay ({ memberDetails }: ActiveMemberDisplayProps) {
-  const { username } = memberDetails
+  const { username, currentGame } = memberDetails
   return (
     <ListGroup.Item className="memberDetails_member">
-      searching
+      { currentGame ? 'ingame' : 'searching' }
       <label className="member_classname">{username}</label>
     </ListGroup.Item>
   )

@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
-import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, CompleteGameInfo, GameMessage } from '../../common/types'
+import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage } from '../../common/types'
 interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
@@ -25,8 +25,7 @@ export class LobbyMember implements LobbyMemberInterface {
   private stateSubject: BehaviorSubject<MemberState>;
 
   constructor (
-    public connection: ClientConnection,
-    activeGames: CompleteGameInfo[]
+    public connection: ClientConnection
   ) {
     const { clientMessage$ } = connection
 
@@ -43,12 +42,6 @@ export class LobbyMember implements LobbyMemberInterface {
       complete: () => {
         this.stateSubject.next({ ...this.state, leftLobby: true })
         this.stateSubject.complete()
-      }
-    })
-    connection.sendMessage({
-      game: {
-        type: 'display',
-        display: activeGames
       }
     })
   }
@@ -91,10 +84,14 @@ export class LobbyMember implements LobbyMemberInterface {
     return this.userDetails.id
   }
 
-  broadcastLobbyMemberDetails = (update: LobbyMemberDetailsUpdate[]) => {
-    console.log('received update: ', update)
-
+  private sendMessageToClient (message: LobbyMessage) {
     this.connection.sendMessage({
+      lobby: message
+    })
+  }
+
+  broadcastLobbyMemberDetails = (update: LobbyMemberDetailsUpdate[]) => {
+    this.sendMessageToClient({
       member: {
         memberDetailsUpdate: update
       }
@@ -102,12 +99,9 @@ export class LobbyMember implements LobbyMemberInterface {
   }
 
   // should be used to keep the lobby displayed games up to date, not to join games
-  broadcastActiveGameMessage (message: GameMessage) {
-    if (message.type === 'join') {
-      throw new Error('don\'t join games from lobbyMembers update channel')
-    }
-    this.connection.sendMessage({
-      game: message
+  broadcastDisplayedGameMessage (message: DisplayedGameMessage) {
+    this.sendMessageToClient({
+      displayedGame: message
     })
   }
 }

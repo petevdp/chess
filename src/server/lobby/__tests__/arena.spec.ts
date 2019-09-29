@@ -1,9 +1,9 @@
 import { getLobbyMemberConnectionPair } from "../testHelpers"
-import { EMPTY, from, Subject, NEVER } from "rxjs"
+import { EMPTY, from, Subject, NEVER, Subscription } from "rxjs"
 import { userDetails } from '../../../common/dummyData'
 import { Arena } from "../arena"
 import { MemberUpdate } from ".."
-import { first, skip } from "rxjs/operators"
+import { first, skip, mergeMap, toArray } from "rxjs/operators"
 import { MockClientConnection } from "../../server/__mocks__/clientConnection"
 import { LobbyMember } from "../lobbyMember"
 
@@ -25,7 +25,7 @@ it('creates a new game when two members join the arena', done => {
   update$.complete()
 })
 
-describe('activeGames$', () => {
+describe('games creation and emmision', () => {
   let conn1: MockClientConnection
   let conn2: MockClientConnection
 
@@ -51,27 +51,63 @@ describe('activeGames$', () => {
     arena.complete()
   })
 
-  it('emits an array containing a game a game is created', (done) => {
-    arena.activeGames$.pipe(skip(1)).subscribe((games) => {
-      expect(games).toHaveLength(1)
-      done()
+  describe('games$', () => {
+    it('emits new games', (done) => {
+      arena.games$.subscribe(() => {
+        done()
+      })
+
+      memberUpdate$.next([member1.id, member1])
+      memberUpdate$.next([member2.id, member2])
     })
 
-    memberUpdate$.next([member1.id, member1])
-    memberUpdate$.next([member2.id, member2])
+    it('emits new games only once', done => {
+      arena.games$.pipe(
+        toArray()
+      ).subscribe(arr => {
+        expect(new Set(arr).size).toEqual(1)
+        done()
+      })
+
+      memberUpdate$.next([member1.id, member1])
+      memberUpdate$.next([member2.id, member2])
+      memberUpdate$.complete()
+    })
   })
 
-  it('removes deleted games from the array', done => {
-    arena.activeGames$.pipe(skip(2)).subscribe(games => {
-      expect(games).toHaveLength(0)
-      done()
+  describe('activeGames$', () => {
+    it('includes new games that haven\'t ended yet', () => {
+      arena.activeGames$.pipe(skip(1)).subscribe(arr => {
+        expect(arr).toHaveLength(1)
+      })
+
+      memberUpdate$.next([member1.id, member1])
+      memberUpdate$.next([member2.id, member2])
     })
 
-    arena.games$.pipe(first()).subscribe(game => {
-      game.end()
-    })
+    it('does not included ended games', done => {
+      arena.activeGames$.pipe(skip(2)).subscribe(games => {
+        expect(games).toHaveLength(0)
+        done()
+      })
 
-    memberUpdate$.next([member1.id, member1])
-    memberUpdate$.next([member2.id, member2])
+      arena.games$.pipe(first()).subscribe(game => {
+        game.end()
+      })
+
+      memberUpdate$.next([member1.id, member1])
+      memberUpdate$.next([member2.id, member2])
+    })
+  })
+})
+
+describe('complete', () => {
+  it('completes games$ and activeGames$', () => {
+    const arena = new Arena(NEVER)
+    const gamesSub = arena.games$.subscribe()
+    const activeGamesSub = arena.activeGames$.subscribe()
+    arena.complete()
+    expect(gamesSub.closed).toBeTruthy()
+    expect(activeGamesSub.closed).toBeTruthy()
   })
 })
