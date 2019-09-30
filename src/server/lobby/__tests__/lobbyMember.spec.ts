@@ -1,8 +1,9 @@
 import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage } from '../../../common/types'
 import { EMPTY, NEVER, Subject } from 'rxjs'
 import { getLobbyMemberConnectionPair } from '../testHelpers'
-import { skip } from 'rxjs/operators'
+import { toArray, map, takeWhile } from 'rxjs/operators'
 import { displayedGameMessages } from '../../../common/dummyData'
+import { MemberState } from '../lobbyMember'
 
 const user1 = {
   id: 'id1',
@@ -76,6 +77,19 @@ describe('state', () => {
     expect(member.state.leftLobby).toBeFalsy()
     clientConnection.clean()
   })
+
+  it('doesn\'t emit twice', (done) => {
+    const subject = new Subject<SocketClientMessage>()
+    const [, member] = getLobbyMemberConnectionPair(subject, user1)
+    member.update$.pipe(
+      takeWhile(member => member !== null),
+      toArray()
+    ).subscribe(arr => {
+      expect(arr).toHaveLength(1)
+      done()
+    })
+    subject.complete()
+  })
 })
 
 describe('update$', () => {
@@ -96,11 +110,17 @@ describe('update$', () => {
     const subject = new Subject<SocketClientMessage>()
     const [, member] = getLobbyMemberConnectionPair(subject, user1)
 
-    member.update$.pipe(skip(1)).subscribe({
-      next: update => {
-        expect(update).toBeNull()
-      },
-      complete: () => done()
+    member.update$.pipe(
+      map(member => (member ? { ...member.state } : null)),
+      toArray()
+    ).subscribe({
+      next: (arr) => {
+        expect(arr).toHaveLength(2)
+        const first = arr[0] as MemberState
+        expect(first.leftLobby).toBeFalsy()
+        expect(arr[1]).toBeNull()
+        done()
+      }
     })
     subject.complete()
   })
