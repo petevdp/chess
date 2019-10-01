@@ -4,7 +4,7 @@ import { Lobby } from '../index'
 import { MockClientConnection } from '../../server/__mocks__/clientConnection'
 import { ClientConnection } from '../../server/clientConnection'
 import { SocketClientMessage, SocketServerMessage } from '../../../common/types'
-import { last, skip, toArray, takeWhile } from 'rxjs/operators'
+import { last, skip, toArray } from 'rxjs/operators'
 import Game from '../../game'
 // import { last } from 'rxjs/operators'
 

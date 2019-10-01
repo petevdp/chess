@@ -1,9 +1,10 @@
-import { GameUpdateWithId, CompleteGameInfo, UserDetails, PlayerDetails } from '../types'
+import { GameUpdateWithId, CompleteGameInfo, UserDetails, PlayerDetails, GameUpdate } from '../types'
 import { GameStream, GameClient, MoveMaker } from '../gameProviders'
 import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { Chess, Move } from 'chess.js'
 import { allGameInfo } from '../dummyData'
+import { getMoveHistoryFromPgn, replayMoveHistory } from '../helpers'
 
 const chess = new Chess()
 const moveUpdates: GameUpdateWithId[] = [
@@ -159,10 +160,43 @@ describe('GameClient', () => {
         }
       })
     })
+
+    it('does not attempt to respond to opponent moves that end the game', done => {
+      const startingGameInfo = allGameInfo.checkmateGame
+      const mockMoveMaker = jest.fn(Engines.firstMoveEngine)
+      const startingMoveHistory = getMoveHistoryFromPgn(startingGameInfo.pgn)
+      const moveHistory = startingMoveHistory.slice(0, -1)
+      const endingMove = startingMoveHistory.reverse()[0]
+      const game = replayMoveHistory(moveHistory)
+
+      const preparedGameInfo: CompleteGameInfo = {
+        ...startingGameInfo,
+        pgn: game.pgn()
+      }
+
+      const endingMoveUpdate: GameUpdate = {
+        type: 'move',
+        move: endingMove
+      }
+
+      const client = new GameClient(
+        of(endingMoveUpdate),
+        preparedGameInfo,
+        preparedGameInfo.playerDetails[1].user,
+        mockMoveMaker
+      )
+
+      client.action$.subscribe({
+        complete: () => {
+          expect(mockMoveMaker).toBeCalledTimes(0)
+          done()
+        }
+      })
+    })
   })
 
   describe('endPromise', () => {
-    it('ends when issued an gameUpdate of type end', done => {
+    it('ends when issued an gameUpdate of type end with reason resign', done => {
       const client = new GameClient(
         of(resignUpdate),
         newGameInfo(),

@@ -1,7 +1,7 @@
 import { Observable, concat, EMPTY, from, BehaviorSubject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
-import { EndState, GameUpdateWithId, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDetails } from './types'
-import { map, filter, concatMap, tap } from 'rxjs/operators'
+import { EndState, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDetails } from './types'
+import { map, filter, concatMap, tap, share, takeWhile } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
 
 const Chess = getChessConstructor()
@@ -104,7 +104,7 @@ export class GameClient {
   private chess: ChessInstance
 
   constructor (
-    public gameUpdate$: Observable<GameUpdateWithId>,
+    public gameUpdate$: Observable<GameUpdate>,
     gameInfo: CompleteGameInfo,
     user: UserDetails,
     getMove: MoveMaker
@@ -115,7 +115,7 @@ export class GameClient {
     this.colour = this.getColour(user, gameInfo)
 
     // TODO implement actions other than moves
-    this.action$ = this.makeClientMoveObservable(
+    this.action$ = this.makeClientActionObservable(
       gameUpdate$.pipe(
         filter(update => update.type === 'move'),
         map(({ move }) => move as Move),
@@ -138,26 +138,16 @@ export class GameClient {
     return player.colour
   }
 
-  private makeClientMoveObservable (
+  private makeClientActionObservable (
     opponentMove$: Observable<Move>,
     getMove: MoveMaker
-  ) {
+  ): Observable<ClientAction> {
     const starting = this.colour === this.chess.turn()
       && this.chess.moves().length > 0
 
     const moveIfStarting = starting
       ? from(getMove(this.chess))
       : EMPTY
-
-    const respondToOpponentMove: Observable<Move> = opponentMove$.pipe(
-      concatMap(async (opponentMove) => {
-        const chess = this.makeMoveIfValid(opponentMove)
-
-        const clientMove = await getMove(chess)
-        this.makeMoveIfValid(clientMove)
-        return clientMove
-      })
-    )
 
     moveIfStarting.subscribe(move => this.makeMoveIfValid(move))
 
@@ -167,8 +157,16 @@ export class GameClient {
       moveIfStarting.pipe(
         moveToAction
       ),
-      respondToOpponentMove.pipe(moveToAction)
-    )
+      opponentMove$.pipe(
+        tap(move => this.makeMoveIfValid(move)),
+        takeWhile(() => this.chess.moves().length > 0),
+        concatMap(async (): Promise<ClientAction> => {
+          const move = await getMove(this.chess)
+          this.makeMoveIfValid(move)
+          return { type: 'move', move }
+        })
+      )
+    ).pipe(share())
   }
 
   private makeMoveIfValid (move: Move) {
