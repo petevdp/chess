@@ -2,7 +2,7 @@ import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
 import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage } from '../../common/types'
-interface MemberState {
+export interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
 }
@@ -32,6 +32,7 @@ export class LobbyMember implements LobbyMemberInterface {
     this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false } as MemberState)
 
     this.update$ = this.stateSubject.pipe(map(state => {
+      console.log('updating lobbyMember')
       if (state.leftLobby) {
         return null
       }

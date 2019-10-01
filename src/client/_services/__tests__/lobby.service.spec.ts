@@ -1,9 +1,8 @@
 import { MockSocketService } from '../__mocks__/socket.service'
 import { LobbyService } from '../lobby.service'
 import { SocketService } from '../socket.service'
-import { allMemberServerMessages, allMemberDetailsUpdates, displayedGameMessages, endUpdates } from '../../../common/dummyData'
+import { allMemberServerMessages, allMemberDetailsUpdates, displayedGameMessages } from '../../../common/dummyData'
 import { SocketServerMessage } from '../../../common/types'
-import { skip } from 'rxjs/operators'
 
 let mockSocketService: MockSocketService
 let lobbyService: LobbyService

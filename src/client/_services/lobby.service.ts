@@ -4,7 +4,7 @@ import { SocketService } from './socket.service'
 import { routeBy } from '../../common/helpers'
 import { useObservable } from 'rxjs-hooks'
 import { scan, shareReplay, filter, map, takeWhile, concatMap, mergeMap, tap } from 'rxjs/operators'
-import { GameStream, GameStateWithDetails, GameState } from '../../common/gameProviders'
+import { GameStream, GameStateWithDetails } from '../../common/gameProviders'
 
 export class LobbyService {
   lobbyMemberDetailsMap$: Observable<Map<string, LobbyMemberDetails>>

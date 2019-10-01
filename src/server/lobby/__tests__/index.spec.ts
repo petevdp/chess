@@ -4,7 +4,7 @@ import { Lobby } from '../index'
 import { MockClientConnection } from '../../server/__mocks__/clientConnection'
 import { ClientConnection } from '../../server/clientConnection'
 import { SocketClientMessage, SocketServerMessage } from '../../../common/types'
-import { last, skip, toArray } from 'rxjs/operators'
+import { last, skip, toArray, takeWhile } from 'rxjs/operators'
 import Game from '../../game'
 // import { last } from 'rxjs/operators'
 
@@ -147,30 +147,25 @@ describe('displayedGameMessage$', () => {
     lobby.complete()
   })
 
-  it.only('emits a given update only once', done => {
-    const l = lobby as any
-
-    l.arena.games$.subscribe((game: Game) => {
-      console.log('new game in test')
-      game.gameUpdate$.subscribe((msg) => console.log('gameUpdate: ', msg))
-      game.end()
-      game.endPromise.then(() => {
-        lobby.complete()
-      })
-    })
-
+  it('emits a given update only once', done => {
     lobby.displayedGameMessage$.pipe(
-      skip(1),
       toArray()
     ).subscribe(arr => {
       console.log('arr: ', arr)
       console.log('len: ', arr.length)
 
-      expect(arr).toHaveLength(1)
+      expect(arr).toHaveLength(2)
       done()
+    })
+
+    const l = lobby as any
+
+    l.arena.games$.subscribe((game: Game) => {
+      game.end()
     })
 
     lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
     lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
+    lobby.complete()
   })
 })

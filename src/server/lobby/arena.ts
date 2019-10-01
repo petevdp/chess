@@ -1,6 +1,6 @@
 import { LobbyMember } from './lobbyMember'
-import { Observable, merge, Subject, of, Subscription, from, BehaviorSubject } from 'rxjs'
-import { scan, map, mergeAll, filter, mergeMap, mapTo, shareReplay } from 'rxjs/operators'
+import { Observable, merge, of, from, BehaviorSubject } from 'rxjs'
+import { scan, map, filter, mergeMap, mapTo, share } from 'rxjs/operators'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
@@ -14,47 +14,46 @@ interface UnmatchedState {
 export class Arena {
   games$: Observable<Game>;
   activeGames$: BehaviorSubject<Game[]>
-  private unmatched$: Subject<MemberUpdate>
-  private lobbyMemberSubscription: Subscription
+  // private unmatched$: Subject<MemberUpdate>
+  // private lobbyMemberSubscription: Subscription
 
-  constructor (lobbyMember$: Observable<MemberUpdate>) {
-    this.unmatched$ = new Subject<MemberUpdate>()
-
-    this.lobbyMemberSubscription = lobbyMember$.subscribe({
-      next: update => {
-        this.unmatched$.next(update)
-      },
-      complete: () => this.unmatched$.complete()
-    })
-
-    this.games$ = this.unmatched$.pipe(
+  constructor (lobbyMemberUpdate$: Observable<MemberUpdate>) {
+    this.games$ = lobbyMemberUpdate$.pipe(
       scan((acc, [id, member]) => {
         const { allUnmatched } = acc
+        acc.potentialGames = []
 
         if (!member) {
           allUnmatched.delete(id)
           return acc
         }
+        console.log('finding game for ', member.id, member.state)
+        console.log(allUnmatched.has(id))
 
         if (allUnmatched.has(id)) {
           if (member.state.currentGame || member.state.leftLobby) {
             allUnmatched.delete(id)
           }
+          console.log('already searching')
           return acc
         }
 
         acc.potentialGames = [...allUnmatched.values()].map(unmatched => (
           this.resolvePotentialGame([unmatched, member])
         ))
-
         allUnmatched.set(id, member)
         return acc
       }, { potentialGames: [], allUnmatched: new Map() } as UnmatchedState),
-      map(({ potentialGames }) => merge(...potentialGames)),
-      mergeAll(),
+      mergeMap(({ potentialGames }) => merge(...potentialGames)),
       filter(game => !!game),
-      shareReplay<Game | false>(1)
-    ) as Observable<Game>
+      map<false | Game, Game>(game => {
+        if (!game) {
+          throw new Error('for typecheckign')
+        }
+        return game
+      }),
+      share()
+    )
 
     const gameAdditionsAndCompletions: Observable<[string, (Game|null)]> = this.games$.pipe(
       mergeMap((game) => {
@@ -71,14 +70,11 @@ export class Arena {
 
     gameAdditionsAndCompletions.pipe(
       scan((acc, [id, game]) => {
-        // first filter map entries that are null, so entries that have
-        // already been signaled to be deleted by the client are removed.
         if (!game) {
           if (!acc.has(id)) {
             throw new Error('trying to delete game that doesn\'t exist')
           }
 
-          // This signals for this entry to be deleted on the client.
           acc.delete(id)
           return acc
         }
@@ -90,8 +86,8 @@ export class Arena {
   }
 
   complete () {
-    this.lobbyMemberSubscription.unsubscribe()
-    this.unmatched$.complete()
+    // this.lobbyMemberSubscription.unsubscribe()
+    // this.unmatched$.complete()
     this.activeGames$.complete()
   }
 

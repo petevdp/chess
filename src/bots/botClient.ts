@@ -10,10 +10,11 @@ import {
 } from '../common/types'
 import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
-import { routeBy } from '../common/helpers'
+import { routeBy, sleep } from '../common/helpers'
 import { filter, takeWhile } from 'rxjs/operators'
 import { randomMoveEngine } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
+import { ChessInstance } from 'chess.js'
 
 function getSocketServerMessageObservable (socket: WebSocket) {
   return new Observable<SocketServerMessage>((subscriber) => {
@@ -100,7 +101,12 @@ export async function newClient (username: string, engine: MoveMaker) {
   return client
 }
 
+const delayedRandomMoveEngine = (delay: number) => async (chess: ChessInstance) => {
+  await sleep(delay)
+  return randomMoveEngine(chess)
+}
+
 if (require.main === module) {
   const [username] = process.argv.slice(2)
-  newClient(username, randomMoveEngine)
+  newClient(username, delayedRandomMoveEngine(400))
 }

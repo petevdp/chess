@@ -1,29 +1,11 @@
 import { getLobbyMemberConnectionPair } from "../testHelpers"
-import { EMPTY, from, Subject, NEVER, Subscription } from "rxjs"
+import { Subject, NEVER } from "rxjs"
 import { userDetails } from '../../../common/dummyData'
 import { Arena } from "../arena"
 import { MemberUpdate } from ".."
-import { first, skip, mergeMap, toArray } from "rxjs/operators"
+import { first, skip, toArray } from "rxjs/operators"
 import { MockClientConnection } from "../../server/__mocks__/clientConnection"
 import { LobbyMember } from "../lobbyMember"
-
-it('creates a new game when two members join the arena', done => {
-  const [, member1] = getLobbyMemberConnectionPair(EMPTY, userDetails[0])
-  const [, member2] = getLobbyMemberConnectionPair(EMPTY, userDetails[1])
-
-  const update$ = new Subject<MemberUpdate>()
-
-  const arena = new Arena(update$)
-
-  arena.games$.subscribe(() => {
-    done()
-  })
-  const updates: MemberUpdate[] = [member1, member2].map(m => [m.id, m])
-
-  from(updates).subscribe(update$)
-
-  update$.complete()
-})
 
 describe('games creation and emmision', () => {
   let conn1: MockClientConnection
@@ -52,7 +34,7 @@ describe('games creation and emmision', () => {
   })
 
   describe('games$', () => {
-    it('emits new games', (done) => {
+    it('emits new games when two members join the arena', (done) => {
       arena.games$.subscribe(() => {
         done()
       })
@@ -65,6 +47,8 @@ describe('games creation and emmision', () => {
       arena.games$.pipe(
         toArray()
       ).subscribe(arr => {
+        console.log('arr: ', arr)
+
         expect(new Set(arr).size).toEqual(1)
         done()
       })
@@ -102,12 +86,10 @@ describe('games creation and emmision', () => {
 })
 
 describe('complete', () => {
-  it('completes games$ and activeGames$', () => {
+  it('completes activeGames$', () => {
     const arena = new Arena(NEVER)
-    const gamesSub = arena.games$.subscribe()
     const activeGamesSub = arena.activeGames$.subscribe()
     arena.complete()
-    expect(gamesSub.closed).toBeTruthy()
     expect(activeGamesSub.closed).toBeTruthy()
   })
 })
