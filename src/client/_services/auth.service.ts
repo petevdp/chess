@@ -7,7 +7,6 @@ import { useObservable } from 'rxjs-hooks'
 import { AUTH_PATH, LOGIN_PATH, LOGOUT_PATH } from '../../common/config'
 
 export interface AuthServiceInterface {
-  // currentUser$: Observable<UserDetails | null>;
   login: (userLogin: UserLogin) => Promise<false|UserDetails>;
   logout: () => Promise<boolean>;
   useCurrentUser: () => UserDetails|null;

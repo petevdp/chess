@@ -1,4 +1,4 @@
-import { Subject, from } from 'rxjs'
+import { Subject, from, NEVER, concat } from 'rxjs'
 import { SocketServerMessage, SocketClientMessage } from '../../../common/types'
 import { allMemberDetails, makeFakeGames } from '../../../common/dummyData/dummyData'
 import { SocketServiceInterface } from '../socket.service'
@@ -23,7 +23,10 @@ const fakeMessages: SocketServerMessage[] = [
 
 class FakeSocketService implements SocketServiceInterface {
   clientMessageSubject = new Subject<SocketClientMessage>();
-  serverMessage$ = from(fakeMessages)
+  serverMessage$ = concat(
+    from(fakeMessages),
+    NEVER
+  )
 
   complete () {
     this.clientMessageSubject.complete()
