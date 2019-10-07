@@ -65,7 +65,7 @@ export class LobbyService {
           tap((u) => console.log('update: ', u.type, u.end)),
           takeWhile(update => update.type !== 'end', true)
         )
-        console.log('new gamestream')
+        console.log(`new gamestream: ${info.id}`)
         const gameStream = new GameStream(gameUpdate$, info)
         return gameStream.gameStateWithDetails$
       })
@@ -79,7 +79,7 @@ export class LobbyService {
       }, new Map<string, GameStateWithDetails>()),
       map<Map<string, GameStateWithDetails>, GameStateWithDetails[]>(stateMap => [...stateMap.values()])
     ).subscribe({
-      next: arr => this.streamedGameStateArr$.next(arr)
+      next: arr => streamedGameStateArr$.next(arr)
     })
 
     return streamedGameStateArr$
