@@ -13,7 +13,7 @@ import uuidv4 from 'uuid/v4'
 import { Player } from './player'
 import { LobbyMember } from '../lobby/lobbyMember'
 import { getGameUpdatesFromPlayerAction } from './rules'
-import { allPlayerDetails } from '../../common/dummyData'
+import { allPlayerDetails } from '../../common/dummyData/dummyData'
 import { routeBy } from '../../common/helpers'
 
 class Game {

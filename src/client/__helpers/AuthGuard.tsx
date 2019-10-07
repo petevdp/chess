@@ -1,11 +1,11 @@
 import React from 'react'
 import { Route, Redirect, RouteProps, RouteComponentProps } from 'react-router-dom'
-import { AuthService } from '../_services/auth.service'
+import { AuthServiceInterface } from '../_services/auth.service'
 
 interface PrivateRouteProps extends RouteProps {
   GuardedComponent: React.ReactType;
   redirectRoute: string;
-  authService: AuthService;
+  authService: AuthServiceInterface;
 }
 
 export function PrivateRoute ({

@@ -7,34 +7,45 @@ import {
 } from "react-router-dom"
 import { Container } from "react-bootstrap"
 
-import { AuthService } from "../_services/auth.service"
+import { AuthServiceInterface, AuthService } from "../_services/auth.service"
 
-import { Lobby } from "./Lobby"
+import Lobby from "./Lobby"
 import { Login } from "./Login"
 import NavBar from "./Nav"
 import { PrivateRoute } from "../__helpers/AuthGuard"
 import { Game } from "./Game"
+import { SocketServiceInterface, SocketService } from "../_services/socket.service"
 
 interface UnconfirmedAppWideServices {
-  authService: AuthService | null;
+  authService: AuthServiceInterface | null;
 }
 
-const useAppWideServices = () => {
+export function useAppWideServices (servicesWithIO: ServicesWithIO) {
   const [services, setServices] = useState(
     { authService: null } as UnconfirmedAppWideServices
   )
   useEffect(() => {
-    const authService = new AuthService()
+    const authService = new servicesWithIO.AuthServiceClass()
     setServices({ authService })
     return () => {
       authService.complete()
     }
-  }, [])
+  }, [servicesWithIO])
   return services
 }
 
-const App: React.FC = () => {
-  const { authService } = useAppWideServices()
+// this dependency injection is here to allow for easy independent development of the frontend
+export interface ServicesWithIO {
+  AuthServiceClass: new () => AuthServiceInterface;
+  SocketServiceClass: new () => SocketServiceInterface;
+}
+
+interface AppProps {
+  servicesWithIO: ServicesWithIO;
+}
+
+export function App ({ servicesWithIO }: AppProps) {
+  const { authService } = useAppWideServices(servicesWithIO)
 
   // initialize global services
   const authGuardRedirectRoute = "login"
@@ -43,8 +54,12 @@ const App: React.FC = () => {
     return <div className="App">Loading</div>
   }
 
+  const { SocketServiceClass } = servicesWithIO
   const renderLogin = () => <Login authService={authService} />
-  const renderLobby = () => <Lobby {...{ authService }} />
+  const renderLobby = () => <Lobby
+    authService={authService}
+    SocketServiceClass={SocketServiceClass}
+  />
 
   return (
     <div className="App">
@@ -63,7 +78,7 @@ const App: React.FC = () => {
           <PrivateRoute
             exact
             path="/game"
-            {...{ authService, redirectRoute: authGuardRedirectRoute }}
+            {...{ authService, SocketServiceClass, redirectRoute: authGuardRedirectRoute }}
             GuardedComponent={Game}
           />
         </Container>
@@ -72,4 +87,13 @@ const App: React.FC = () => {
   )
 }
 
-export default App
+const defaultIOServices: ServicesWithIO = {
+  SocketServiceClass: SocketService,
+  AuthServiceClass: AuthService
+}
+
+function DefaultApp () {
+  return <App servicesWithIO={defaultIOServices}/>
+}
+
+export default DefaultApp

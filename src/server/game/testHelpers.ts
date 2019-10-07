@@ -4,7 +4,7 @@ import { MockClientConnection } from "../server/__mocks__/clientConnection"
 import { Player } from "./player"
 import { ClientConnection } from "../server/clientConnection"
 import { Chess, Move } from "chess.js"
-import { newClientMessage } from "../../common/dummyData"
+import { newClientMessage } from "../../common/dummyData/dummyData"
 
 export function getPlayerConnectionPair (
   clientMessage$: Observable<SocketClientMessage>,

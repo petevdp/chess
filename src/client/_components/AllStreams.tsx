@@ -1,6 +1,6 @@
 import React from 'react'
 import { LobbyService } from "../_services/lobby.service"
-import { StreamedGame } from './StreamedGame'
+import { SmallGameDisplay } from './StreamedGame'
 
 interface AllStreamsProps {
   lobbyService: LobbyService;
@@ -37,7 +37,7 @@ function AllStreams ({ lobbyService }: AllStreamsProps) {
   const gameStateArr = lobbyService.useStreamedGameStates()
 
   const streamedGames = gameStateArr.map(state => (
-    <StreamedGame
+    <SmallGameDisplay
       key={state.id}
       gameState={state}
     />)

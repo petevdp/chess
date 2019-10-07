@@ -1,4 +1,4 @@
-import { userDetails } from '../../../common/dummyData'
+import { userDetails } from '../../../common/dummyData/dummyData'
 import { Subject, NEVER } from 'rxjs'
 import { Lobby } from '../index'
 import { MockClientConnection } from '../../server/__mocks__/clientConnection'

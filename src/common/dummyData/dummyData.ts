@@ -1,9 +1,11 @@
 // dummy data for tsts
+import uuidv4 from 'uuid/v4'
+import _ from 'lodash'
 
-import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage, SocketServerMessage, LobbyMemberDetailsUpdate, LobbyMemberDetails, GameMessage, DisplayedGameMessage } from "./types"
+import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage, SocketServerMessage, LobbyMemberDetailsUpdate, LobbyMemberDetails, GameMessage, DisplayedGameMessage, CompleteGameInfo } from "../types"
 
 import { Move, ChessInstance } from "chess.js"
-import { getChessConstructor } from "./helpers"
+import { getChessConstructor } from "../helpers"
 
 const Chess = getChessConstructor()
 
@@ -28,6 +30,16 @@ export const userDetails: UserDetails[] = [
 export const allMemberDetails: LobbyMemberDetails[] = [
   {
     ...userDetails[0],
+    currentGame: null,
+    leftLobby: false
+  },
+  {
+    ...userDetails[1],
+    currentGame: null,
+    leftLobby: false
+  },
+  {
+    ...userDetails[2],
     currentGame: null,
     leftLobby: false
   }
@@ -107,15 +119,15 @@ export const allMemberServerMessages: SocketServerMessage[] = [
   }
 ]
 
-export const allGameInfo = {
-  newGame: {
+export const allGameInfo: CompleteGameInfo[] = [
+  {
     id: 'game1',
     playerDetails: allPlayerDetails,
     pgn: new Chess().pgn()
   },
-  checkmateGame: {
+  {
     id: 'casualGame',
-    playerDetails: allPlayerDetails,
+    playerDetails: allPlayerDetails.slice(0, 2),
     pgn: ['[Event "Casual Game"]',
       '[Site "Berlin GER"]',
       '[Date "1852.??.??"]',
@@ -133,27 +145,46 @@ export const allGameInfo = {
       'd3 8.Qb3 Qf6 9.e5 Qg6 10.Re1 Nge7 11.Ba3 b5 12.Qxb5 Rb8 13.Qa4',
       'Bb6 14.Nbd2 Bb7 15.Ne4 Qf5 16.Bxd3 Qh5 17.Nf6+ gxf6 18.exf6',
       'Rg8 19.Rad1 Qxf3 20.Rxe7+ Nxe7 21.Qxd7+ Kxd7 22.Bf5+ Ke8',
-      '23.Bd7+ Kf8 24.Bxe7# 1-0'].join('\n')
+      '23.Bd7+ Kf8 24.Bxe7# 1-0'].join('\n'),
+    end: {
+      reason: 'checkmate',
+      winnerId: allPlayerDetails[0].user.id
+    }
+  }
+]
+
+export function duplicateGameInfo (gameInfo: CompleteGameInfo): CompleteGameInfo {
+  return {
+    ...gameInfo,
+    id: uuidv4(),
+    end: gameInfo.end && { ...gameInfo.end }
   }
 }
 
 export const joinMessage: GameMessage = {
   type: 'join',
-  join: allGameInfo.newGame
+  join: allGameInfo[0]
 }
 
 export const displayedGameMessages: DisplayedGameMessage[] = [
   {
     type: 'add',
-    add: [allGameInfo.newGame]
+    add: [allGameInfo[0]]
   },
   {
     type: 'add',
-    add: [allGameInfo.checkmateGame]
+    add: [allGameInfo[1]]
   }
 ]
 
 export const endUpdateMessage: GameMessage = {
   type: 'update',
   update: endUpdates[0]
+}
+
+export function makeFakeGames (count: number): CompleteGameInfo[] {
+  return _.times(count).map((): CompleteGameInfo => ({
+    ...allGameInfo[0],
+    id: uuidv4()
+  }))
 }

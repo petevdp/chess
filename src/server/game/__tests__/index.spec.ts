@@ -2,7 +2,7 @@ import { SocketClientMessage } from "../../../common/types"
 import { getLobbyMemberConnectionPair } from "../../lobby/testHelpers"
 import { EMPTY, Subject, NEVER } from "rxjs"
 import Game from ".."
-import { userDetails, allGameInfo } from "../../../common/dummyData"
+import { userDetails, allGameInfo } from "../../../common/dummyData/dummyData"
 import { last } from "rxjs/operators"
 import { simulatePlayerActions } from "../testHelpers"
 
@@ -36,7 +36,7 @@ describe('game end', () => {
     const [, member2] = getLobbyMemberConnectionPair(connSubject2, userDetails[1])
 
     const game = new Game([[member1, 'w'], [member2, 'b']])
-    const gameInfo = allGameInfo.checkmateGame
+    const gameInfo = allGameInfo[1]
 
     game.gameUpdate$.pipe(last()).subscribe(update => {
       expect(update.type === 'end')

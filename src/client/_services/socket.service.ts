@@ -3,12 +3,17 @@ import { SocketServerMessage, SocketClientMessage } from '../../common/types'
 import { useObservable } from 'rxjs-hooks'
 import { SOCKET_URL_CLIENT } from '../../common/config'
 
-export class SocketService {
+export interface SocketServiceInterface {
+  serverMessage$: Observable<SocketServerMessage>;
+  useSocketStatus: () => boolean;
+  complete: () => void;
+}
+
+export class SocketService implements SocketServiceInterface {
   serverMessage$: Observable<SocketServerMessage>;
   private serverMessageSubject: BehaviorSubject<SocketServerMessage>;
   private socket: WebSocket
-
-  clientMessageSubject = new Subject<SocketClientMessage>();
+  private clientMessage$ = new Subject<SocketClientMessage>();
 
   constructor () {
     // not assigning socket till init

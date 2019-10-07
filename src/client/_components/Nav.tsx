@@ -1,11 +1,11 @@
 import React, { } from 'react'
 import { Link } from 'react-router-dom'
 import { Nav, Button, Navbar } from 'react-bootstrap'
-import { AuthService } from '../_services/auth.service'
+import { AuthServiceInterface } from '../_services/auth.service'
 import { UserDetails } from '../../common/types'
 
 interface MyNavBarProps {
-  authService: AuthService;
+  authService: AuthServiceInterface;
 }
 
 function MyNavBar ({ authService }: MyNavBarProps) {
@@ -32,7 +32,7 @@ const LoggedOutDisplay: React.FC = () => (
 )
 
 interface LoggedInDisplayProps {
-  authService: AuthService;
+  authService: AuthServiceInterface;
   currentUser: UserDetails;
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { AuthService } from '../_services/auth.service'
+import { AuthServiceInterface } from '../_services/auth.service'
 import { UserLogin } from '../../common/types'
 import { Form, Button } from 'react-bootstrap'
 
@@ -10,7 +10,7 @@ interface LoginFormState extends UserLogin {
   status: 'clean' | 'evaluating' | 'rejected' | 'authenticated';
 }
 
-const useLoginForm = (authService: AuthService) => {
+function useLoginForm (authService: AuthServiceInterface) {
   const [inputs, setInputs] = useState({ username: '', password: '', status: 'clean', userType: 'human' } as LoginFormState)
 
   const handleSubmit = async (event: any) => {
@@ -32,7 +32,7 @@ const useLoginForm = (authService: AuthService) => {
 }
 
 interface LoginFormProps {
-  authService: AuthService;
+  authService: AuthServiceInterface;
 }
 function LoginForm ({ authService }: LoginFormProps) {
   const { handleSubmit, handleInputChange, inputs } = useLoginForm(authService)
@@ -75,8 +75,10 @@ function LoginForm ({ authService }: LoginFormProps) {
   )
 }
 
-export const Login: React.FC<LoginFormProps> = (props) => (
-  <Center>
-    <LoginForm {...props} />
-  </Center>
-)
+export function Login (props: LoginFormProps) {
+  return (
+    <Center>
+      <LoginForm {...props} />
+    </Center>
+  )
+}

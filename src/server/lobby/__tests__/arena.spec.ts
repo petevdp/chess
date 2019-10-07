@@ -1,6 +1,6 @@
 import { getLobbyMemberConnectionPair } from "../testHelpers"
 import { Subject, NEVER } from "rxjs"
-import { userDetails } from '../../../common/dummyData'
+import { userDetails } from '../../../common/dummyData/dummyData'
 import { Arena } from "../arena"
 import { MemberUpdate } from ".."
 import { first, skip, toArray } from "rxjs/operators"

@@ -2,7 +2,7 @@ import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessa
 import { EMPTY, NEVER, Subject } from 'rxjs'
 import { getLobbyMemberConnectionPair } from '../testHelpers'
 import { toArray, map, takeWhile } from 'rxjs/operators'
-import { displayedGameMessages } from '../../../common/dummyData'
+import { displayedGameMessages } from '../../../common/dummyData/dummyData'
 import { MemberState } from '../lobbyMember'
 
 const user1 = {

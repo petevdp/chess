@@ -108,6 +108,7 @@ export interface GameDetails {
 
 export interface CompleteGameInfo extends GameDetails {
   pgn: string;
+  end?: EndState;
 }
 export interface UserLogin {
   username: string;

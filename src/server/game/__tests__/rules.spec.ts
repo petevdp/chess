@@ -1,4 +1,4 @@
-import { allPlayerDetails, moves, allGameInfo } from "../../../common/dummyData"
+import { allPlayerDetails, moves, allGameInfo } from "../../../common/dummyData/dummyData"
 import { PlayerAction } from '../player'
 import { Chess } from "chess.js"
 import { getGameUpdatesFromPlayerAction } from "../rules"
@@ -27,7 +27,7 @@ describe('getGameUpdatesFromPlayerAction', () => {
   })
 
   it('returns a move update and an end update on game ending move', () => {
-    const game = allGameInfo.checkmateGame
+    const game = allGameInfo[1]
     const full = new Chess()
     full.load_pgn(game.pgn)
     const history = full.history({ verbose: true })

@@ -3,7 +3,7 @@ import { GameStream, GameClient, MoveMaker } from '../gameProviders'
 import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { Chess, Move } from 'chess.js'
-import { allGameInfo } from '../dummyData'
+import { allGameInfo } from '../dummyData/dummyData'
 import { getMoveHistoryFromPgn, replayMoveHistory } from '../helpers'
 
 const chess = new Chess()
@@ -149,7 +149,7 @@ describe('GameClient', () => {
 
     it('does not call moveMaker when there are no legal moves', done => {
       const mockMovemaker = jest.fn(Engines.firstMoveEngine)
-      const game = allGameInfo.checkmateGame
+      const game = allGameInfo[1]
 
       const client = new GameClient(EMPTY, game, game.playerDetails[1].user, mockMovemaker)
 
@@ -162,7 +162,7 @@ describe('GameClient', () => {
     })
 
     it('does not attempt to respond to opponent moves that end the game', done => {
-      const startingGameInfo = allGameInfo.checkmateGame
+      const startingGameInfo = allGameInfo[1]
       const mockMoveMaker = jest.fn(Engines.firstMoveEngine)
       const startingMoveHistory = getMoveHistoryFromPgn(startingGameInfo.pgn)
       const moveHistory = startingMoveHistory.slice(0, -1)

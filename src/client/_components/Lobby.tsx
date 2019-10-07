@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from 'react'
-import { AuthService } from '../_services/auth.service'
+import { AuthServiceInterface } from '../_services/auth.service'
 import { LobbyService } from '../_services/lobby.service'
 import { LobbyMemberDetails } from '../../common/types'
-import { SocketService } from '../_services/socket.service'
-import { ListGroup, Button } from 'react-bootstrap'
-import AllStreams from './AllStreams'
+import { ListGroup } from 'react-bootstrap'
+import AllSmallGamesDisplay from './AllStreams'
+import { SocketServiceInterface } from '../_services/socket.service'
 
 interface LobbyProps {
   lobbyService: LobbyService;
 }
 
-function Lobby ({ lobbyService }: LobbyProps) {
+export function Lobby ({ lobbyService }: LobbyProps) {
   const allMemberDetails = lobbyService.useLobbyMemberDetailsArr()
   return (
-    <React.Fragment>
-      <Button onClick={lobbyService.queueForGame}>Queue for Game</Button>
+    <div id="lobby-container">
       <ActiveMembersDisplayList {...{ allMemberDetails }}/>
-      <AllStreams {... { lobbyService }} />
-    </React.Fragment>
+      <AllSmallGamesDisplay {... { lobbyService }} />
+    </div>
   )
 }
 
@@ -35,9 +34,11 @@ function ActiveMembersDisplayList (
     />
   ))
   return (
-    <ListGroup>
-      {displayList}
-    </ListGroup>
+    <div className="member-details-container">
+      <ListGroup>
+        {displayList}
+      </ListGroup>
+    </div>
   )
 }
 
@@ -56,28 +57,29 @@ function MemberDisplay ({ memberDetails }: ActiveMemberDisplayProps) {
 }
 
 interface LobbyServiceProviderProps {
-  authService: AuthService;
+  authService: AuthServiceInterface;
+  SocketServiceClass: new () => SocketServiceInterface;
 }
 
-function LobbyServiceProvider ({ authService }: LobbyServiceProviderProps) {
+function LobbyServiceProvider ({ authService, SocketServiceClass }: LobbyServiceProviderProps) {
   const [lobbyService, setLobbyService] = useState(null as LobbyService | null)
   const currentUser = authService.useCurrentUser()
   useEffect(() => {
     if (!currentUser) {
       return
     }
-    const socketService = new SocketService()
+    const socketService = new SocketServiceClass()
     const lobbyService = new LobbyService(socketService)
     setLobbyService(lobbyService)
     return () => {
       // lobbyService depends on socketService
       socketService.complete()
     }
-  }, [currentUser])
+  }, [currentUser, SocketServiceClass])
   if (!lobbyService) {
     return <span>loading</span>
   }
   return <Lobby {...{ lobbyService }} />
 }
 
-export { LobbyServiceProvider as Lobby }
+export default LobbyServiceProvider
