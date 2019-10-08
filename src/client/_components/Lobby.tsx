@@ -14,6 +14,7 @@ interface LobbyProps {
 
 export function Lobby ({ lobbyService, authService }: LobbyProps) {
   const allMemberDetails = lobbyService.useLobbyMemberDetailsArr()
+  console.log('lobby')
   return (
     <React.Fragment>
       <NavBar {...{ authService }} />
@@ -42,7 +43,7 @@ function LobbyMemberSidebar (
   ))
   return (
     <div id="lobby-member-sidebar">
-      <ListGroup>
+      <ListGroup variant="flush">
         {displayList}
       </ListGroup>
     </div>

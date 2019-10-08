@@ -5,9 +5,11 @@ import ReactDOM from 'react-dom'
 import './client/styles/index.css'
 
 import * as serviceWorker from './client/serviceWorker'
-// import App from './client/_components/App'
-import FakeApp from './client/_components/__fakes__/App'
 
+import FakeApp from './client/_components/__fakes__/App'
 ReactDOM.render(<FakeApp />, document.getElementById('root'))
+
+// import App from './client/_components/App'
+// ReactDOM.render(<App />, document.getElementById('root'))
 
 serviceWorker.unregister()

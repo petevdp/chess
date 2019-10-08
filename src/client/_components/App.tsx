@@ -5,13 +5,10 @@ import {
   Route,
   Redirect
 } from "react-router-dom"
-import { Container } from "react-bootstrap"
-
 import { AuthServiceInterface, AuthService } from "../_services/auth.service"
 
 import Lobby from "./Lobby"
 import { Login } from "./Login"
-import NavBar from "./Nav"
 import { PrivateRoute } from "../__helpers/AuthGuard"
 import { Game } from "./Game"
 import { SocketServiceInterface, SocketService } from "../_services/socket.service"

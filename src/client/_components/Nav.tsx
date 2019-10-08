@@ -38,12 +38,15 @@ function MyNavBar ({ authService }: MyNavBarProps) {
   const currentUser = authService.useCurrentUser()
   return (
     <Navbar
-      bg="light"
+      bg="dark"
+      variant="dark"
       expand="lg"
     >
-      <Nav.Item key="lobby" as={Link} to="lobby">
+      <Nav>
+        <Nav.Link key="lobby" as={Link} to="lobby">
         Lobby
-      </Nav.Item>
+        </Nav.Link>
+      </Nav>
       <span className="user-status-display">
         {currentUser ? <LoggedInDisplay {...{ authService, currentUser }} /> : <LoggedOutDisplay /> }
       </span>
@@ -65,8 +68,13 @@ interface LoggedInDisplayProps {
 function LoggedInDisplay ({ authService, currentUser }: LoggedInDisplayProps) {
   return (
     <Nav.Item key="logout">
-      Logged in as {currentUser.username}
-      <Button onClick={authService.logout}>Log out</Button>
+      <span className="login-message">
+        Logged in as {currentUser.username}
+      </span>
+      <Button
+        onClick={authService.logout}
+        variant="outline-light"
+      >Log out</Button>
     </Nav.Item>
   )
 }
