@@ -4,28 +4,35 @@ import { LobbyService } from '../_services/lobby.service'
 import { LobbyMemberDetails } from '../../common/types'
 import { ListGroup } from 'react-bootstrap'
 import AllSmallGamesDisplay from './AllStreams'
+import NavBar from './Nav'
 import { SocketServiceInterface } from '../_services/socket.service'
 
 interface LobbyProps {
   lobbyService: LobbyService;
+  authService: AuthServiceInterface;
 }
 
-export function Lobby ({ lobbyService }: LobbyProps) {
+export function Lobby ({ lobbyService, authService }: LobbyProps) {
   const allMemberDetails = lobbyService.useLobbyMemberDetailsArr()
   return (
-    <div id="lobby-container">
-      <ActiveMembersDisplayList {...{ allMemberDetails }}/>
-      <AllSmallGamesDisplay {... { lobbyService }} />
-    </div>
+    <React.Fragment>
+      <NavBar {...{ authService }} />
+      <div id="lobby-container">
+        <div id="lobby-content-container">
+          <AllSmallGamesDisplay {... { lobbyService }} />
+        </div>
+        <LobbyMemberSidebar {...{ allMemberDetails }}/>
+      </div>
+    </React.Fragment>
   )
 }
 
-interface ActiveMembersDisplayProps {
+interface LobbyMemberSidebarProps {
   allMemberDetails: LobbyMemberDetails[];
 }
 
-function ActiveMembersDisplayList (
-  { allMemberDetails }: ActiveMembersDisplayProps
+function LobbyMemberSidebar (
+  { allMemberDetails }: LobbyMemberSidebarProps
 ) {
   const displayList = allMemberDetails.map(memberDetails => (
     <MemberDisplay
@@ -34,7 +41,7 @@ function ActiveMembersDisplayList (
     />
   ))
   return (
-    <div className="member-details-container">
+    <div id="lobby-member-sidebar">
       <ListGroup>
         {displayList}
       </ListGroup>
@@ -79,7 +86,7 @@ function LobbyServiceProvider ({ authService, SocketServiceClass }: LobbyService
   if (!lobbyService) {
     return <span>loading</span>
   }
-  return <Lobby {...{ lobbyService }} />
+  return <Lobby {...{ lobbyService, authService }} />
 }
 
 export default LobbyServiceProvider

@@ -25,8 +25,11 @@ export function useAppWideServices (servicesWithIO: ServicesWithIO) {
     { authService: null } as UnconfirmedAppWideServices
   )
   useEffect(() => {
+    console.log('new authservice')
     const authService = new servicesWithIO.AuthServiceClass()
     setServices({ authService })
+    console.log('auth service: ', authService)
+
     return () => {
       authService.complete()
     }
@@ -34,7 +37,6 @@ export function useAppWideServices (servicesWithIO: ServicesWithIO) {
   return services
 }
 
-// this dependency injection is here to allow for easy independent development of the frontend
 export interface ServicesWithIO {
   AuthServiceClass: new () => AuthServiceInterface;
   SocketServiceClass: new () => SocketServiceInterface;
@@ -45,6 +47,8 @@ interface AppProps {
 }
 
 export function App ({ servicesWithIO }: AppProps) {
+  // this dependency injection is here to allow for
+  // easy independent development of the frontend
   const { authService } = useAppWideServices(servicesWithIO)
 
   // initialize global services
@@ -64,24 +68,20 @@ export function App ({ servicesWithIO }: AppProps) {
   return (
     <div className="App">
       <Router>
-        <NavBar {...{ authService }} />
-        <Container>
-          <Route path="/login" exact render={renderLogin} />
-          <PrivateRoute
-            exact
-            path="/lobby"
-            {...{ authService, redirectRoute: authGuardRedirectRoute }}
-            GuardedComponent={renderLobby}
-          />
+        <Route path="/login" exact render={renderLogin} />
+        <PrivateRoute
+          exact
+          path="/lobby"
+          {...{ authService, redirectRoute: authGuardRedirectRoute }}
+          GuardedComponent={renderLobby}
+        />
 
-          <Redirect to="login" path="/" />
-          <PrivateRoute
-            exact
-            path="/game"
-            {...{ authService, SocketServiceClass, redirectRoute: authGuardRedirectRoute }}
-            GuardedComponent={Game}
-          />
-        </Container>
+        <PrivateRoute
+          exact
+          path="/game"
+          {...{ authService, SocketServiceClass, redirectRoute: authGuardRedirectRoute }}
+          GuardedComponent={Game}
+        />
       </Router>
     </div>
   )

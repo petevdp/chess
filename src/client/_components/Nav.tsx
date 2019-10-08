@@ -1,8 +1,34 @@
-import React, { } from 'react'
-import { Link } from 'react-router-dom'
+import React, { ReactNode } from 'react'
+import { Link, Route } from 'react-router-dom'
 import { Nav, Button, Navbar } from 'react-bootstrap'
 import { AuthServiceInterface } from '../_services/auth.service'
 import { UserDetails } from '../../common/types'
+
+interface InjectNavBarProps {
+  children: {
+    base: ReactNode[];
+    lobby: ReactNode[];
+    login: ReactNode[];
+  };
+}
+
+export function InjectNavBar ({ children }: InjectNavBarProps) {
+  const { base, lobby, login } = children
+  return (
+    <Navbar
+      bg="light"
+      expand="lg"
+    >
+      { base }
+      <Route path="lobby" exact>
+        {lobby}
+      </Route>
+      <Route path="login" exact>
+        {login}
+      </Route>
+    </Navbar>
+  )
+}
 
 interface MyNavBarProps {
   authService: AuthServiceInterface;

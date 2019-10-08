@@ -35,11 +35,6 @@ export class AuthService {
     this.currentUserSubject.next(response.data as UserDetails)
   }
 
-  private async submitUserLoginDetails (userLogin: UserLogin, route: string) {
-    const res = await axios.put(route, userLogin)
-    return res.data
-  }
-
   async login (userLogin: UserLogin): Promise<UserDetails|false> {
     console.log('logging in')
     const [err, res] = await to(axios.put(LOGIN_PATH, userLogin))
