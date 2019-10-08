@@ -41,10 +41,18 @@ function SmallGameInfo ({ gameState }: SmallGameDisplayProps) {
     : <div>turn: {gameState.chess.turn()}</div>
 
   return (
-    <div className="info">
-      <div>w: {white.user.username}</div>
-      <div>b: {black.user.username}</div>
+    <div className="small-game-info">
+      <div className="player-info white-player-info">
+        <i className="material-icons avatar">portrait</i>
+        <span className="username">{white.user.username}</span>
+        <span className="elo">1001</span>
+      </div>
       {currentStateDisplay}
+      <div className="player-info black-player-info">
+        <span className="username">{black.user.username}</span>
+        <span className="elo">4200</span>
+        <i className="material-icons avatar">portrait</i>
+      </div>
     </div>
   )
 }
@@ -80,7 +88,7 @@ export function SmallGameDisplay (
   const position = chess.fen()
   const squareStyles = getSquareStyling(chess)
   return (
-    <div className="game-stream" >
+    <div className="small-game-stream" >
       <Chessboard
         position={position}
         width={320}

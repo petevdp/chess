@@ -6,16 +6,81 @@
   width: 100%;
   height: 100%;
   grid-template-areas: 'lobby-content-container lobby-member-sidebar';
-  grid-template-columns: auto 200px;
+  grid-template-columns: 1fr min-content;
 }
 
 #lobby-member-sidebar {
   grid-area: lobby-member-sidebar;
+  width: 200px;
   background-color: white;
 }
 
 #lobby-content-container {
   grid-area: lobby-content-container;
+}
+
+#lobby-content-container > .all-small-games {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.small-game-stream {
+  padding: 0.5em;
+
+  .small-game-info {
+    background-color: white;
+    display: flex;
+    justify-content: space-between;
+
+    .avatar {
+      grid-area: avatar;
+      font-size: 3em;
+      $size: 48px;
+      width: $size;
+      height: $size;
+    }
+
+    .username {
+      grid-area: username;
+      padding-top: 3px;
+    }
+
+    .elo {
+      grid-area: elo;
+      color: $grey-3;
+      font-size: small;
+    }
+
+    .player-info {
+      display: grid;
+    }
+
+    .white-player-info {
+      grid-template-columns: 48px;
+      grid-template-areas:
+        'avatar username'
+        'avatar elo';
+
+      .username,
+      .elo {
+        text-align: left;
+      }
+    }
+
+    .black-player-info {
+      grid-template-columns: auto 48px;
+      grid-template-areas:
+        'username avatar'
+        'elo      avatar';
+
+      .username,
+      .elo {
+        text-align: right;
+      }
+    }
+  }
 }
 
 .member-display.list-group-item {

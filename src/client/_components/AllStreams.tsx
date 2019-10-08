@@ -33,7 +33,7 @@ interface AllStreamsProps {
 //   }, prevBoards)
 // }
 
-function AllStreams ({ lobbyService }: AllStreamsProps) {
+function AllSmallGames ({ lobbyService }: AllStreamsProps) {
   const gameStateArr = lobbyService.useStreamedGameStates()
 
   const streamedGames = gameStateArr.map(state => (
@@ -43,10 +43,10 @@ function AllStreams ({ lobbyService }: AllStreamsProps) {
     />)
   )
   return (
-    <React.Fragment>
+    <section className="all-small-games">
       {streamedGames}
-    </React.Fragment>
+    </section>
   )
 }
 
-export default AllStreams
+export default AllSmallGames
