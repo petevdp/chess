@@ -1,5 +1,11 @@
+html,
+body {
+  overflow: hidden;
+}
+
 .App {
   text-align: center;
+  height: 100vh;
 }
 
 #login {

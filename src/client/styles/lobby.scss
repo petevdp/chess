@@ -1,21 +1,28 @@
 @import './colors.scss';
 
+$lobby-container-area: calc(100% - 55.28px);
+
 #lobby-container {
   display: grid;
   background-color: $grey-1;
   width: 100%;
-  height: 100%;
-  grid-template-areas: 'lobby-content-container lobby-member-sidebar';
+  height: $lobby-container-area;
+  grid-template-areas:
+    'lobby-content-container lobby-member-sidebar'
+    'lobby-content-container .';
   grid-template-columns: 1fr min-content;
+  grid-template-rows: 100%;
 }
 
 #lobby-member-sidebar {
   grid-area: lobby-member-sidebar;
   width: 200px;
   background-color: white;
+  overflow-y: scroll;
 }
 
 #lobby-content-container {
+  overflow-y: scroll;
   grid-area: lobby-content-container;
 }
 
