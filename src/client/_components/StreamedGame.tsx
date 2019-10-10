@@ -89,6 +89,7 @@ export function SmallGameDisplay (
   const squareStyles = getSquareStyling(chess)
   return (
     <div className="small-game-stream" >
+      <SmallGameInfo gameState={gameState}/>
       <Chessboard
         position={position}
         width={320}
@@ -96,7 +97,6 @@ export function SmallGameDisplay (
         draggable={false}
         squareStyles={squareStyles}
       />
-      <SmallGameInfo gameState={gameState}/>
     </div>
   )
 }
