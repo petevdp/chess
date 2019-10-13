@@ -1,5 +1,5 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { shareReplay, concatMap, takeWhile, first } from 'rxjs/operators'
+import { shareReplay, concatMap, takeWhile, first, tap } from 'rxjs/operators'
 import {
   Colour,
   GameDetails,
@@ -54,12 +54,7 @@ class Game {
       ...this.players.map((p) => p.playerAction$)
     ).pipe(
       concatMap((action) => {
-        let updates: GameUpdate[]
-        try {
-          updates = getGameUpdatesFromPlayerAction(action, this.chess, allPlayerDetails)
-        } catch (error) {
-          throw new Error('oh no')
-        }
+        const updates = getGameUpdatesFromPlayerAction(action, this.chess, allPlayerDetails)
 
         // Make move if action turned out to be a move.
         // Moves will only turn up in the first index.
@@ -82,7 +77,8 @@ class Game {
 
     this.endPromise = this.gameUpdate$.pipe(
       routeBy<EndState>('end'),
-      first()
+      first(),
+      tap(() => console.log('ending game ', this.id))
     ).toPromise()
   }
 

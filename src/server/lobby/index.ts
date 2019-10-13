@@ -15,8 +15,7 @@ import {
   LobbyMemberDetailsUpdate,
   CompleteGameInfo,
   GameUpdate,
-  DisplayedGameMessage,
-  UserDetails
+  DisplayedGameMessage
 } from '../../common/types'
 import { ClientConnection } from '../server/clientConnection'
 import { Arena } from './arena'
@@ -130,7 +129,12 @@ export class Lobby {
       complete: () => console.log('memberdetailsupdates completed')
     })
 
-    this.displayedGameMessage$.subscribe((msg) => {
+    this.displayedGameMessage$.pipe(
+      startWith({
+        type: 'add',
+        add: this.displayedGameInfoArr
+      } as DisplayedGameMessage)
+    ).subscribe((msg) => {
       if (member.userDetails.username === 'pete') {
         console.log('updating displayed game: ', msg)
       }

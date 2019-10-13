@@ -41,13 +41,10 @@ const lobby = new Lobby()
 
 app.use('/api', api(queries))
 
-const socketServer = new SocketServer(http, session);
+const socketServer = new SocketServer(http, session)
 
-(async () => {
-  const botManager = new BotManager()
-  await socketServer.listening
-  STARTING_BOTS.forEach(details => botManager.addBot(details))
-})()
+const botManager = new BotManager()
+STARTING_BOTS.forEach(details => botManager.addBot(details))
 
 socketServer.rawConnection$.subscribe(async ({ socket, session }) => {
   const [err, user] = await to(queries.getUser({ id: session.userId }))

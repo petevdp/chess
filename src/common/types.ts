@@ -15,6 +15,7 @@ export interface UserDetails extends Details {
 
 export interface BotDetails extends UserDetails {
   engineName: ChessEngineName;
+  delay?: number;
 }
 
 export interface UserDetailsPartial {

@@ -12,11 +12,10 @@ import {
 } from '../common/types'
 import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
-import { routeBy, sleep } from '../common/helpers'
+import { routeBy } from '../common/helpers'
 import { filter, takeWhile } from 'rxjs/operators'
-import { randomMoveEngine, ChessEngineName, engineNameMapping } from './engines'
+import { engineNameMapping, delayedEngine } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
-import { ChessInstance } from 'chess.js'
 
 function getSocketServerMessageObservable (socket: WebSocket) {
   return new Observable<SocketServerMessage>((subscriber) => {
@@ -81,7 +80,7 @@ export class BotClient {
   disconnect () {}
 }
 
-export async function newClient (options: BotDetails) {
+async function newClient (options: BotDetails) {
   const res = await axios.put(LOGIN_URL, {
     username: options.username,
     userType: 'bot'
@@ -96,9 +95,13 @@ export async function newClient (options: BotDetails) {
 
   const serverMessage$ = getSocketServerMessageObservable(socket)
 
-  const engine = engineNameMapping.get(options.engineName)
+  let engine = engineNameMapping.get(options.engineName)
   if (!engine) {
     throw new Error(`No engine with name ${options.engineName}`)
+  }
+
+  if (options.delay !== undefined) {
+    engine = delayedEngine(options.delay, engine)
   }
 
   const client = new BotClient(
@@ -110,11 +113,6 @@ export async function newClient (options: BotDetails) {
 
   return client
 }
-
-// const delayedRandomMoveEngine = (delay: number) => async (chess: ChessInstance) => {
-//   await sleep(delay)
-//   return randomMoveEngine(chess)
-// }
 
 if (require.main === module) {
   console.log('new botclient')

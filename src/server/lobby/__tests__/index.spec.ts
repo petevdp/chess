@@ -53,7 +53,7 @@ describe('member details connection updates', () => {
     s2.complete()
   })
 
-  it('sends only new details after first update', done => {
+  it('sends only new details after first update for each member', done => {
     const s1 = new Subject<SocketClientMessage>()
     const user1 = userDetails[0]
     const mockConnection1 = new MockClientConnection(s1, user1)
@@ -147,7 +147,7 @@ describe('displayedGameMessage$', () => {
     lobby.complete()
   })
 
-  it('emits a given update only once', done => {
+  it('emits updates once', done => {
     lobby.displayedGameMessage$.pipe(
       toArray()
     ).subscribe(arr => {

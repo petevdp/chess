@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { MoveMaker } from '../common/gameProviders'
 import { ChessInstance, Move } from 'chess.js'
+import { sleep } from '../common/helpers'
 
 export type ChessEngine = MoveMaker
 export type ChessEngineName =
@@ -20,3 +21,11 @@ export const engineNameMapping = new Map<ChessEngineName, ChessEngine>([
   ['first', firstMoveEngine],
   ['random', randomMoveEngine]
 ])
+
+export const delayedEngine = (
+  delay: number,
+  engine: ChessEngine
+): ChessEngine => async chess => {
+  await sleep(delay)
+  return engine(chess)
+}

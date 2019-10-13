@@ -1,6 +1,6 @@
 import faker from 'faker'
 import uuidv4 from 'uuid/v4'
-import { UserDetails } from '../types'
+import { UserDetails, BotDetails } from '../types'
 
 export function genFakeUser (): UserDetails {
   return {
@@ -10,6 +10,12 @@ export function genFakeUser (): UserDetails {
   }
 }
 
-
-export function genFakeGame () {
+export function genFakeBot (): BotDetails {
+  return {
+    id: uuidv4(),
+    username: faker.internet.userName(),
+    type: 'bot',
+    engineName: 'random',
+    delay: 400
+  }
 }
