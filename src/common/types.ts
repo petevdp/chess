@@ -1,16 +1,20 @@
 import { ChessInstance, Move } from 'chess.js'
-import { ChessEngineName } from '../bots/engines'
 
+import { ChessEngineName } from '../bots/engines'
 
 export interface Details {
   id: string;
 }
 
 export type UserType = 'bot' | 'human';
+
 export interface UserDetails extends Details {
   username: string;
   type: UserType;
-  engine?: ChessEngineName;
+}
+
+export interface BotDetails extends UserDetails {
+  engineName: ChessEngineName;
 }
 
 export interface UserDetailsPartial {

@@ -1,4 +1,4 @@
-import { Subject } from 'rxjs'
+import { Subject, Observable } from 'rxjs'
 import express from 'express'
 import WebSocket from 'ws'
 import Http from 'http'
@@ -9,29 +9,36 @@ interface RawConnection {
   session: any;
 }
 
-export const SocketServer = (
-  httpServer: Http.Server,
-  sessionParser: express.RequestHandler
-) => {
-  const wss = new WebSocket.Server({ noServer: true })
+export class SocketServer {
+  rawConnection$ = new Subject<RawConnection>()
+  listening: Promise<void>
 
-  const client$ = new Subject<RawConnection>()
-  httpServer.on('upgrade', (request, socket, head) => {
-    sessionParser(request, {} as Response, () => {
-      const { session } = request
+  constructor (
+    httpServer: Http.Server,
+    sessionParser: express.RequestHandler
+  ) {
+    this.listening = new Promise((resolve) => {
+      const wss = new WebSocket.Server({ noServer: true }, () => {
+        resolve()
+      })
 
-      if (!session.userId) {
-        socket.destroy()
-        return
-      }
+      httpServer.on('upgrade', (request, socket, head) => {
+      // handle session authentication
+        sessionParser(request, {} as Response, () => {
+          const { session } = request
 
-      // emit connection event with parsed session
-      wss.handleUpgrade(request, socket, head, socket => {
-        client$.next({ session, socket })
-        wss.emit('connection', socket, request)
+          if (!session.userId) {
+            socket.destroy()
+            return
+          }
+
+          // emit connection event with parsed session
+          wss.handleUpgrade(request, socket, head, socket => {
+            this.rawConnection$.next({ session, socket })
+            wss.emit('connection', socket, request)
+          })
+        })
       })
     })
-  })
-
-  return client$.asObservable()
+  }
 }

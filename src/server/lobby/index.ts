@@ -15,7 +15,8 @@ import {
   LobbyMemberDetailsUpdate,
   CompleteGameInfo,
   GameUpdate,
-  DisplayedGameMessage
+  DisplayedGameMessage,
+  UserDetails
 } from '../../common/types'
 import { ClientConnection } from '../server/clientConnection'
 import { Arena } from './arena'
@@ -23,11 +24,11 @@ import { Arena } from './arena'
 export type MemberUpdate = [string, LobbyMember | null]
 
 export class Lobby {
-  private arena: Arena
   memberDetailsUpdates$: Observable<LobbyMemberDetailsUpdate>
   memberDetailsMap$: BehaviorSubject<Map<string, LobbyMemberDetails>>
   displayedGameMessage$: Observable<DisplayedGameMessage>
 
+  private arena: Arena
   private memberUpdate$: Subject<MemberUpdate>
 
   constructor () {
@@ -94,8 +95,7 @@ export class Lobby {
           startWith({
             type: 'add',
             add: [game.completeGameInfo]
-          } as DisplayedGameMessage),
-          tap(() => console.log('updateMessage'))
+          } as DisplayedGameMessage)
         )
       }),
       share()

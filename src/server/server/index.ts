@@ -15,7 +15,8 @@ import { api } from './api'
 
 import ExpressWs from 'express-ws'
 import { UserDetails } from '../../common/types'
-import { SERVER_PORT } from '../../common/config'
+import { SERVER_PORT, STARTING_BOTS } from '../../common/config'
+import BotManager from './botManager'
 
 // loads .env file into process.env
 dotenv.config({ path: path.resolve('../.env') })
@@ -40,9 +41,15 @@ const lobby = new Lobby()
 
 app.use('/api', api(queries))
 
-const client$ = SocketServer(http, session)
+const socketServer = new SocketServer(http, session);
 
-client$.subscribe(async ({ socket, session }) => {
+(async () => {
+  const botManager = new BotManager()
+  await socketServer.listening
+  STARTING_BOTS.forEach(details => botManager.addBot(details))
+})()
+
+socketServer.rawConnection$.subscribe(async ({ socket, session }) => {
   const [err, user] = await to(queries.getUser({ id: session.userId }))
   if (err) {
     console.log(err.toString())

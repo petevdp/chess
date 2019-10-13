@@ -7,7 +7,8 @@ import {
   UserDetails,
   GameMessage,
   CompleteGameInfo,
-  GameUpdateWithId
+  GameUpdateWithId,
+  BotDetails
 } from '../common/types'
 import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
@@ -80,15 +81,12 @@ export class BotClient {
   disconnect () {}
 }
 
-export interface BotClientCLIOptions {
-  user: UserDetails;
-  engineName: ChessEngineName;
-}
+export async function newClient (options: BotDetails) {
+  const res = await axios.put(LOGIN_URL, {
+    username: options.username,
+    userType: 'bot'
+  })
 
-export async function newClient (options: BotClientCLIOptions) {
-  const username = options.user.username
-
-  const res = await axios.put(LOGIN_URL, { username, userType: 'bot' })
   const user = res.data as UserDetails
   const socket = new WebSocket(SOCKET_URL, {
     headers: {
@@ -122,6 +120,6 @@ if (require.main === module) {
   console.log('new botclient')
   const argv = yargs.argv
 
-  const options = JSON.parse(argv.json as string)
+  const options = JSON.parse(argv.json as string) as BotDetails
   newClient(options)
 }
