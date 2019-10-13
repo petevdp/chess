@@ -1,5 +1,6 @@
 import axios from 'axios'
 import WebSocket from 'ws'
+import yargs from 'yargs'
 import {
   SocketServerMessage,
   SocketClientMessage,
@@ -12,7 +13,7 @@ import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy, sleep } from '../common/helpers'
 import { filter, takeWhile } from 'rxjs/operators'
-import { randomMoveEngine } from './engines'
+import { randomMoveEngine, ChessEngineName, engineNameMapping } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
 import { ChessInstance } from 'chess.js'
 
@@ -79,9 +80,15 @@ export class BotClient {
   disconnect () {}
 }
 
-export async function newClient (username: string, engine: MoveMaker) {
-  const res = await axios.put(LOGIN_URL, { username, userType: 'bot' })
+export interface BotClientCLIOptions {
+  user: UserDetails;
+  engineName: ChessEngineName;
+}
 
+export async function newClient (options: BotClientCLIOptions) {
+  const username = options.user.username
+
+  const res = await axios.put(LOGIN_URL, { username, userType: 'bot' })
   const user = res.data as UserDetails
   const socket = new WebSocket(SOCKET_URL, {
     headers: {
@@ -90,6 +97,11 @@ export async function newClient (username: string, engine: MoveMaker) {
   })
 
   const serverMessage$ = getSocketServerMessageObservable(socket)
+
+  const engine = engineNameMapping.get(options.engineName)
+  if (!engine) {
+    throw new Error(`No engine with name ${options.engineName}`)
+  }
 
   const client = new BotClient(
     user,
@@ -101,12 +113,15 @@ export async function newClient (username: string, engine: MoveMaker) {
   return client
 }
 
-const delayedRandomMoveEngine = (delay: number) => async (chess: ChessInstance) => {
-  await sleep(delay)
-  return randomMoveEngine(chess)
-}
+// const delayedRandomMoveEngine = (delay: number) => async (chess: ChessInstance) => {
+//   await sleep(delay)
+//   return randomMoveEngine(chess)
+// }
 
 if (require.main === module) {
-  const [username] = process.argv.slice(2)
-  newClient(username, delayedRandomMoveEngine(400))
+  console.log('new botclient')
+  const argv = yargs.argv
+
+  const options = JSON.parse(argv.json as string)
+  newClient(options)
 }
