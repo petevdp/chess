@@ -111,16 +111,12 @@ export class GameClient {
   ) {
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
-
     this.colour = this.getColour(user, gameInfo)
 
     // TODO implement actions other than moves
+
     this.action$ = this.makeClientActionObservable(
-      gameUpdate$.pipe(
-        filter(update => update.type === 'move'),
-        map(({ move }) => move as Move),
-        filter(move => this.chess.turn() === move.color)
-      ),
+      gameUpdate$,
       getMove
     )
 
@@ -139,13 +135,21 @@ export class GameClient {
   }
 
   private makeClientActionObservable (
-    opponentMove$: Observable<Move>,
+    gameUpdate$: Observable<GameUpdate>,
     getMove: MoveMaker
   ): Observable<ClientAction> {
-    const starting = this.colour === this.chess.turn()
+    const opponentMove$ = gameUpdate$.pipe(
+      filter(update => (
+        !!update.move
+        && update.move.color !== this.colour
+      )),
+      map(({ move }) => move as Move)
+    )
+
+    const thisClientIsStarting = this.colour === this.chess.turn()
       && this.chess.moves().length > 0
 
-    const moveIfStarting = starting
+    const moveIfStarting = thisClientIsStarting
       ? from(getMove(this.chess))
       : EMPTY
 
@@ -173,7 +177,9 @@ export class GameClient {
     const out = this.chess.move(move)
 
     if (!out) {
-      throw new Error(`invalid move: ${move}\n${this.chess.ascii()}`)
+      throw new Error(`
+      invalid move: ${move.san} by ${move.color}
+      ${this.chess.ascii()}`)
     }
 
     return this.chess
