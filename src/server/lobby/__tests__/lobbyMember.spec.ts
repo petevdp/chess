@@ -30,7 +30,7 @@ describe('broadcasting', () => {
     const update = new Map<string, LobbyMemberDetails>([
       [lobbyMember1.id, lobbyMember1]
     ])
-    member.broadcastLobbyMemberDetails([...update])
+    member.broadcastLobbyMemberDetailsUpdate([...update])
 
     const message: SocketServerMessage = {
       lobby: {

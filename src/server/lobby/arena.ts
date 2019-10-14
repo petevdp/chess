@@ -33,7 +33,7 @@ export class Arena {
           }
           return acc
         }
-        console.log('finding game for ', member.userDetails.username, member.state)
+        console.log('finding game for ', member.details.username, member.state)
 
         acc.potentialGames = [...allUnmatched.values()].map(unmatched => (
           this.resolvePotentialGame([unmatched, member])

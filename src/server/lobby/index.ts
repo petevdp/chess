@@ -100,11 +100,11 @@ export class Lobby {
         next: (update) => this.memberUpdate$.next([member.id, update])
       })
 
-    member.broadcastLobbyMemberDetails([...this.memberDetailsMap])
+    member.broadcastLobbyMemberDetailsUpdate([...this.memberDetailsMap])
 
     this.memberDetailsUpdates$.subscribe({
       next: (update) => {
-        member.broadcastLobbyMemberDetails([update])
+        member.broadcastLobbyMemberDetailsUpdate([update])
       }
     })
 
