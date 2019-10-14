@@ -1,25 +1,13 @@
 import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
-import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
-import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage, EndState } from '../../common/types'
+import { ClientConnection } from '../server/clientConnection'
+import { LobbyMemberDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage, EndState } from '../../common/types'
 export interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
 }
 
-export interface LobbyMemberInterface {
-  details: LobbyMemberDetails;
-  update$: Observable<LobbyMember|null>;
-  connection: ClientConnectionInterface;
-  userDetails: UserDetails;
-
-  // updateGamePartial: (update: GameUpdate) => void;
-  // loadGamePartials: (info: CompleteGameInfo[]) => void;
-  // joinGame: (info: CompleteGameInfo) => Promise<boolean>;
-  // spectateGame: (id: string) => Promise<boolean>
-}
-
-export class LobbyMember implements LobbyMemberInterface {
+export class LobbyMember {
   update$: Observable<LobbyMember|null>;
 
   private stateSubject: BehaviorSubject<MemberState>;
@@ -46,6 +34,10 @@ export class LobbyMember implements LobbyMemberInterface {
     })
   }
 
+  /**
+   *  Keeps track of this LobbyMember's state and resolves
+   *  when it becomse unavaliable to match
+   */
   resolveMatchedOrDisconnected () {
     return new Promise<boolean>(resolve => {
       if (this.state.currentGame) {
@@ -92,7 +84,7 @@ export class LobbyMember implements LobbyMemberInterface {
     })
   }
 
-  broadcastLobbyMemberDetails = (update: LobbyMemberDetailsUpdate[]) => {
+  broadcastLobbyMemberDetailsUpdate (update: LobbyMemberDetailsUpdate[]) {
     this.sendMessageToClient({
       member: {
         memberDetailsUpdate: update
@@ -100,7 +92,6 @@ export class LobbyMember implements LobbyMemberInterface {
     })
   }
 
-  // should be used to keep the lobby displayed games up to date, not to join games
   broadcastDisplayedGameMessage (message: DisplayedGameMessage) {
     this.sendMessageToClient({
       displayedGame: message
