@@ -1,5 +1,5 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { shareReplay, concatMap, takeWhile, first, tap } from 'rxjs/operators'
+import { shareReplay, concatMap, takeWhile, first, tap, share } from 'rxjs/operators'
 import {
   Colour,
   GameDetails,
@@ -8,7 +8,7 @@ import {
   PlayerDetails,
   EndState
 } from '../../common/types'
-import { Chess, ChessInstance } from 'chess.js'
+import { Chess, ChessInstance, Move } from 'chess.js'
 import uuidv4 from 'uuid/v4'
 import { Player } from './player'
 import { LobbyMember } from '../lobby/lobbyMember'
@@ -30,6 +30,8 @@ class Game {
   private chess: ChessInstance
 
   constructor (gameMembers: [LobbyMember, Colour][]) {
+    console.log('new game between ', gameMembers.map(([m]) => m.userDetails.username))
+
     this.id = uuidv4()
     this.chess = new Chess()
 
@@ -40,7 +42,6 @@ class Game {
         `wrong number of players! should be: ${this.requiredPlayerCount}`
       )
     }
-    this.setLobbyMemberJoinedGameState(this.id, gameMembers.map(m => m[0]))
 
     const gameUpdateSubject = new Subject<GameUpdate>()
 
@@ -68,18 +69,25 @@ class Game {
 
     merge(playerUpdates, this.gameController$)
       .pipe(
-        takeWhile((update) => update.type !== 'end', true),
-        shareReplay(1)
+        takeWhile((update) => update.type !== 'end', true)
       )
       .subscribe(gameUpdateSubject)
 
-    this.gameUpdate$ = gameUpdateSubject.asObservable().pipe(shareReplay(1))
-
+    this.gameUpdate$ = gameUpdateSubject
     this.endPromise = this.gameUpdate$.pipe(
       routeBy<EndState>('end'),
-      first(),
-      tap(() => console.log('ending game ', this.id))
+      first()
     ).toPromise()
+
+    this.gameUpdate$.pipe(routeBy<Move>('move')).subscribe(move => {
+      console.log(`MOVE: ${move.color}, ${move.san}`)
+    })
+
+    this.setLobbyMemberJoinedGameState(
+      this.id,
+      gameMembers.map(m => m[0]),
+      this.endPromise
+    )
   }
 
   /**
@@ -104,8 +112,12 @@ class Game {
     }
   }
 
-  private setLobbyMemberJoinedGameState (id: string, members: LobbyMember[]) {
-    members.forEach((m) => m.joinGame(id, this.endPromise))
+  private setLobbyMemberJoinedGameState (
+    id: string,
+    members: LobbyMember[],
+    endPromise: Promise<EndState>
+  ) {
+    members.forEach((m) => m.joinGame(id, endPromise))
   }
 
   private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameDetails {
