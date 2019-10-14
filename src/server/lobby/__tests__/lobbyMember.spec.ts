@@ -1,4 +1,4 @@
-import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage } from '../../../common/types'
+import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage, EndState } from '../../../common/types'
 import { EMPTY, NEVER, Subject } from 'rxjs'
 import { getLobbyMemberConnectionPair } from '../testHelpers'
 import { toArray, map, takeWhile } from 'rxjs/operators'
@@ -92,6 +92,26 @@ describe('state', () => {
   })
 })
 
+describe('joinGame', () => {
+  it('sets currentGame back to null once the endPromise is resolved', async () => {
+    const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
+    const gameId = 'id'
+    // const end$: ConnectableObservable<EndState> = rxOf<EndState>()
+    const end$ = new Subject<EndState>()
+
+    const out = member.joinGame(gameId, end$.toPromise())
+    expect(member.state.currentGame).toEqual(gameId)
+
+    end$.next({
+      reason: 'checkmate',
+      winnerId: 'id'
+    })
+    end$.complete()
+    await out
+    expect(member.state.currentGame).toBeNull()
+  })
+})
+
 describe('update$', () => {
   it('emits update when state is updated', done => {
     const subject = new Subject<SocketClientMessage>()
@@ -103,7 +123,7 @@ describe('update$', () => {
         subject.complete()
       }
     })
-    member.joinGame('game')
+    member.joinGame('game', EMPTY.toPromise())
   })
 
   it('broadcasts null update when user leaves, and then completes', done => {

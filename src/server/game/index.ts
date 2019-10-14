@@ -105,7 +105,7 @@ class Game {
   }
 
   private setLobbyMemberJoinedGameState (id: string, members: LobbyMember[]) {
-    members.forEach((m) => m.joinGame(id))
+    members.forEach((m) => m.joinGame(id, this.endPromise))
   }
 
   private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameDetails {

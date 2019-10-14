@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ClientConnection, ClientConnectionInterface } from '../server/clientConnection'
-import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage } from '../../common/types'
+import { LobbyMemberDetails, UserDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage, EndState } from '../../common/types'
 export interface MemberState {
   currentGame: string | null;
   leftLobby: boolean;
@@ -62,8 +62,10 @@ export class LobbyMember implements LobbyMemberInterface {
     })
   }
 
-  joinGame (gameId: string) {
+  async joinGame (gameId: string, endPromise: Promise<EndState>) {
     this.stateSubject.next({ ...this.state, currentGame: gameId })
+    await endPromise
+    this.stateSubject.next({ ...this.state, currentGame: null })
   }
 
   get state () {
