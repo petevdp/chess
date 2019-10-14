@@ -56,7 +56,8 @@ export function getGameUpdatesFromPlayerAction (
   playerDetails: PlayerDetails[]
 ): GameUpdate[] {
   if (!validatePlayerAction(playerAction, chess)) {
-    throw new Error('invalid player action')
+    console.log(playerAction.colour)
+    throw new Error(`invalid player action: \n${chess.ascii()}, \n${playerAction.move}`)
   }
 
   const { type, playerId } = playerAction

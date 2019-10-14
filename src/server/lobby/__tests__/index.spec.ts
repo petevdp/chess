@@ -127,7 +127,6 @@ describe('displayedGameMessage$', () => {
     const l = lobby as any
 
     l.arena.games$.subscribe((game: Game) => {
-      console.log('new game in test')
       game.gameUpdate$.subscribe((msg) => console.log('gameUpdate: ', msg))
       game.end()
       game.endPromise.then(() => console.log('endpromise resolved'))

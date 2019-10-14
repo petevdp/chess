@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs'
-import { filter, map } from 'rxjs/operators'
+import { filter, map, tap } from 'rxjs/operators'
 
 import {
   ClientPlayerAction,

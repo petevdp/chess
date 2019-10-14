@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs'
 import { SocketClientMessage, SocketServerMessage, UserDetails } from '../../common/types'
 import WebSocket from 'ws'
+import { share, tap } from 'rxjs/operators'
 
 export interface ClientConnectionInterface {
   clientMessage$: Observable<SocketClientMessage>;
@@ -16,7 +17,7 @@ export class ClientConnection implements ClientConnectionInterface {
   constructor (private ws: WebSocket, public user: UserDetails) {
     console.log('new connection!')
 
-    this.clientMessage$ = new Observable(subscriber => {
+    this.clientMessage$ = new Observable<SocketClientMessage>(subscriber => {
       ws
         .on('message', msg => subscriber.next(JSON.parse(msg as string) as SocketClientMessage))
         .on('error', () => {
@@ -27,7 +28,7 @@ export class ClientConnection implements ClientConnectionInterface {
           console.log(`${user.username} disconnected`)
           subscriber.complete()
         })
-    })
+    }).pipe(share())
   }
 
   get isActive () {

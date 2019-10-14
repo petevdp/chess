@@ -32,7 +32,6 @@ export class LobbyMember implements LobbyMemberInterface {
     this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false } as MemberState)
 
     this.update$ = this.stateSubject.pipe(map(state => {
-      console.log('updating lobbyMember')
       if (state.leftLobby) {
         return null
       }

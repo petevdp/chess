@@ -27,16 +27,13 @@ export class Arena {
           allUnmatched.delete(id)
           return acc
         }
-        console.log('finding game for ', member.id, member.state)
-        console.log(allUnmatched.has(id))
-
         if (allUnmatched.has(id)) {
           if (member.state.currentGame || member.state.leftLobby) {
             allUnmatched.delete(id)
           }
-          console.log('already searching')
           return acc
         }
+        console.log('finding game for ', member.userDetails.username, member.state)
 
         acc.potentialGames = [...allUnmatched.values()].map(unmatched => (
           this.resolvePotentialGame([unmatched, member])
@@ -46,12 +43,7 @@ export class Arena {
       }, { potentialGames: [], allUnmatched: new Map() } as UnmatchedState),
       mergeMap(({ potentialGames }) => merge(...potentialGames)),
       filter(game => !!game),
-      map<false | Game, Game>(game => {
-        if (!game) {
-          throw new Error('for typecheckign')
-        }
-        return game
-      }),
+      map<false | Game, Game>(game => game as Game),
       share()
     )
 
@@ -64,9 +56,6 @@ export class Arena {
       })
     )
     this.activeGames$ = new BehaviorSubject([] as Game[])
-    this.activeGames$.subscribe((u) => {
-      console.log('activeGame update', u.length)
-    })
 
     gameAdditionsAndCompletions.pipe(
       scan((acc, [id, game]) => {
@@ -103,8 +92,6 @@ export class Arena {
         return true
       })
     ])
-    console.log('new game: ', !unSuccessfulResolution)
-
     return !unSuccessfulResolution && new Game([[members[0], 'w'], [members[1], 'b']])
   }
 }

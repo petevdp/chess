@@ -68,14 +68,6 @@ export class Lobby {
       )
     )
 
-    this.memberUpdate$.subscribe(update => {
-      console.log('lobby member update: ', update[0], update[1] && update[1].state)
-    })
-
-    this.arena.games$.subscribe((game) => {
-      console.log('new game from lobby: ', game.id)
-    })
-
     // TODO constrict which games are displayed
     this.displayedGameMessage$ = this.arena.games$.pipe(
       mergeMap((game) => {
@@ -88,7 +80,6 @@ export class Lobby {
             }
           }))
         )
-        console.log('hooking up new game: ', game.id)
 
         return updateMessage$.pipe(
           startWith({
@@ -105,28 +96,16 @@ export class Lobby {
     const member = new LobbyMember(client)
 
     member.update$
-      .pipe(
-        tap<LobbyMember | null>(
-          (member) =>
-            member
-            && console.log(
-              `member update: id: ${member.id}, state: ${member.state}`
-            )
-        )
-      )
       .subscribe({
         next: (update) => this.memberUpdate$.next([member.id, update])
       })
 
     member.broadcastLobbyMemberDetails([...this.memberDetailsMap])
 
-    console.log('initial displayed games: ', this.displayedGameInfoArr)
-
     this.memberDetailsUpdates$.subscribe({
       next: (update) => {
         member.broadcastLobbyMemberDetails([update])
-      },
-      complete: () => console.log('memberdetailsupdates completed')
+      }
     })
 
     this.displayedGameMessage$.pipe(
@@ -135,9 +114,6 @@ export class Lobby {
         add: this.displayedGameInfoArr
       } as DisplayedGameMessage)
     ).subscribe((msg) => {
-      if (member.userDetails.username === 'pete') {
-        console.log('updating displayed game: ', msg)
-      }
       member.broadcastDisplayedGameMessage(msg)
     })
   }
