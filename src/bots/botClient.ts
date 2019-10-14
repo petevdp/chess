@@ -13,7 +13,7 @@ import {
 import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
-import { filter, takeWhile } from 'rxjs/operators'
+import { filter, takeWhile, share } from 'rxjs/operators'
 import { engineNameMapping, delayedEngine } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
 
@@ -27,7 +27,7 @@ function getSocketServerMessageObservable (socket: WebSocket) {
     socket.on('close', () => {
       subscriber.complete()
     })
-  })
+  }).pipe(share())
 }
 
 function sendToServer (socket: WebSocket, message: SocketClientMessage): void {
@@ -115,7 +115,6 @@ async function newClient (options: BotDetails) {
 }
 
 if (require.main === module) {
-  console.log('new botclient')
   const argv = yargs.argv
 
   const options = JSON.parse(argv.json as string) as BotDetails
