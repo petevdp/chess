@@ -62,7 +62,6 @@ export class LobbyService {
       mergeMap((info: CompleteGameInfo) => {
         const gameUpdate$ = displayedGameUpdate$.pipe(
           filter(update => update.id === info.id),
-          tap((u) => console.log('update: ', u.type, u.end)),
           takeWhile(update => update.type !== 'end', true)
         )
         console.log(`new gamestream: ${info.id}`)

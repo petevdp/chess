@@ -1310,6 +1310,11 @@
   resolved "https://registry.yarnpkg.com/@types/chess.js/-/chess.js-0.10.0.tgz#8272fe9d117b11db38c21e65ec394df74a786c57"
   integrity sha512-esXTIYEeSa4HSt5ZCvkN4toKuZL53zyIBh1gcSTzvKpmQ7XM0H7Mf8lo858IJM8lBoHZsAa57yxwY78FS/2s3A==
 
+"@types/chessboardjs@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@types/chessboardjs/-/chessboardjs-0.3.1.tgz#8032a325b55d534931e68b69b79cab830f2d0baf"
+  integrity sha512-dNsKwjJ1uRP82vstvDO3tfq7wTB3AAv+SJphveu+MOUZW6/0etK73/fENRNLG55MVF1LyfXAMotxxnX4FMQNDQ==
+
 "@types/connect@*":
   version "3.4.32"
   resolved "https://registry.yarnpkg.com/@types/connect/-/connect-3.4.32.tgz#aa0e9616b9435ccad02bc52b5b454ffc2c70ba28"
@@ -1409,6 +1414,13 @@
   integrity sha512-jcDDXdjTcrQzdN06+TSVsPPqxvsZA/5QkYfIZlq1JMw7FdP5AZylbOc+6B/cuDurctRe+MziUMtQ3xQdrbjqyQ==
   dependencies:
     "@types/jest-diff" "*"
+
+"@types/jquery@^3.3.31":
+  version "3.3.31"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.31.tgz#27c706e4bf488474e1cb54a71d8303f37c93451b"
+  integrity sha512-Lz4BAJihoFw5nRzKvg4nawXPzutkv7wmfQ5121avptaSIXlDNJCUuxZxX/G+9EVidZGuO0UBlk+YjKbwRKJigg==
+  dependencies:
+    "@types/sizzle" "*"
 
 "@types/json-schema@^7.0.3":
   version "7.0.3"
@@ -1511,6 +1523,11 @@
   dependencies:
     "@types/express-serve-static-core" "*"
     "@types/mime" "*"
+
+"@types/sizzle@*":
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@types/sizzle/-/sizzle-2.3.2.tgz#a811b8c18e2babab7d542b3365887ae2e4d9de47"
+  integrity sha512-7EJYyKTL7tFR8+gDbB6Wwz/arpGa0Mywk1TJbNzKzHtzbwVmY4HR9WqS5VV7dsBUKQmPNr192jHr/VpBluj/hg==
 
 "@types/slonik@^18.6.0":
   version "18.6.1"
@@ -2799,6 +2816,11 @@ chess.js@^0.10.2:
   version "0.10.2"
   resolved "https://registry.yarnpkg.com/chess.js/-/chess.js-0.10.2.tgz#eacefa2067155f87f046e80cc12d2019eef1b81a"
   integrity sha1-6s76IGcVX4fwRugMwS0gGe7xuBo=
+
+chessboardjs@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/chessboardjs/-/chessboardjs-0.0.1.tgz#106e112dba6cc0dcdcf75472a29212c304ff564e"
+  integrity sha1-EG4RLbpswNzc91RyopISwwT/Vk4=
 
 chessboardjsx@^2.4.2:
   version "2.4.2"

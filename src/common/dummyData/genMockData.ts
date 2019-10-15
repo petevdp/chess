@@ -16,6 +16,8 @@ export function genFakeBot (): BotDetails {
     username: faker.internet.userName(),
     type: 'bot',
     engineName: 'random',
-    delay: 400
+    engineOptions: {
+      delay: [300, 100]
+    }
   }
 }

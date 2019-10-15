@@ -13,9 +13,13 @@ export interface UserDetails extends Details {
   type: UserType;
 }
 
+export interface EngineOptions {
+  delay?: number | [number, number];
+}
+
 export interface BotDetails extends UserDetails {
   engineName: ChessEngineName;
-  delay?: number;
+  engineOptions: EngineOptions;
 }
 
 export interface UserDetailsPartial {

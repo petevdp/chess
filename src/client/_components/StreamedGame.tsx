@@ -1,8 +1,11 @@
-import React, { } from 'react'
-import Chessboard from 'chessboardjsx'
+import React, { useEffect, useState } from 'react'
+import _ from 'lodash'
 import { GameStateWithDetails } from '../../common/gameProviders'
 import { PlayerDetails, EndState } from '../../common/types'
-import { ChessInstance, Move } from 'chess.js'
+import { ChessInstance, Move, ShortMove } from 'chess.js'
+import ChessBoardDefault, { ChessBoardFactory } from 'chessboardjs'
+
+const ChessBoard = ChessBoardDefault as unknown as ChessBoardFactory
 
 const colours = {
   lightYellow: "rgba(255, 255, 0, 0.4)"
@@ -10,6 +13,7 @@ const colours = {
 
 export interface SmallGameDisplayProps {
   gameState: GameStateWithDetails;
+  id: string;
 }
 
 function getSortedPlayerDetails (playerDetails: PlayerDetails[]) {
@@ -33,12 +37,16 @@ function EndDisplay ({ end, playerDetails }: WinnerDisplayProps) {
   )
 }
 
-function SmallGameInfo ({ gameState }: SmallGameDisplayProps) {
+interface SmallGameInfoProps {
+  gameState: GameStateWithDetails;
+}
+
+function SmallGameInfo ({ gameState }: SmallGameInfoProps) {
   const { playerDetails, end } = gameState
   const [white, black] = getSortedPlayerDetails(playerDetails)
   const currentStateDisplay = end
     ? <EndDisplay end={end} playerDetails={playerDetails} />
-    : <div>turn: {gameState.chess.turn()}</div>
+    : null
 
   return (
     <div className="small-game-info">
@@ -81,22 +89,35 @@ export function getSquareStyling (chess: ChessInstance) {
   return styles
 }
 
+function useBoard (chess: ChessInstance, id: string) {
+  const [board, setBoard] = useState()
+  useEffect(() => {
+    const newBoard = ChessBoard(`myBoard-${id}`)
+    newBoard.position(chess.fen())
+    setBoard(newBoard)
+  }, [])
+  return board
+}
+
 export function SmallGameDisplay (
-  { gameState }: SmallGameDisplayProps
+  { gameState, id }: SmallGameDisplayProps
 ) {
-  const { chess } = gameState
-  const position = chess.fen()
-  const squareStyles = getSquareStyling(chess)
+  const board = useBoard(gameState.chess, id)
+  useEffect(() => {
+    const { chess } = gameState
+    if (chess.history().length === 0 || !board) {
+      return () => {}
+    }
+
+    const moveObj = _.last(chess.history({ verbose: true })) as ShortMove
+    const moveStr = `${moveObj.from}-${moveObj.to}`
+    board.move(moveStr)
+  }, [gameState.chess.history()])
+
   return (
     <div className="small-game-stream" >
       <SmallGameInfo gameState={gameState}/>
-      <Chessboard
-        position={position}
-        width={320}
-        transitionDuration={0}
-        draggable={false}
-        squareStyles={squareStyles}
-      />
+      <div id={`myBoard-${id}`} style={{ width: '300px' }}></div>
     </div>
   )
 }

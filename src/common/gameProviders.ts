@@ -46,8 +46,6 @@ export class GameStream {
         if (type === 'move') {
           const out = this.chess.move(update.move as Move)
           if (!out) {
-            console.log(this.chess.ascii())
-            console.log('move: ', update.move)
             throw new Error('invalid move sent to GameStream')
           }
           return this.state
@@ -67,7 +65,6 @@ export class GameStream {
           console.log('game over')
           this.state$.complete()
         }
-        console.log('new gameState')
       },
       complete: () => this.state$.complete()
     })

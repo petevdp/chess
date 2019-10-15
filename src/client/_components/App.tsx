@@ -2,16 +2,16 @@ import React, { useEffect, useState } from "react"
 import "../App.scss"
 import {
   BrowserRouter as Router,
-  Route,
-  Redirect
+  Route
 } from "react-router-dom"
 import { AuthServiceInterface, AuthService } from "../_services/auth.service"
 
 import Lobby from "./Lobby"
 import { Login } from "./Login"
 import { PrivateRoute } from "../__helpers/AuthGuard"
-import { Game } from "./Game"
 import { SocketServiceInterface, SocketService } from "../_services/socket.service"
+
+const Game = () => <div>hello game</div>
 
 interface UnconfirmedAppWideServices {
   authService: AuthServiceInterface | null;

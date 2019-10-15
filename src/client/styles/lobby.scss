@@ -50,6 +50,7 @@ $lobby-container-area: calc(100% - 55.28px);
     }
 
     .username {
+      overflow: hidden;
       grid-area: username;
       padding-top: 3px;
     }
