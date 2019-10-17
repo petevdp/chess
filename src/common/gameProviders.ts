@@ -102,7 +102,7 @@ export class GameClient {
 
   constructor (
     public gameUpdate$: Observable<GameUpdate>,
-    gameInfo: CompleteGameInfo,
+    private gameInfo: CompleteGameInfo,
     user: UserDetails,
     getMove: MoveMaker
   ) {
@@ -119,6 +119,10 @@ export class GameClient {
 
     this.endPromise = gameUpdate$.pipe(routeBy<EndState>('end'), tap(() => {
     })).toPromise()
+  }
+
+  get id () {
+    return this.gameInfo.id
   }
 
   complete () { }

@@ -14,9 +14,10 @@ import {
 import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
-import { filter, takeWhile, share } from 'rxjs/operators'
+import { filter, takeWhile, share, map } from 'rxjs/operators'
 import { constructEngine } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
+import { userDetails } from '../common/dummyData/dummyData'
 
 function getSocketServerMessageObservable (socket: WebSocket) {
   return new Observable<SocketServerMessage>((subscriber) => {
@@ -44,39 +45,50 @@ export class BotClient {
     sendMessageToServer: (msg: SocketClientMessage) => void,
     engine: MoveMaker
   ) {
+    const gameClient$ = this.createGameClient$(user, serverMessage$, engine)
+
+    gameClient$.subscribe((client) => {
+      client.action$.subscribe({
+        next: (action) => {
+          sendMessageToServer({
+            gameAction: {
+              gameId: client.id,
+              ...action
+            }
+          })
+        },
+        error: (err) => {
+          console.log(`in botclient ${this.user.id}`)
+          console.log(`playing game ${info.playerDetails}`)
+          throw err
+        }
+      })
+    })
+  }
+
+  createGameClient$ (
+    user: UserDetails,
+    serverMessage$: Observable<SocketServerMessage>,
+    engine: MoveMaker
+  ) {
     const gameMessage$ = serverMessage$.pipe(routeBy<GameMessage>('game'))
 
-    gameMessage$.pipe(routeBy<CompleteGameInfo>('join')).subscribe({
-      next: (info) => {
+    return gameMessage$.pipe(
+      routeBy<CompleteGameInfo>('join'),
+      map(info => {
         const gameUpdate$ = gameMessage$.pipe(
           routeBy<GameUpdateWithId>('update'),
           filter(({ id }) => id === info.id),
           takeWhile((update) => update.type !== 'end', true)
         )
-        const gameClient = new GameClient(
+        return new GameClient(
           gameUpdate$,
           info,
           user,
           engine
         )
-
-        gameClient.action$.subscribe({
-          next: (action) => {
-            sendMessageToServer({
-              gameAction: {
-                gameId: info.id,
-                ...action
-              }
-            })
-          },
-          error: (err) => {
-            console.log(`in botclient ${this.user.id}`)
-            console.log(`playing game ${info.playerDetails}`)
-            throw err
-          }
-        })
-      }
-    })
+      })
+    )
   }
 
   get currentGame () {
