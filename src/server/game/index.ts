@@ -79,10 +79,6 @@ class Game {
       first()
     ).toPromise()
 
-    this.gameUpdate$.pipe(routeBy<Move>('move')).subscribe(move => {
-      console.log(`MOVE: ${move.color}, ${move.san}`)
-    })
-
     this.setLobbyMemberJoinedGameState(
       this.id,
       gameMembers.map(m => m[0]),

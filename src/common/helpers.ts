@@ -37,7 +37,9 @@ export function allDetails<D extends Details> (obj$: Observable<HasDetailsObserv
   )
 }
 
-export const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+export function sleep (ms: number) {
+  return new Promise(resolve => setTimeout(() => (resolve()), ms))
+}
 
 export function getMoveHistoryFromPgn (pgn: string) {
   const chess: ChessInstance = new Chess()

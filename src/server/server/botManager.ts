@@ -1,10 +1,30 @@
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
 import { BotDetails } from '../../common/types'
+import newBotClient, { BotClient } from '../../bots/botClient'
 
 class BotManager {
-  private botProcessMap = new Map<string, ChildProcessWithoutNullStreams>()
+  private botMap = new Map<string, BotClient>()
 
-  constructor () { }
+  async addBot (details: BotDetails) {
+    const resolveBotClient = newBotClient(details)
+    resolveBotClient.catch((err) => {
+      throw err
+    })
+    this.botMap.set(details.id, await resolveBotClient)
+  }
+
+  async removeBot (id: string) {
+    const bot = this.botMap.get(id)
+    if (!bot) {
+      throw new Error(`bot with id ${id} not found`)
+    }
+    this.botMap.delete(id)
+    bot.disconnect()
+  }
+}
+
+export class MultithreadedBotManager {
+  private botProcessMap = new Map<string, ChildProcessWithoutNullStreams>()
 
   addBot (details: BotDetails) {
     console.log('adding bot', details.username)
@@ -12,6 +32,7 @@ class BotManager {
     if (details.type !== 'bot') {
       throw new Error('user must be bot')
     }
+
     const bot = spawn(
       'ts-node',
       ['../bots/botClient.ts', '--json', JSON.stringify(details)]

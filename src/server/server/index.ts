@@ -16,7 +16,7 @@ import { api } from './api'
 import ExpressWs from 'express-ws'
 import { UserDetails } from '../../common/types'
 import { SERVER_PORT, STARTING_BOTS } from '../../common/config'
-import BotManager from './botManager'
+import MultithreadedBotManager from './botManager'
 
 // loads .env file into process.env
 dotenv.config({ path: path.resolve('../.env') })
@@ -43,7 +43,7 @@ app.use('/api', api(queries))
 
 const socketServer = new SocketServer(http, session)
 
-const botManager = new BotManager()
+const botManager = new MultithreadedBotManager()
 STARTING_BOTS.forEach(details => botManager.addBot(details))
 
 socketServer.rawConnection$.subscribe(async ({ socket, session }) => {

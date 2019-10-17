@@ -46,7 +46,7 @@ export class GameStream {
         if (type === 'move') {
           const out = this.chess.move(update.move as Move)
           if (!out) {
-            throw new Error('invalid move sent to GameStream')
+            throw new Error(`invalid move sent to GameStream: ${update.move}`)
           }
           return this.state
         }
