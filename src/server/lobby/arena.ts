@@ -85,13 +85,16 @@ export class Arena {
   }
 
   private async resolvePotentialGame (members: LobbyMember[]) {
-    const unSuccessfulResolution = await Promise.race([
-      sleep(100),
+    const successfulResolution = await Promise.race([
+      async (): Promise<boolean> => {
+        await sleep(100)
+        return true
+      },
       ...members.map(async (m) => {
         await m.resolveMatchedOrDisconnected()
-        return true
+        return false
       })
     ])
-    return !unSuccessfulResolution && new Game([[members[0], 'w'], [members[1], 'b']])
+    return successfulResolution && new Game([[members[0], 'w'], [members[1], 'b']])
   }
 }
