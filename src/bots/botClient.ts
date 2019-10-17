@@ -1,4 +1,5 @@
 import axios from 'axios'
+import _ from 'lodash'
 import WebSocket from 'ws'
 import yargs from 'yargs'
 import {
@@ -14,7 +15,7 @@ import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
 import { filter, takeWhile, share } from 'rxjs/operators'
-import { engineNameMapping, delayedEngine } from './engines'
+import { constructEngine } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
 
 function getSocketServerMessageObservable (socket: WebSocket) {
@@ -38,7 +39,7 @@ export class BotClient {
   private currentGame$ = new BehaviorSubject<GameClient | null>(null)
 
   constructor (
-    user: UserDetails,
+    public user: UserDetails,
     serverMessage$: Observable<SocketServerMessage>,
     sendMessageToServer: (msg: SocketClientMessage) => void,
     engine: MoveMaker
@@ -67,6 +68,11 @@ export class BotClient {
                 ...action
               }
             })
+          },
+          error: (err) => {
+            console.log(`in botclient ${this.user.id}`)
+            console.log(`playing game ${info.playerDetails}`)
+            throw err
           }
         })
       }
@@ -80,7 +86,7 @@ export class BotClient {
   disconnect () {}
 }
 
-async function newClient (options: BotDetails) {
+async function newBotClient (options: BotDetails) {
   const res = await axios.put(LOGIN_URL, {
     username: options.username,
     userType: 'bot'
@@ -95,13 +101,10 @@ async function newClient (options: BotDetails) {
 
   const serverMessage$ = getSocketServerMessageObservable(socket)
 
-  let engine = engineNameMapping.get(options.engineName)
+  const engine = constructEngine(options.engineName, options.engineOptions)
+
   if (!engine) {
     throw new Error(`No engine with name ${options.engineName}`)
-  }
-
-  if (options.delay !== undefined) {
-    engine = delayedEngine(options.delay, engine)
   }
 
   const client = new BotClient(
@@ -118,5 +121,7 @@ if (require.main === module) {
   const argv = yargs.argv
 
   const options = JSON.parse(argv.json as string) as BotDetails
-  newClient(options)
+  newBotClient(options)
 }
+
+export default newBotClient
