@@ -30,8 +30,6 @@ class Game {
   private chess: ChessInstance
 
   constructor (gameMembers: [LobbyMember, Colour][]) {
-    console.log('new game between ', gameMembers.map(([m]) => m.userDetails.username))
-
     this.id = uuidv4()
     this.chess = new Chess()
 
@@ -76,7 +74,11 @@ class Game {
     this.gameUpdate$ = gameUpdateSubject
     this.endPromise = this.gameUpdate$.pipe(
       routeBy<EndState>('end'),
-      first()
+      first(),
+      tap((end) => {
+        console.log(` Game ended between ${this.playersDisplay} `)
+        console.log(`result: `, end)
+      })
     ).toPromise()
 
     this.setLobbyMemberJoinedGameState(
@@ -84,6 +86,12 @@ class Game {
       gameMembers.map(m => m[0]),
       this.endPromise
     )
+
+    console.log('new game between ', this.playersDisplay)
+  }
+
+  private get playersDisplay () {
+    return this.players.map(p => `${p.user.username}(${p.colour})`)
   }
 
   /**

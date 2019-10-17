@@ -1,5 +1,4 @@
 import axios from 'axios'
-import _ from 'lodash'
 import WebSocket from 'ws'
 import yargs from 'yargs'
 import {
@@ -17,7 +16,6 @@ import { routeBy } from '../common/helpers'
 import { filter, takeWhile, share, map } from 'rxjs/operators'
 import { constructEngine } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
-import { userDetails } from '../common/dummyData/dummyData'
 
 function getSocketServerMessageObservable (socket: WebSocket) {
   return new Observable<SocketServerMessage>((subscriber) => {
@@ -59,7 +57,6 @@ export class BotClient {
         },
         error: (err) => {
           console.log(`in botclient ${this.user.id}`)
-          console.log(`playing game ${info.playerDetails}`)
           throw err
         }
       })
