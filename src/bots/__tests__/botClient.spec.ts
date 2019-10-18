@@ -9,8 +9,9 @@ import {
 import { Chess } from 'chess.js'
 import { BotClient } from '../botClient'
 import { MoveMaker } from '../../common/gameProviders'
-import { from } from 'rxjs'
+import { from, Subject, Observable } from 'rxjs'
 import { moveUpdates, moves } from '../../common/dummyData/dummyData'
+import { take, publish } from 'rxjs/operators'
 
 const user1: UserDetails = {
   id: 'u1',
@@ -40,22 +41,42 @@ const game1: CompleteGameInfo = {
   pgn: new Chess().pgn()
 }
 
-const joinGameMsg: SocketServerMessage = {
+const game2: CompleteGameInfo = {
+  id: 'game2',
+  playerDetails: [player1, player2],
+  pgn: new Chess().pgn()
+}
+
+const joinGameMsg1: SocketServerMessage = {
   game: {
     type: 'join',
     join: game1
   }
 }
 
-it('can respond to a game update', (done) => {
-  const gameUpdateMessage: SocketServerMessage = {
-    game: {
-      type: 'update',
-      update: moveUpdates[0]
-    }
+const joinGameMsg2: SocketServerMessage = {
+  game: {
+    type: 'join',
+    join: game2
   }
+}
 
-  const message$ = from([joinGameMsg, gameUpdateMessage])
+const gameUpdateMessage1: SocketServerMessage = {
+  game: {
+    type: 'update',
+    update: moveUpdates[0]
+  }
+}
+
+const gameUpdateMessage2: SocketServerMessage = {
+  game: {
+    type: 'update',
+    update: moveUpdates[0]
+  }
+}
+
+it('can respond to a game update', (done) => {
+  const message$ = publish<SocketServerMessage>()(from([joinGameMsg1, gameUpdateMessage1]))
   const expectedMove = moves[1]
   const expectedClientAction: ClientPlayerAction = {
     gameId: game1.id,
@@ -71,5 +92,60 @@ it('can respond to a game update', (done) => {
 
   const client = new BotClient(user2, message$, response, engine)
 
+  message$.connect()
   client.disconnect()
+})
+
+it('can play two successsive games', done => {
+  const gameResignMessage: SocketServerMessage = {
+    game: {
+      type: 'update',
+      update: {
+        id: '1',
+        type: 'end',
+        end: {
+          reason: 'resign',
+          winnerId: 'id1'
+        }
+      }
+    }
+  }
+  const updateGame2: SocketServerMessage = {
+    game: {
+      type: 'update',
+      update: {
+        id: 'game2',
+        type: 'move',
+        move: moves[0]
+      }
+    }
+  }
+
+  const message$: Observable<SocketServerMessage> = from([
+    joinGameMsg1,
+    gameUpdateMessage1,
+    gameResignMessage,
+    joinGameMsg2,
+    updateGame2
+  ])
+
+  const expectedMove = moves[1]
+
+  const engine: MoveMaker = async () => expectedMove
+  const response$ = new Subject()
+  const response = (msg: SocketClientMessage) => {
+    response$.next(msg)
+  }
+
+  response$.pipe(
+    take(2)
+  ).subscribe({
+    next: () => console.log('response!'),
+    complete: () => {
+      response$.complete()
+      done()
+    }
+  })
+
+  const client = new BotClient(user2, message$, response, engine)
 })

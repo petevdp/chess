@@ -78,6 +78,7 @@ class Game {
       tap((end) => {
         console.log(` Game ended between ${this.playersDisplay} `)
         console.log(`result: `, end)
+        console.log(this.chess.ascii())
       })
     ).toPromise()
 
@@ -88,6 +89,7 @@ class Game {
     )
 
     console.log('new game between ', this.playersDisplay)
+    console.log('game id: ', this.id)
   }
 
   private get playersDisplay () {
@@ -98,7 +100,7 @@ class Game {
    * Ends the game, notifying all clients
    */
   end () {
-    console.log('ending game')
+    console.log('force ending game ', this.id)
 
     this.gameController$.next({
       type: 'end',

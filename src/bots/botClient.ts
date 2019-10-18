@@ -13,7 +13,7 @@ import {
 import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
-import { filter, takeWhile, share, map } from 'rxjs/operators'
+import { filter, takeWhile, share, map, tap } from 'rxjs/operators'
 import { constructEngine } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
 
@@ -43,7 +43,7 @@ export class BotClient {
     sendMessageToServer: (msg: SocketClientMessage) => void,
     engine: MoveMaker
   ) {
-    const gameClient$ = this.createGameClient$(user, serverMessage$, engine)
+    const gameClient$ = this.createGameClient$(user, serverMessage$.pipe(share()), engine)
 
     gameClient$.subscribe((client) => {
       client.action$.subscribe({
@@ -68,7 +68,7 @@ export class BotClient {
     serverMessage$: Observable<SocketServerMessage>,
     engine: MoveMaker
   ) {
-    const gameMessage$ = serverMessage$.pipe(routeBy<GameMessage>('game'))
+    const gameMessage$ = serverMessage$.pipe(routeBy<GameMessage>('game'), share())
 
     return gameMessage$.pipe(
       routeBy<CompleteGameInfo>('join'),
@@ -78,13 +78,15 @@ export class BotClient {
           filter(({ id }) => id === info.id),
           takeWhile((update) => update.type !== 'end', true)
         )
+
         return new GameClient(
           gameUpdate$,
           info,
           user,
           engine
         )
-      })
+      }),
+      share()
     )
   }
 

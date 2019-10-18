@@ -62,7 +62,6 @@ export class GameStream {
       next: state => {
         this.state$.next(state)
         if (state.end) {
-          console.log('game over')
           this.state$.complete()
         }
       },
@@ -108,13 +107,15 @@ export class GameClient {
   ) {
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
+
     this.colour = this.getColour(user, gameInfo)
 
     // TODO implement actions other than moves
 
     this.action$ = this.makeClientActionObservable(
       gameUpdate$,
-      getMove
+      getMove,
+      this.colour
     )
 
     this.endPromise = gameUpdate$.pipe(routeBy<EndState>('end'), tap(() => {
@@ -137,12 +138,13 @@ export class GameClient {
 
   private makeClientActionObservable (
     gameUpdate$: Observable<GameUpdate>,
-    getMove: MoveMaker
+    getMove: MoveMaker,
+    colour: Colour
   ): Observable<ClientAction> {
     const opponentMove$ = gameUpdate$.pipe(
       filter(update => (
         !!update.move
-        && update.move.color !== this.colour
+        && update.move.color !== colour
       )),
       map(({ move }) => move as Move)
     )
@@ -164,12 +166,13 @@ export class GameClient {
       ),
       opponentMove$.pipe(
         tap(move => this.makeMoveIfValid(move)),
-        takeWhile(() => this.chess.moves().length > 0),
+        takeWhile(() => !this.chess.game_over()),
         concatMap(async (): Promise<ClientAction> => {
           const move = await getMove(this.chess)
           this.makeMoveIfValid(move)
           return { type: 'move', move }
-        })
+        }),
+        share()
       )
     ).pipe(share())
   }
@@ -180,7 +183,8 @@ export class GameClient {
     if (!out) {
       throw new Error(`
       invalid move: ${move.san} by ${move.color}
-      ${this.chess.ascii()}`)
+      ${this.chess.ascii()}
+      ${this.chess.moves()}`)
     }
 
     return this.chess

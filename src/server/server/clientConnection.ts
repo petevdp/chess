@@ -15,7 +15,7 @@ export class ClientConnection implements ClientConnectionInterface {
   clientMessage$: Observable<SocketClientMessage>;
 
   constructor (private ws: WebSocket, public user: UserDetails) {
-    console.log('new connection!')
+    console.log('new connection!: ', user.username)
 
     this.clientMessage$ = new Observable<SocketClientMessage>(subscriber => {
       ws
