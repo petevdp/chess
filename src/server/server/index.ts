@@ -17,6 +17,7 @@ import ExpressWs from 'express-ws'
 import { UserDetails } from '../../common/types'
 import { SERVER_PORT, STARTING_BOTS } from '../../common/config'
 import MultithreadedBotManager from './botManager'
+import { PUBLIC_DIR, BUILD_DIR } from '../constants'
 
 // loads .env file into process.env
 dotenv.config({ path: path.resolve('../.env') })
@@ -39,6 +40,7 @@ app.use(session)
 const queries = new DBQueries()
 const lobby = new Lobby()
 
+app.use(express.static(BUILD_DIR))
 app.use('/api', api(queries))
 
 const socketServer = new SocketServer(http, session)
@@ -54,6 +56,10 @@ socketServer.rawConnection$.subscribe(async ({ socket, session }) => {
   }
   const clientConnection = new ClientConnection(socket, user as UserDetails)
   lobby.addLobbyMember(clientConnection)
+})
+
+app.get('*', (_, res) => {
+  res.sendFile(path.join(BUILD_DIR, 'index.html'))
 })
 
 http.listen(SERVER_PORT, () => {
