@@ -13,7 +13,7 @@ import {
 import { Observable, BehaviorSubject } from 'rxjs'
 import { MoveMaker, GameClient } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
-import { filter, takeWhile, share, map, tap } from 'rxjs/operators'
+import { filter, takeWhile, share, map } from 'rxjs/operators'
 import { constructEngine } from './engines'
 import { SOCKET_URL, LOGIN_URL } from '../common/config'
 

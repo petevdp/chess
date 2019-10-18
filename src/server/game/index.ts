@@ -1,5 +1,5 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { shareReplay, concatMap, takeWhile, first, tap, share } from 'rxjs/operators'
+import { concatMap, takeWhile, first, tap } from 'rxjs/operators'
 import {
   Colour,
   GameDetails,
@@ -8,7 +8,7 @@ import {
   PlayerDetails,
   EndState
 } from '../../common/types'
-import { Chess, ChessInstance, Move } from 'chess.js'
+import { Chess, ChessInstance } from 'chess.js'
 import uuidv4 from 'uuid/v4'
 import { Player } from './player'
 import { LobbyMember } from '../lobby/lobbyMember'

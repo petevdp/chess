@@ -68,13 +68,6 @@ const gameUpdateMessage1: SocketServerMessage = {
   }
 }
 
-const gameUpdateMessage2: SocketServerMessage = {
-  game: {
-    type: 'update',
-    update: moveUpdates[0]
-  }
-}
-
 it('can respond to a game update', (done) => {
   const message$ = publish<SocketServerMessage>()(from([joinGameMsg1, gameUpdateMessage1]))
   const expectedMove = moves[1]

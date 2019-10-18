@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs'
 import { SocketClientMessage, SocketServerMessage, UserDetails } from '../../common/types'
 import WebSocket from 'ws'
-import { share, tap } from 'rxjs/operators'
+import { share } from 'rxjs/operators'
 
 export interface ClientConnectionInterface {
   clientMessage$: Observable<SocketClientMessage>;
