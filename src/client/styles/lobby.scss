@@ -38,6 +38,7 @@ $lobby-container-area: calc(100% - 55.28px);
 
   .small-game-info {
     background-color: white;
+    width: 300px;
     display: flex;
     justify-content: space-between;
 
@@ -50,6 +51,7 @@ $lobby-container-area: calc(100% - 55.28px);
     }
 
     .username {
+      font-size: 0.8em;
       overflow: hidden;
       grid-area: username;
       padding-top: 3px;
@@ -58,7 +60,7 @@ $lobby-container-area: calc(100% - 55.28px);
     .elo {
       grid-area: elo;
       color: $grey-3;
-      font-size: small;
+      font-size: 0.6em;
     }
 
     .player-info {
