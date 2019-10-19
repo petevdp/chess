@@ -48,7 +48,7 @@ export class AuthService {
   }
 
   logout = async () => {
-    const res = await axios.put(LOGOUT_PATH)
+    const res = await axios.post(LOGOUT_PATH)
     this.currentUserSubject.next(null)
     return res.status === 200
   }

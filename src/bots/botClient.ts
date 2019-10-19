@@ -98,7 +98,7 @@ export class BotClient {
 }
 
 async function newBotClient (options: BotDetails) {
-  const res = await axios.put(LOGIN_URL, {
+  const res = await axios.post(LOGIN_URL, {
     username: options.username,
     userType: 'bot'
   })

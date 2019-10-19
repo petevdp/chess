@@ -42,7 +42,7 @@ export const api = (dbQueries: DBQueries) => {
     res.json(user)
   })
 
-  api.put('/logout', (req, res) => {
+  api.post('/logout', (req, res) => {
     req.session && req.session.destroy(() => res.sendStatus(200))
   })
 
