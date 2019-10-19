@@ -3,27 +3,36 @@ import path from 'path'
 import dotenv from 'dotenv'
 import HttpServer from 'http'
 import to from 'await-to-js'
+import redis from 'redis'
+import ExpressSessionFactory from 'express-session'
+import RedisStoreFactory from 'connect-redis'
+import ExpressWs from 'express-ws'
 
 import { DBQueries } from '../db/queries'
 import { SocketServer } from './socketServer'
 import { ClientConnection } from './clientConnection'
 import { Lobby } from '../lobby'
 
-// middleware
-import ExpressSessionFactory from 'express-session'
-import { api } from './api'
-
-import ExpressWs from 'express-ws'
 import { UserDetails } from '../../common/types'
 import { SERVER_PORT, STARTING_BOTS } from '../../common/config'
-import MultithreadedBotManager from './botManager'
-import { PUBLIC_DIR, BUILD_DIR } from '../constants'
+import BotManager from './botManager'
+import { BUILD_DIR } from '../constants'
+import { api } from './api'
 
 // loads .env file into process.env
-dotenv.config({ path: path.resolve('../.env') })
+dotenv.config({ path: path.resolve('../../.env') })
+
+const RedisStore = RedisStoreFactory(ExpressSessionFactory)
+const redisClient = redis.createClient()
+const { SESSION_SECRET } = process.env
+
+if (!SESSION_SECRET) {
+  throw new Error('env variable SESSION_SECRET is undefined')
+}
 
 const session = ExpressSessionFactory({
-  secret: 'my-secret',
+  store: new RedisStore({ client: redisClient }),
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: true
 })
@@ -44,10 +53,6 @@ app.use(express.static(BUILD_DIR))
 app.use('/api', api(queries))
 
 const socketServer = new SocketServer(http, session)
-
-const botManager = new MultithreadedBotManager()
-STARTING_BOTS.forEach(details => botManager.addBot(details))
-
 socketServer.rawConnection$.subscribe(async ({ socket, session }) => {
   const [err, user] = await to(queries.getUser({ id: session.userId }))
   if (err) {
@@ -64,4 +69,6 @@ app.get('*', (_, res) => {
 
 http.listen(SERVER_PORT, () => {
   console.log(`Listening on ${SERVER_PORT}`)
+  const botManager = new BotManager()
+  STARTING_BOTS.forEach(details => botManager.addBot(details))
 })

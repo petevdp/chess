@@ -37,7 +37,7 @@ export class AuthService {
 
   async login (userLogin: UserLogin): Promise<UserDetails|false> {
     console.log('logging in')
-    const [err, res] = await to(axios.put(LOGIN_PATH, userLogin))
+    const [err, res] = await to(axios.post(LOGIN_PATH, userLogin))
     if (err) {
       this.currentUserSubject.next(null)
       return false

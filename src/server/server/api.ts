@@ -15,7 +15,7 @@ export const api = (dbQueries: DBQueries) => {
     check('userType').isIn(['bot', 'human'])
   ]
 
-  api.put('/login', userLoginSchema, async (req: Request, res: Response) => {
+  api.post('/login', userLoginSchema, async (req: Request, res: Response) => {
     const validationErrors = validationResult(req)
     if (!validationErrors.isEmpty()) {
       return res.status(422).json({ errors: validationErrors.array() })
