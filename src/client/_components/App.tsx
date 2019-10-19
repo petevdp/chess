@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react"
 import "../App.scss"
-import '../styles/chessground.css'
-import '../styles/chessground-theme.css'
 
 import {
   BrowserRouter as Router,
@@ -70,8 +68,7 @@ export function App ({ servicesWithIO }: AppProps) {
       <Router>
         <Route path="/login" exact render={renderLogin} />
         <PrivateRoute
-          exact
-          path="/lobby"
+          path="/"
           {...{ authService, redirectRoute: authGuardRedirectRoute }}
           GuardedComponent={renderLobby}
         />
