@@ -18,6 +18,8 @@ export const LOGIN_URL = `${BASE_SERVER_URL}/${LOGIN_PATH}`
 export const SOCKET_URL = BASE_SERVER_URL
 export const SOCKET_URL_CLIENT = `ws://${HOST}:${SERVER_PORT}`
 
-export const STARTING_BOTS: BotDetails[] = _.times(8).map(() => (
+export const DISPLAYED_GAMES_PER_PAGE = 8
+
+export const STARTING_BOTS: BotDetails[] = _.times(2).map(() => (
   genFakeBot([1000, 5000])
 ))

@@ -12,7 +12,7 @@ interface AllStreamsProps {
 function AllSmallGames ({ lobbyService }: AllStreamsProps) {
   const gameStateArr = lobbyService.useStreamedGameStates()
 
-  const gamesPerPage = 8
+  const gamesPerPage = DISPLAYED_GAMES_PER_PAGE
 
   const numOfPages = Math.ceil(gameStateArr.length / gamesPerPage)
 
