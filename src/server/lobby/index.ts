@@ -5,7 +5,6 @@ import {
   map,
   mergeMap,
   startWith,
-  tap,
   share
 } from 'rxjs/operators'
 

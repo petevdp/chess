@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { LobbyService } from "../_services/lobby.service"
 import { SmallGameDisplay } from './StreamedGame'
 import _ from 'lodash'
 import { Route, Link } from 'react-router-dom'
+import { DISPLAYED_GAMES_PER_PAGE } from '../../common/config'
 
 interface AllStreamsProps {
   lobbyService: LobbyService;

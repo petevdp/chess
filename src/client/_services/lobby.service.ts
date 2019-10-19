@@ -3,7 +3,7 @@ import { Observable, from, BehaviorSubject } from 'rxjs'
 import { SocketServiceInterface } from './socket.service'
 import { routeBy } from '../../common/helpers'
 import { useObservable } from 'rxjs-hooks'
-import { scan, shareReplay, filter, map, takeWhile, concatMap, mergeMap, tap } from 'rxjs/operators'
+import { scan, shareReplay, filter, map, takeWhile, concatMap, mergeMap } from 'rxjs/operators'
 import { GameStream, GameStateWithDetails } from '../../common/gameProviders'
 
 export class LobbyService {
