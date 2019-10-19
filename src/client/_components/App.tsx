@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react"
 import "../App.scss"
+import '../styles/chessground.css'
+import '../styles/chessground-theme.css'
+
 import {
   BrowserRouter as Router,
   Route

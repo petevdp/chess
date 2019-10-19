@@ -3,9 +3,7 @@ import _ from 'lodash'
 import { GameStateWithDetails } from '../../common/gameProviders'
 import { PlayerDetails, EndState } from '../../common/types'
 import { ChessInstance, Move, ShortMove } from 'chess.js'
-import ChessBoardDefault, { ChessBoardFactory } from 'chessboardjs'
-
-const ChessBoard = ChessBoardDefault as unknown as ChessBoardFactory
+import { Chessground } from 'chessground'
 
 const colours = {
   lightYellow: "rgba(255, 255, 0, 0.4)"
@@ -92,9 +90,23 @@ export function getSquareStyling (chess: ChessInstance) {
 function useBoard (chess: ChessInstance, id: string) {
   const [board, setBoard] = useState()
   useEffect(() => {
-    const newBoard = ChessBoard(`myBoard-${id}`)
-    newBoard.position(chess.fen())
+    const boardElement = document.getElementById(`board-${id}`)
+    if (!boardElement) {
+      console.log('no board element!')
+      return
+    }
+    const lastMove = _.last(chess.history({ verbose: true }))
+    const newBoard = Chessground(boardElement, {
+      fen: chess.fen(),
+      viewOnly: true,
+      highlight: {
+        lastMove: true,
+        check: true
+      },
+      lastMove: lastMove && [lastMove.from, lastMove.to]
+    })
     setBoard(newBoard)
+    return () => newBoard.destroy()
   }, [])
   return board
 }
@@ -110,14 +122,19 @@ export function SmallGameDisplay (
     }
 
     const moveObj = _.last(chess.history({ verbose: true })) as ShortMove
-    const moveStr = `${moveObj.from}-${moveObj.to}`
-    board.move(moveStr)
-  }, [gameState.chess.history()])
+    board.move(moveObj.from, moveObj.to)
+  }, [gameState])
 
   return (
     <div className="small-game-stream" >
       <SmallGameInfo gameState={gameState}/>
-      <div id={`myBoard-${id}`} style={{ width: '300px' }}></div>
+      <section className="blue merida">
+        <div
+          id={`board-${id}`}
+          className="cg-wrap"
+        >
+        </div>
+      </section>
     </div>
   )
 }

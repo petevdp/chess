@@ -1305,11 +1305,6 @@
   resolved "https://registry.yarnpkg.com/@types/chess.js/-/chess.js-0.10.0.tgz#8272fe9d117b11db38c21e65ec394df74a786c57"
   integrity sha512-esXTIYEeSa4HSt5ZCvkN4toKuZL53zyIBh1gcSTzvKpmQ7XM0H7Mf8lo858IJM8lBoHZsAa57yxwY78FS/2s3A==
 
-"@types/chessboardjs@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@types/chessboardjs/-/chessboardjs-0.3.1.tgz#8032a325b55d534931e68b69b79cab830f2d0baf"
-  integrity sha512-dNsKwjJ1uRP82vstvDO3tfq7wTB3AAv+SJphveu+MOUZW6/0etK73/fENRNLG55MVF1LyfXAMotxxnX4FMQNDQ==
-
 "@types/connect@*":
   version "3.4.32"
   resolved "https://registry.yarnpkg.com/@types/connect/-/connect-3.4.32.tgz#aa0e9616b9435ccad02bc52b5b454ffc2c70ba28"
@@ -1473,10 +1468,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-router-dom@^4.3.5":
-  version "4.3.5"
-  resolved "https://registry.yarnpkg.com/@types/react-router-dom/-/react-router-dom-4.3.5.tgz#72f229967690c890d00f96e6b85e9ee5780db31f"
-  integrity sha512-eFajSUASYbPHg2BDM1G8Btx+YqGgvROPIg6sBhl3O4kbDdYXdFdfrgQFf/pcBuQVObjfT9AL/dd15jilR5DIEA==
+"@types/react-router-dom@^5.1.0":
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/@types/react-router-dom/-/react-router-dom-5.1.0.tgz#8baa84a7fa8c8e7797fb3650ca51f93038cb4caf"
+  integrity sha512-YCh8r71pL5p8qDwQf59IU13hFy/41fDQG/GeOI3y+xmD4o0w3vEPxE8uBe+dvOgMoDl0W1WUZsWH0pxc1mcZyQ==
   dependencies:
     "@types/history" "*"
     "@types/react" "*"
@@ -2802,10 +2797,10 @@ chess.js@^0.10.2:
   resolved "https://registry.yarnpkg.com/chess.js/-/chess.js-0.10.2.tgz#eacefa2067155f87f046e80cc12d2019eef1b81a"
   integrity sha1-6s76IGcVX4fwRugMwS0gGe7xuBo=
 
-chessboardjs@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/chessboardjs/-/chessboardjs-0.0.1.tgz#106e112dba6cc0dcdcf75472a29212c304ff564e"
-  integrity sha1-EG4RLbpswNzc91RyopISwwT/Vk4=
+chessground@^7.6.10:
+  version "7.6.10"
+  resolved "https://registry.yarnpkg.com/chessground/-/chessground-7.6.10.tgz#b837c11e27a8504c6f3ed06c659e8e2d8ea11f3e"
+  integrity sha512-kAnS6hy7NNdGLu6H1b2IOodwEHu9cDfaG/GVhh96KuBm2D9llZ2Ccf/j0sLwmMQctn3cIxOXV4yeRsT4/8szzg==
 
 chokidar@^2.0.0, chokidar@^2.0.2, chokidar@^2.0.4:
   version "2.1.8"
