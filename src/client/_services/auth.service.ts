@@ -44,7 +44,6 @@ export class AuthService {
     }
     const { data } = res
     this.currentUserSubject.next(data)
-    console.log('')
     return data
   }
 

@@ -20,10 +20,10 @@ export function InjectNavBar ({ children }: InjectNavBarProps) {
       expand="lg"
     >
       { base }
-      <Route path="lobby" exact>
+      <Route path="/lobby" exact>
         {lobby}
       </Route>
-      <Route path="login" exact>
+      <Route path="/login" exact>
         {login}
       </Route>
     </Navbar>
@@ -43,7 +43,7 @@ function MyNavBar ({ authService }: MyNavBarProps) {
       expand="lg"
     >
       <Nav>
-        <Nav.Link key="lobby" as={Link} to="lobby">
+        <Nav.Link key="lobby" as={Link} to="/lobby">
         Lobby
         </Nav.Link>
       </Nav>
@@ -55,7 +55,7 @@ function MyNavBar ({ authService }: MyNavBarProps) {
 }
 
 const LoggedOutDisplay: React.FC = () => (
-  <Nav.Item key="login" as={Link} to="login">
+  <Nav.Item key="login" as={Link} to="/login">
         Log In
   </Nav.Item>
 )

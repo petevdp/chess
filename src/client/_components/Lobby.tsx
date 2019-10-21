@@ -3,7 +3,8 @@ import { AuthServiceInterface } from '../_services/auth.service'
 import { LobbyService } from '../_services/lobby.service'
 import { LobbyMemberDetails } from '../../common/types'
 import { ListGroup } from 'react-bootstrap'
-import AllSmallGamesDisplay from './AllStreams'
+import { Route, Switch, Redirect } from 'react-router-dom'
+import AllSmallGamesDisplay, { GamesRouteParams } from './AllStreams'
 import NavBar from './Nav'
 import { SocketServiceInterface } from '../_services/socket.service'
 
@@ -20,7 +21,12 @@ export function Lobby ({ lobbyService, authService }: LobbyProps) {
       <NavBar {...{ authService }} />
       <div id="lobby-container">
         <div id="lobby-content-container">
-          <AllSmallGamesDisplay {... { lobbyService }} />
+          <Switch>
+            <Route path="/lobby/games">
+              <AllSmallGamesDisplay {...{ lobbyService }} />
+            </Route>
+            <Redirect exact to="/lobby/games" />
+          </Switch>
         </div>
         <LobbyMemberSidebar {...{ allMemberDetails }}/>
       </div>
@@ -41,6 +47,7 @@ function LobbyMemberSidebar (
       {...{ memberDetails }}
     />
   ))
+
   return (
     <div id="lobby-member-sidebar">
       <ListGroup variant="flush">

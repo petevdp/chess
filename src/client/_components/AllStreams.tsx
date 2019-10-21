@@ -1,9 +1,15 @@
 import React from 'react'
+import queryString from 'querystring'
 import { LobbyService } from "../_services/lobby.service"
 import { SmallGameDisplay } from './StreamedGame'
 import _ from 'lodash'
-import { Route, Link } from 'react-router-dom'
+import { Route, Link, useLocation, useParams, match } from 'react-router-dom'
 import { DISPLAYED_GAMES_PER_PAGE } from '../../common/config'
+import { RouteChildrenProps, RouteProps, Redirect } from 'react-router'
+
+export interface GamesRouteParams {
+  pageNum?: string;
+}
 
 interface AllStreamsProps {
   lobbyService: LobbyService;
@@ -11,48 +17,44 @@ interface AllStreamsProps {
 
 function AllSmallGames ({ lobbyService }: AllStreamsProps) {
   const gameStateArr = lobbyService.useStreamedGameStates()
+  const { search } = useLocation()
+  const pageNum = (Number(queryString.parse(search.slice(1)).page))
+  // const pageNum = Number(useParams<GamesRouteParams>().pageNum)
+  console.log('pagenum: ', pageNum)
+
+  if (!pageNum) {
+    return <Redirect to="/lobby/games/?page=1" />
+  }
 
   const gamesPerPage = DISPLAYED_GAMES_PER_PAGE
 
   const numOfPages = Math.ceil(gameStateArr.length / gamesPerPage)
 
-  const gamesPages = _.times(numOfPages).map(index => {
-    const startingIdx = index * gamesPerPage
-    const gamesForPage = gameStateArr.slice(startingIdx, startingIdx + gamesPerPage)
+  const startingIdx = (pageNum - 1) * gamesPerPage
 
-    const streamedGames = gamesForPage.map(state => (
-      <SmallGameDisplay
-        key={state.id}
-        id={state.id}
-        gameState={state}
-      />
-    ))
+  const gameStatesForPage = gameStateArr.slice(startingIdx, startingIdx + gamesPerPage)
 
-    return (
-      <Route
-        key={index + 1}
-        path={`/lobby/${index + 1}`}
-      >
-        {streamedGames}
-      </Route>
-    )
-  })
+  const gameDisplays = gameStatesForPage.map(game => (
+    <SmallGameDisplay
+      key={game.id}
+      id={game.id}
+      gameState={game}
+    />
+  ))
 
-  const pageLinks = _.range(1, numOfPages + 1).map(num => {
-    return (
-      <Link
-        key={num}
-        to={`/lobby/${num}`}
-      >
-        {num}
-      </Link>
-    )
-  })
+  const pageLinks = _.range(1, numOfPages + 1).map(num => (
+    <Link
+      key={num}
+      to={`/lobby/games/?page=${num}`}
+    >
+      {num}
+    </Link>
+  ))
 
   return (
     <section className="all-small-games">
       {pageLinks}
-      {gamesPages}
+      {gameDisplays}
       {pageLinks}
     </section>
   )

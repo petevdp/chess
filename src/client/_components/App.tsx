@@ -3,7 +3,9 @@ import "../App.scss"
 
 import {
   BrowserRouter as Router,
-  Route
+  Route,
+  Redirect,
+  Switch
 } from "react-router-dom"
 import { AuthServiceInterface, AuthService } from "../_services/auth.service"
 
@@ -50,7 +52,7 @@ export function App ({ servicesWithIO }: AppProps) {
   const { authService } = useAppWideServices(servicesWithIO)
 
   // initialize global services
-  const authGuardRedirectRoute = "login"
+  const authGuardRedirectRoute = "/login"
 
   if (!authService) {
     return <div className="App">Loading</div>
@@ -66,19 +68,21 @@ export function App ({ servicesWithIO }: AppProps) {
   return (
     <div className="App">
       <Router>
-        <Route path="/login" exact render={renderLogin} />
-        <PrivateRoute
-          path="/"
-          {...{ authService, redirectRoute: authGuardRedirectRoute }}
-          GuardedComponent={renderLobby}
-        />
+        <Switch>
+          <Route path="/login" exact render={renderLogin} />
+          <PrivateRoute
+            path="/lobby"
+            {...{ authService, redirectRoute: authGuardRedirectRoute }}
+            GuardedComponent={renderLobby}
+          />
 
-        <PrivateRoute
-          exact
-          path="/game"
-          {...{ authService, SocketServiceClass, redirectRoute: authGuardRedirectRoute }}
-          GuardedComponent={Game}
-        />
+          <PrivateRoute
+            path="/game"
+            {...{ authService, SocketServiceClass, redirectRoute: authGuardRedirectRoute }}
+            GuardedComponent={Game}
+          />
+          <Redirect to="/lobby" />
+        </Switch>
       </Router>
     </div>
   )

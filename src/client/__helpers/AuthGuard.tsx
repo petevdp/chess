@@ -14,7 +14,7 @@ export function PrivateRoute ({
   const currentUser = authService.useCurrentUser()
   const guarded = (props: RouteComponentProps) => currentUser
     ? <GuardedComponent {...props} />
-    : <Redirect to={redirectRoute} />
+    : <Redirect exact to={redirectRoute} />
   return (
     <Route
       {...rest}
