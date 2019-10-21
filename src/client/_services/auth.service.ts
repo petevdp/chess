@@ -44,6 +44,7 @@ export class AuthService {
     }
     const { data } = res
     this.currentUserSubject.next(data)
+    console.log('')
     return data
   }
 
@@ -54,6 +55,6 @@ export class AuthService {
   }
 
   useCurrentUser () {
-    return useObservable(() => this.currentUser$)
+    return useObservable(() => this.currentUser$, this.currentUserSubject.value)
   }
 }
