@@ -1,30 +1,35 @@
-import { Observable, concat, EMPTY, from, BehaviorSubject } from 'rxjs'
+import { Observable, BehaviorSubject, Subject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
-import { EndState, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDetails } from './types'
-import { map, filter, concatMap, tap, share, takeWhile } from 'rxjs/operators'
+import { EndState, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDescription, GameUpdateType } from './types'
+import { map, filter, concatMap, first, tap, shareReplay, startWith } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
+import _ from 'lodash'
+import { logicalExpression } from '@babel/types'
 
 const Chess = getChessConstructor()
 
 export interface GameState {
   chess: ChessInstance;
+  lastUpdateType?: GameUpdateType;
   end?: EndState;
 }
 
-export interface GameStateWithDetails extends GameDetails{
+export interface GameStateWithDetails extends GameDescription{
   chess: ChessInstance;
+  lastUpdateType?: GameUpdateType;
   end?: EndState;
 }
 
 export class GameStream {
   gameStateWithDetails$: Observable<GameStateWithDetails>
-  gameDetails: GameDetails
+  gameDetails: GameDescription
+  state$: BehaviorSubject<GameState>
+  endPromise: Promise<EndState>
   private chess: ChessInstance
-  private state$: BehaviorSubject<GameState>
 
   constructor (
     gameUpdate$: Observable<GameUpdate>,
-    private gameInfo: CompleteGameInfo
+    public gameInfo: CompleteGameInfo
   ) {
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
@@ -39,20 +44,35 @@ export class GameStream {
       end: undefined
     } as GameState)
 
+    this.gameStateWithDetails$ = this.state$.pipe(
+      map(state => ({
+        ...state,
+        ...this.gameDetails
+      }))
+    )
+    this.endPromise = this.state$.pipe(
+      routeBy<EndState>('end')
+    ).toPromise()
+
     gameUpdate$.pipe(
+      tap(update => console.log('update: ', update)),
       filter(u => u.type !== 'offerDraw'),
-      map(update => {
+      map((update): GameState => {
         const { type } = update
         if (type === 'move') {
           const out = this.chess.move(update.move as Move)
           if (!out) {
             throw new Error(`invalid move sent to GameStream: ${update.move}`)
           }
-          return this.state
+          return {
+            ...this.state,
+            lastUpdateType: type
+          }
         }
         if (type === 'end') {
           return {
             ...this.state,
+            lastUpdateType: type,
             end: update.end
           }
         }
@@ -65,15 +85,11 @@ export class GameStream {
           this.state$.complete()
         }
       },
-      complete: () => this.state$.complete()
+      complete: () => {
+        console.log('completed state')
+        this.state$.complete()
+      }
     })
-
-    this.gameStateWithDetails$ = this.state$.pipe(
-      map(state => ({
-        ...state,
-        ...this.gameDetails
-      }))
-    )
   }
 
   get gameId () {
@@ -83,52 +99,39 @@ export class GameStream {
   get state (): GameState {
     return this.state$.value
   }
+
+  complete () {
+    this.state$.complete()
+  }
 }
 
 // signature for function which can make moves for the client.
-// Make sure this funciton doesn't modify the ChessInstance it's passed.
+// Make sure this function doesn't modify the ChessInstance it's passed.
 export type MoveMaker = (chess: ChessInstance) => Promise<Move>
 
-export interface ClientActionProvider {
-  getMove: MoveMaker;
-}
-
 export class GameClient {
-  action$: Observable<ClientAction>
-  endPromise: Promise<EndState>
-  private colour: Colour
-  private chess: ChessInstance
+  readonly colour: Colour
+  readonly action$: Observable<ClientAction>
+  readonly id: string
+  private readonly _action$: Subject<ClientAction>
 
   constructor (
-    public gameUpdate$: Observable<GameUpdate>,
-    private gameInfo: CompleteGameInfo,
-    user: UserDetails,
-    getMove: MoveMaker
+    gameStream: GameStream,
+    public readonly user: UserDetails,
+    makeMove: MoveMaker
   ) {
-    this.chess = new Chess()
-    this.chess.load_pgn(gameInfo.pgn)
+    this.id = user.id
+    this.colour = GameClient.getColour(user, gameStream.gameInfo)
+    this._action$ = new Subject()
+    GameClient.createClientAction$(gameStream, makeMove, this.colour).subscribe({
+      next: action => this._action$.next(action),
+      complete: () => this._action$.complete()
+    })
 
-    this.colour = this.getColour(user, gameInfo)
-
-    // TODO implement actions other than moves
-
-    this.action$ = this.makeClientActionObservable(
-      gameUpdate$,
-      getMove,
-      this.colour
-    )
-
-    this.endPromise = gameUpdate$.pipe(routeBy<EndState>('end'), tap(() => {
-    })).toPromise()
+    this.action$ = this._action$.asObservable()
   }
 
-  get id () {
-    return this.gameInfo.id
-  }
-
-  complete () { }
-
-  private getColour (user: UserDetails, gameInfo: CompleteGameInfo) {
+  private static getColour (user: UserDetails, gameInfo: CompleteGameInfo) {
     const player = gameInfo.playerDetails.find(p => p.user.id === user.id)
     if (!player) {
       throw new Error(`player matching ${user} not found`)
@@ -136,57 +139,40 @@ export class GameClient {
     return player.colour
   }
 
-  private makeClientActionObservable (
-    gameUpdate$: Observable<GameUpdate>,
-    getMove: MoveMaker,
-    colour: Colour
-  ): Observable<ClientAction> {
-    const opponentMove$ = gameUpdate$.pipe(
-      filter(update => (
-        !!update.move
-        && update.move.color !== colour
-      )),
-      map(({ move }) => move as Move)
+  private static createClientAction$ (
+    gameStream: GameStream,
+    makeMove: MoveMaker,
+    clientColour: Colour
+  ) {
+    const clientMove$: Observable<ClientAction> = gameStream.state$.pipe(
+      startWith(gameStream.state),
+      tap((state) => console.log('state update: ', state.lastUpdateType)),
+      filter(({ chess, lastUpdateType, end }) => {
+        if (!['move', undefined].includes(lastUpdateType) || end) {
+          return false
+        }
+
+        if (chess.moves().length === 0) {
+          return false
+        }
+
+        return chess.turn() === clientColour
+      }),
+      concatMap(async ({ chess }): Promise<ClientAction> => {
+        const move = await makeMove(chess)
+        return {
+          type: 'move',
+          move
+        }
+      }),
+      shareReplay(10)
     )
 
-    const thisClientIsStarting = this.colour === this.chess.turn()
-      && this.chess.moves().length > 0
-
-    const moveIfStarting = thisClientIsStarting
-      ? from(getMove(this.chess))
-      : EMPTY
-
-    moveIfStarting.subscribe(move => this.makeMoveIfValid(move))
-
-    const moveToAction = map((move: Move): ClientAction => ({ type: 'move', move }))
-
-    return concat(
-      moveIfStarting.pipe(
-        moveToAction
-      ),
-      opponentMove$.pipe(
-        tap(move => this.makeMoveIfValid(move)),
-        takeWhile(() => !this.chess.game_over()),
-        concatMap(async (): Promise<ClientAction> => {
-          const move = await getMove(this.chess)
-          this.makeMoveIfValid(move)
-          return { type: 'move', move }
-        }),
-        share()
-      )
-    ).pipe(share())
+    // TODO add draw responses
+    return clientMove$.pipe()
   }
 
-  private makeMoveIfValid (move: Move) {
-    const out = this.chess.move(move)
-
-    if (!out) {
-      throw new Error(`
-      invalid move: ${move.san} by ${move.color}
-      ${this.chess.ascii()}
-      ${this.chess.moves()}`)
-    }
-
-    return this.chess
+  complete () {
+    this._action$.complete()
   }
 }

@@ -85,6 +85,17 @@ describe('GameStream', () => {
     const stream = new GameStream(EMPTY, newGameInfo(inputChess))
     expect(stream.state.chess.fen()).toEqual(inputChess.fen())
   })
+
+  describe('endPromise', () => {
+    it('ends when issued an gameUpdate of type end with reason resign', async () => {
+      const gameStream = new GameStream(
+        of(resignUpdate),
+        newGameInfo()
+      )
+      const endState = await gameStream.endPromise
+      expect(endState.reason).toEqual('resign')
+    })
+  })
 })
 
 describe('GameClient', () => {
@@ -96,8 +107,7 @@ describe('GameClient', () => {
       })
 
       const client = new GameClient(
-        of(moveUpdates[0]),
-        newGameInfo(),
+        new GameStream(of(moveUpdates[0]), newGameInfo()),
         user2,
         mockMoveMaker
       )
@@ -109,20 +119,18 @@ describe('GameClient', () => {
       client.complete()
     })
 
-    it('is not called when opponent has yet to move', done => {
+    it('does not output action when opponent has yet to move', done => {
       const mockMoveMaker = jest.fn(Engines.firstMoveEngine)
+      const gameStream = new GameStream(EMPTY, newGameInfo())
       const client = new GameClient(
-        EMPTY,
-        newGameInfo(),
+        gameStream,
         user2,
         mockMoveMaker
       )
 
-      client.gameUpdate$.subscribe({
-        complete: () => {
-          expect(mockMoveMaker.mock.calls.length).toEqual(0)
-          done()
-        }
+      client.action$.subscribe({
+        next: () => done.fail(new Error('no actions should be outputted')),
+        complete: () => done()
       })
     })
 
@@ -130,9 +138,9 @@ describe('GameClient', () => {
       const moveMaker: MoveMaker = chess => {
         return Engines.firstMoveEngine(chess)
       }
+
       const client = new GameClient(
-        NEVER,
-        newGameInfo(),
+        new GameStream(NEVER, newGameInfo()),
         user1,
         moveMaker
       )
@@ -147,11 +155,15 @@ describe('GameClient', () => {
       })
     })
 
-    it('does not call moveMaker when there are no legal moves', done => {
+    it('output actions when there are no legal moves', done => {
       const mockMovemaker = jest.fn(Engines.firstMoveEngine)
       const game = allGameInfo[1]
 
-      const client = new GameClient(EMPTY, game, game.playerDetails[1].user, mockMovemaker)
+      const client = new GameClient(
+        new GameStream(EMPTY, game),
+        game.playerDetails[1].user,
+        mockMovemaker
+      )
 
       client.action$.subscribe({
         complete: () => {
@@ -180,8 +192,7 @@ describe('GameClient', () => {
       }
 
       const client = new GameClient(
-        of(endingMoveUpdate),
-        preparedGameInfo,
+        new GameStream(of(endingMoveUpdate), preparedGameInfo),
         preparedGameInfo.playerDetails[1].user,
         mockMoveMaker
       )
@@ -192,19 +203,6 @@ describe('GameClient', () => {
           done()
         }
       })
-    })
-  })
-
-  describe('endPromise', () => {
-    it('ends when issued an gameUpdate of type end with reason resign', done => {
-      const client = new GameClient(
-        of(resignUpdate),
-        newGameInfo(),
-        user2,
-        Engines.firstMoveEngine
-      )
-
-      client.endPromise.then(() => done())
     })
   })
 })
