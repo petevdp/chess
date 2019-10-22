@@ -1,6 +1,6 @@
 import { Observable, BehaviorSubject, Subject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
-import { EndState, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDescription, GameUpdateType } from './types'
+import { EndState, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDescription, GameUpdateType, ClientPlayerAction } from './types'
 import { map, filter, concatMap, first, tap, shareReplay, startWith } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
 import _ from 'lodash'
@@ -112,7 +112,8 @@ export type MoveMaker = (chess: ChessInstance) => Promise<Move>
 export class GameClient {
   readonly colour: Colour
   readonly action$: Observable<ClientAction>
-  readonly id: string
+  readonly userId: string
+  readonly gameInfo: CompleteGameInfo
   private readonly _action$: Subject<ClientAction>
 
   constructor (
@@ -120,7 +121,8 @@ export class GameClient {
     public readonly user: UserDetails,
     makeMove: MoveMaker
   ) {
-    this.id = user.id
+    this.userId = user.id
+    this.gameInfo = gameStream.gameInfo
     this.colour = GameClient.getColour(user, gameStream.gameInfo)
     this._action$ = new Subject()
     GameClient.createClientAction$(gameStream, makeMove, this.colour).subscribe({

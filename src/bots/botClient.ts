@@ -11,7 +11,7 @@ import {
   BotDetails
 } from '../common/types'
 import { Observable, BehaviorSubject } from 'rxjs'
-import { MoveMaker, GameClient } from '../common/gameProviders'
+import { MoveMaker, GameClient, GameStream } from '../common/gameProviders'
 import { routeBy } from '../common/helpers'
 import { filter, takeWhile, share, map } from 'rxjs/operators'
 import { constructEngine } from './engines'
@@ -50,7 +50,7 @@ export class BotClient {
         next: (action) => {
           sendMessageToServer({
             gameAction: {
-              gameId: client.id,
+              gameId: client.gameInfo.id,
               ...action
             }
           })
@@ -80,8 +80,7 @@ export class BotClient {
         )
 
         return new GameClient(
-          gameUpdate$,
-          info,
+          new GameStream(gameUpdate$, info),
           user,
           engine
         )
