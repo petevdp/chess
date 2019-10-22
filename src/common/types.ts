@@ -79,8 +79,10 @@ export type LobbyMemberDetailsUpdate = [string, LobbyMemberDetails|null]
 
 export type ActionType = 'move' | 'resign' | 'disconnect' | 'offerDraw';
 
+export type GameUpdateType = 'move' | 'end' | 'offerDraw';
+
 export interface GameUpdate {
-  type: 'move' | 'end' | 'offerDraw';
+  type: GameUpdateType;
   move?: Move;
   end?: EndState;
 }
@@ -113,12 +115,12 @@ export interface PlayerDetails {
   user: UserDetails;
   colour: Colour;
 }
-export interface GameDetails {
+export interface GameDescription {
   id: string;
   playerDetails: PlayerDetails[];
 }
 
-export interface CompleteGameInfo extends GameDetails {
+export interface CompleteGameInfo extends GameDescription {
   pgn: string;
   end?: EndState;
 }
