@@ -1,8 +1,8 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { concatMap, takeWhile, first, tap } from 'rxjs/operators'
+import { concatMap, takeWhile, first, tap, share } from 'rxjs/operators'
 import {
   Colour,
-  GameDetails,
+  GameDescription,
   GameUpdate,
   CompleteGameInfo,
   PlayerDetails,
@@ -13,13 +13,12 @@ import uuidv4 from 'uuid/v4'
 import { Player } from './player'
 import { LobbyMember } from '../lobby/lobbyMember'
 import { getGameUpdatesFromPlayerAction } from './rules'
-import { allPlayerDetails } from '../../common/dummyData/dummyData'
 import { routeBy } from '../../common/helpers'
 
 class Game {
   private players: Player[]
   id: string
-  details: GameDetails
+  details: GameDescription
 
   // TODO make type for gamestate
   gameUpdate$: Observable<GameUpdate>
@@ -53,7 +52,11 @@ class Game {
       ...this.players.map((p) => p.playerAction$)
     ).pipe(
       concatMap((action) => {
-        const updates = getGameUpdatesFromPlayerAction(action, this.chess, allPlayerDetails)
+        const updates = getGameUpdatesFromPlayerAction(
+          action,
+          this.chess,
+          this.details.playerDetails
+        )
 
         // Make move if action turned out to be a move.
         // Moves will only turn up in the first index.
@@ -62,7 +65,8 @@ class Game {
         }
 
         return from(updates)
-      })
+      }),
+      share()
     )
 
     merge(playerUpdates, this.gameController$)
@@ -126,7 +130,7 @@ class Game {
     members.forEach((m) => m.joinGame(id, endPromise))
   }
 
-  private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameDetails {
+  private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameDescription {
     const playerDetails: PlayerDetails[] = gameMembers.map(([member, colour]) => ({
       user: member.userDetails,
       colour
