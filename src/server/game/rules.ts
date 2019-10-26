@@ -55,12 +55,24 @@ export function getGameUpdatesFromPlayerAction (
   chess: ChessInstance,
   playerDetails: PlayerDetails[]
 ): GameUpdate[] {
+  const { type, playerId } = playerAction
+
   if (!validatePlayerAction(playerAction, chess)) {
     console.log(playerAction.colour)
-    throw new Error(`invalid player action: \n${chess.ascii()}, \n${playerAction.move}`)
+    const { move } = playerAction
+    if (!move) {
+      throw new Error(`move is undefined`)
+    }
+
+    console.log('details: ', playerDetails)
+    throw new Error(`
+      invalid player action:
+      ${playerId}
+      ${chess.ascii()}, \n${playerAction.move && playerAction.move.san}
+      ${chess.turn()}
+    `)
   }
 
-  const { type, playerId } = playerAction
   const updates = [] as GameUpdate[]
   const getOpponentId = () => {
     const player = playerDetails.find(p => p.user.id !== playerId)
