@@ -13,16 +13,16 @@ export interface GamesRouteParams {
 
 interface AllStreamsProps {
   lobbyService: LobbyService;
+  pageNum: number;
 }
 
-function AllSmallGames ({ lobbyService }: AllStreamsProps) {
+function AllSmallGames ({ lobbyService, pageNum }: AllStreamsProps) {
   const gameStateArr = lobbyService.useStreamedGameStates()
-  const { search } = useLocation()
-  const pageNum = (Number(queryString.parse(search.slice(1)).page))
-  // const pageNum = Number(useParams<GamesRouteParams>().pageNum)
-  console.log('pagenum: ', pageNum)
+  console.log('gamestatArr: ', gameStateArr)
 
-  if (!pageNum) {
+  if (!_.inRange(pageNum - 1, 0, gameStateArr.length)) {
+    console.log(`${pageNum} is out of range`)
+
     return <Redirect to="/lobby/games/?page=1" />
   }
 
