@@ -6,7 +6,7 @@ import { GameUpdate } from "../../../common/types"
 import { replayChessHistory } from "../testHelpers"
 
 describe('getGameUpdatesFromPlayerAction', () => {
-  it('returns a corresponding move update', () => {
+  it('returns a corresponding move update for valid moves', () => {
     const chess = new Chess()
 
     const playerDetails = allPlayerDetails.slice(0, 2)
@@ -58,5 +58,8 @@ describe('getGameUpdatesFromPlayerAction', () => {
         }
       }
     ] as GameUpdate[])
+  })
+
+  it('throws an error if passed an invalid move', () => {
   })
 })

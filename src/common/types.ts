@@ -66,7 +66,7 @@ export interface EndState {
   reason: EndReason;
 }
 
-export type GameDisplayAddition = CompleteGameInfo
+export type GameDisplayAddition = GameInfo
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -102,7 +102,6 @@ export interface GameSpecificMove extends Move {
 
 export interface ClientPlayerAction extends ClientAction {
   gameId: string;
-  move?: Move;
 }
 
 export interface AuthPayload {
@@ -115,12 +114,12 @@ export interface PlayerDetails {
   user: UserDetails;
   colour: Colour;
 }
-export interface GameDescription {
+export interface GameIdentifiers {
   id: string;
   playerDetails: PlayerDetails[];
 }
 
-export interface CompleteGameInfo extends GameDescription {
+export interface GameInfo extends GameIdentifiers {
   pgn: string;
   end?: EndState;
 }
@@ -166,7 +165,7 @@ export interface DisplayedGameMessage {
 export interface GameMessage {
   type: 'update' | 'join';
   update?: GameUpdateWithId;
-  join?: CompleteGameInfo;
+  join?: GameInfo;
 }
 
 export interface LobbyMessage {

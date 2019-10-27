@@ -1,4 +1,4 @@
-import { MemberMessage, CompleteGameInfo, GameUpdateWithId, LobbyMemberDetails, LobbyMessage, DisplayedGameMessage } from '../../common/types'
+import { MemberMessage, GameInfo, GameUpdateWithId, LobbyMemberDetails, LobbyMessage, DisplayedGameMessage } from '../../common/types'
 import { Observable, from, BehaviorSubject } from 'rxjs'
 import { SocketServiceInterface } from './socket.service'
 import { routeBy } from '../../common/helpers'
@@ -48,7 +48,7 @@ export class LobbyService {
     )
 
     const displayedGameAddition$ = displayedGameMessage$.pipe(
-      routeBy<CompleteGameInfo[]>('add')
+      routeBy<GameInfo[]>('add')
     )
 
     const streamedGameStateArr$ = new BehaviorSubject([] as GameStateWithDetails[])
@@ -59,7 +59,7 @@ export class LobbyService {
         .map(g => g.id)
         .includes(info.id)
       ),
-      mergeMap((info: CompleteGameInfo) => {
+      mergeMap((info: GameInfo) => {
         const gameUpdate$ = displayedGameUpdate$.pipe(
           filter(update => update.id === info.id),
           takeWhile(update => update.type !== 'end', true)

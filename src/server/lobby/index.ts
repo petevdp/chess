@@ -12,7 +12,7 @@ import { LobbyMember } from './lobbyMember'
 import {
   LobbyMemberDetails,
   LobbyMemberDetailsUpdate,
-  CompleteGameInfo,
+  GameInfo,
   GameUpdate,
   DisplayedGameMessage
 } from '../../common/types'
@@ -117,7 +117,7 @@ export class Lobby {
     })
   }
 
-  get displayedGameInfoArr (): CompleteGameInfo[] {
+  get displayedGameInfoArr (): GameInfo[] {
     return this.arena.activeGames.map((g) => g.completeGameInfo)
   }
 

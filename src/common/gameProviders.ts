@@ -1,6 +1,6 @@
 import { Observable, BehaviorSubject, Subject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
-import { EndState, ClientAction, CompleteGameInfo, UserDetails, Colour, GameUpdate, GameDescription, GameUpdateType } from './types'
+import { EndState, ClientAction, GameInfo, UserDetails, Colour, GameUpdate, GameIdentifiers, GameUpdateType } from './types'
 import { map, filter, concatMap, shareReplay, startWith, tap, share } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
 import _ from 'lodash'
@@ -13,7 +13,7 @@ export interface GameState {
   end?: EndState;
 }
 
-export interface GameStateWithDetails extends GameDescription{
+export interface GameStateWithDetails extends GameIdentifiers{
   chess: ChessInstance;
   lastUpdateType?: GameUpdateType;
   end?: EndState;
@@ -21,14 +21,14 @@ export interface GameStateWithDetails extends GameDescription{
 
 export class GameStream {
   gameStateWithDetails$: Observable<GameStateWithDetails>
-  gameDetails: GameDescription
+  gameDetails: GameIdentifiers
   state$: BehaviorSubject<GameState>
   endPromise: Promise<EndState>
   private chess: ChessInstance
 
   constructor (
     gameUpdate$: Observable<GameUpdate>,
-    public gameInfo: CompleteGameInfo
+    public gameInfo: GameInfo
   ) {
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
@@ -58,10 +58,6 @@ export class GameStream {
       map((update): GameState => {
         const { move, type } = update
         if (move) {
-          console.log('move: ', move.san)
-          console.log('colour: ', move.color)
-          console.log(this.chess.ascii())
-
           const out = this.chess.move(update.move as Move)
           if (!out) {
             throw new Error(`invalid move sent to GameStream: ${move.san}`)
@@ -114,7 +110,7 @@ export class GameClient {
   readonly colour: Colour
   readonly action$: Observable<ClientAction>
   readonly userId: string
-  readonly gameInfo: CompleteGameInfo
+  readonly gameInfo: GameInfo
   private readonly _action$: Subject<ClientAction>
 
   constructor (
@@ -125,7 +121,6 @@ export class GameClient {
     this.userId = user.id
     this.gameInfo = gameStream.gameInfo
     this.colour = GameClient.getColour(user, gameStream.gameInfo)
-    console.log(`${this.colour} is ${user.username}`)
     this._action$ = new Subject()
     GameClient.createClientAction$(gameStream, makeMove, this.colour).subscribe({
       next: action => this._action$.next(action),
@@ -135,7 +130,7 @@ export class GameClient {
     this.action$ = this._action$.asObservable()
   }
 
-  private static getColour (user: UserDetails, gameInfo: CompleteGameInfo) {
+  private static getColour (user: UserDetails, gameInfo: GameInfo) {
     const player = gameInfo.playerDetails.find(p => p.user.id === user.id)
     if (!player) {
       throw new Error(`player matching ${user} not found`)
@@ -160,8 +155,6 @@ export class GameClient {
       }),
       concatMap(async ({ chess }): Promise<ClientAction> => {
         const move = await makeMove(chess)
-        console.log('making move: ', move.san)
-        console.log(chess.ascii())
         return {
           type: 'move',
           move

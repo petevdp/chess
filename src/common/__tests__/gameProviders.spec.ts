@@ -1,4 +1,4 @@
-import { GameUpdateWithId, CompleteGameInfo, UserDetails, PlayerDetails, GameUpdate } from '../types'
+import { GameUpdateWithId, GameInfo, UserDetails, PlayerDetails, GameUpdate } from '../types'
 import { GameStream, GameClient, MoveMaker } from '../gameProviders'
 import { of, from, EMPTY, NEVER } from 'rxjs'
 import * as Engines from '../../bots/engines'
@@ -50,7 +50,7 @@ const resignUpdate = {
   }
 } as GameUpdateWithId
 
-const newGameInfo = (chess = new Chess()): CompleteGameInfo => ({
+const newGameInfo = (chess = new Chess()): GameInfo => ({
   id: 'game1',
   playerDetails: [
     player1, player2
@@ -181,7 +181,7 @@ describe('GameClient', () => {
       const endingMove = startingMoveHistory.reverse()[0]
       const game = replayMoveHistory(moveHistory)
 
-      const preparedGameInfo: CompleteGameInfo = {
+      const preparedGameInfo: GameInfo = {
         ...startingGameInfo,
         pgn: game.pgn()
       }

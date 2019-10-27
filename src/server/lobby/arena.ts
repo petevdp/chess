@@ -1,15 +1,19 @@
-import { LobbyMember } from './lobbyMember'
+import _ from 'lodash'
 import { Observable, merge, of, from, BehaviorSubject } from 'rxjs'
 import { scan, map, filter, mergeMap, mapTo, share } from 'rxjs/operators'
+import { LobbyMember } from './lobbyMember'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
 import { EndState } from '../../common/types'
+import * as resolutionFormulas from './gameResolution'
 
 interface UnmatchedState {
   potentialGames: Array<Promise<Game | false>>;
   allUnmatched: Map<string, LobbyMember>;
 }
+
+export type GameResolutionTimeFormula = (members: [LobbyMember, LobbyMember]) => number
 
 export class Arena {
   games$: Observable<Game>;
@@ -17,7 +21,10 @@ export class Arena {
   // private unmatched$: Subject<MemberUpdate>
   // private lobbyMemberSubscription: Subscription
 
-  constructor (lobbyMemberUpdate$: Observable<MemberUpdate>) {
+  constructor (
+    lobbyMemberUpdate$: Observable<MemberUpdate>,
+    resolutionFormula: GameResolutionTimeFormula = resolutionFormulas.fixedTime(0)
+  ) {
     this.games$ = lobbyMemberUpdate$.pipe(
       scan((acc, [id, member]) => {
         const { allUnmatched } = acc
@@ -36,7 +43,7 @@ export class Arena {
         console.log('finding game for ', member.details.username, member.state)
 
         acc.potentialGames = [...allUnmatched.values()].map(unmatched => (
-          this.resolvePotentialGame([unmatched, member])
+          Arena.resolvePotentialGame([unmatched, member], resolutionFormula)
         ))
         allUnmatched.set(id, member)
         return acc
@@ -84,17 +91,21 @@ export class Arena {
     return this.activeGames$.value
   }
 
-  private async resolvePotentialGame (members: LobbyMember[]) {
+  private static async resolvePotentialGame (
+    members: [LobbyMember, LobbyMember],
+    determineResolveTime: GameResolutionTimeFormula
+  ) {
     const successfulResolution = await Promise.race([
-      async (): Promise<boolean> => {
-        await sleep(100)
-        return true
-      },
       ...members.map(async (m) => {
         await m.resolveMatchedOrDisconnected()
         return false
-      })
+      }),
+      (async (): Promise<boolean> => {
+        await sleep(determineResolveTime(members))
+        return members.every(m => m.canJoinGame)
+      })()
     ])
+
     return successfulResolution && new Game([[members[0], 'w'], [members[1], 'b']])
   }
 }

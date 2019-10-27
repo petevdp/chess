@@ -2,7 +2,7 @@
 import uuidv4 from 'uuid/v4'
 import _ from 'lodash'
 
-import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage, SocketServerMessage, LobbyMemberDetailsUpdate, LobbyMemberDetails, GameMessage, DisplayedGameMessage, CompleteGameInfo } from "../types"
+import { UserDetails, PlayerDetails, GameUpdateWithId, SocketClientMessage, SocketServerMessage, LobbyMemberDetailsUpdate, LobbyMemberDetails, GameMessage, DisplayedGameMessage, GameInfo } from "../types"
 
 import { Move, ChessInstance } from "chess.js"
 import { getChessConstructor } from "../helpers"
@@ -119,7 +119,7 @@ export const allMemberServerMessages: SocketServerMessage[] = [
   }
 ]
 
-export const allGameInfo: CompleteGameInfo[] = [
+export const allGameInfo: GameInfo[] = [
   {
     id: 'game1',
     playerDetails: allPlayerDetails,
@@ -153,7 +153,7 @@ export const allGameInfo: CompleteGameInfo[] = [
   }
 ]
 
-export function duplicateGameInfo (gameInfo: CompleteGameInfo): CompleteGameInfo {
+export function duplicateGameInfo (gameInfo: GameInfo): GameInfo {
   return {
     ...gameInfo,
     id: uuidv4(),
@@ -182,8 +182,8 @@ export const endUpdateMessage: GameMessage = {
   update: endUpdates[0]
 }
 
-export function makeFakeGames (count: number): CompleteGameInfo[] {
-  return _.times(count).map((): CompleteGameInfo => ({
+export function makeFakeGames (count: number): GameInfo[] {
+  return _.times(count).map((): GameInfo => ({
     ...allGameInfo[0],
     id: uuidv4()
   }))

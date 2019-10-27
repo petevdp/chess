@@ -1,10 +1,10 @@
-import { CompleteGameInfo } from "../common/types"
+import { GameInfo } from "../common/types"
 import { GameStateWithDetails } from "../common/gameProviders"
 import { getChessConstructor } from "../common/helpers"
 
 const Chess = getChessConstructor()
 
-export function getGameStateWithDetailsFromGameInfo (info: CompleteGameInfo): GameStateWithDetails {
+export function getGameStateWithDetailsFromGameInfo (info: GameInfo): GameStateWithDetails {
   const chess = new Chess()
   chess.load_pgn(info.pgn)
   return {

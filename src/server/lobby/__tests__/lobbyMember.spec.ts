@@ -63,7 +63,7 @@ describe('broadcasting', () => {
 describe('state', () => {
   it('is set to the correct values on instantiation', () => {
     const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
-    expect(member.state).toEqual({ currentGame: null, leftLobby: false })
+    expect(member.state).toEqual({ currentGame: null, leftLobby: false, gameHistory: [] })
   })
 
   it('set leftLobby to true when clientMessage$ completes', () => {
@@ -93,22 +93,30 @@ describe('state', () => {
 })
 
 describe('joinGame', () => {
-  it('sets currentGame back to null once the endPromise is resolved', async () => {
-    const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
-    const gameId = 'id'
-    // const end$: ConnectableObservable<EndState> = rxOf<EndState>()
-    const end$ = new Subject<EndState>()
+  const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
+  const gameId = 'id'
+  // const end$: ConnectableObservable<EndState> = rxOf<EndState>()
+  const end$ = new Subject<EndState>()
+  const checkmate: EndState = {
+    reason: 'checkmate',
+    winnerId: 'id'
+  }
 
-    const out = member.joinGame(gameId, end$.toPromise())
+  const out = member.joinGame(gameId, end$.toPromise())
+  it('sets currentGame back to null once the endPromise is resolved', async () => {
     expect(member.state.currentGame).toEqual(gameId)
 
-    end$.next({
-      reason: 'checkmate',
-      winnerId: 'id'
-    })
+    end$.next(checkmate)
     end$.complete()
     await out
     expect(member.state.currentGame).toBeNull()
+  })
+
+  it('adds a game to the games history once the endPromise is resolved', async () => {
+    end$.next(checkmate)
+    await out
+    expect(member.state.gameHistory).toContain(gameId)
+    end$.complete()
   })
 })
 

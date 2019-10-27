@@ -2,9 +2,9 @@ import { Observable, merge, Subject, from } from 'rxjs'
 import { concatMap, takeWhile, first, tap, share } from 'rxjs/operators'
 import {
   Colour,
-  GameDescription,
+  GameIdentifiers,
   GameUpdate,
-  CompleteGameInfo,
+  GameInfo,
   PlayerDetails,
   EndState
 } from '../../common/types'
@@ -18,7 +18,7 @@ import { routeBy } from '../../common/helpers'
 class Game {
   private players: Player[]
   id: string
-  details: GameDescription
+  details: GameIdentifiers
 
   // TODO make type for gamestate
   gameUpdate$: Observable<GameUpdate>
@@ -115,7 +115,7 @@ class Game {
     })
   }
 
-  get completeGameInfo (): CompleteGameInfo {
+  get completeGameInfo (): GameInfo {
     return {
       ...this.details,
       pgn: this.chess.pgn()
@@ -130,7 +130,7 @@ class Game {
     members.forEach((m) => m.joinGame(id, endPromise))
   }
 
-  private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameDescription {
+  private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameIdentifiers {
     const playerDetails: PlayerDetails[] = gameMembers.map(([member, colour]) => ({
       user: member.userDetails,
       colour
@@ -144,7 +144,7 @@ class Game {
 
   private createPlayers (
     gameMembers: [LobbyMember, Colour][],
-    completeGameInfo: CompleteGameInfo,
+    completeGameInfo: GameInfo,
     gameUpdate$: Observable<GameUpdate>
   ) {
     return gameMembers.map(

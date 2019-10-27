@@ -1,7 +1,7 @@
 import {
   SocketClientMessage,
   SocketServerMessage,
-  CompleteGameInfo,
+  GameInfo,
   PlayerDetails,
   UserDetails,
   ClientPlayerAction
@@ -35,13 +35,13 @@ const player2: PlayerDetails = {
   colour: 'b'
 }
 
-const game1: CompleteGameInfo = {
+const game1: GameInfo = {
   id: 'game1',
   playerDetails: [player1, player2],
   pgn: new Chess().pgn()
 }
 
-const game2: CompleteGameInfo = {
+const game2: GameInfo = {
   id: 'game2',
   playerDetails: [player1, player2],
   pgn: new Chess().pgn()

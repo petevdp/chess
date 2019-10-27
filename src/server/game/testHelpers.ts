@@ -1,5 +1,5 @@
 import { Observable, Subject } from "rxjs"
-import { SocketClientMessage, GameUpdate, CompleteGameInfo, PlayerDetails } from "../../common/types"
+import { SocketClientMessage, GameUpdate, GameInfo, PlayerDetails } from "../../common/types"
 import { MockClientConnection } from "../server/__mocks__/clientConnection"
 import { Player } from "./player"
 import { ClientConnection } from "../server/clientConnection"
@@ -9,7 +9,7 @@ import { newClientMessage } from "../../common/dummyData/dummyData"
 export function getPlayerConnectionPair (
   clientMessage$: Observable<SocketClientMessage>,
   gameUpdate$: Observable<GameUpdate>,
-  completeGameInfo: CompleteGameInfo,
+  completeGameInfo: GameInfo,
   details: PlayerDetails
 ): [MockClientConnection, Player] {
   const clientConnection = new MockClientConnection(clientMessage$, details.user)

@@ -5,7 +5,7 @@ import {
   ClientPlayerAction,
   Colour,
   GameUpdate,
-  CompleteGameInfo
+  GameInfo
 } from '../../common/types'
 import { ClientConnection } from '../server/clientConnection'
 // has one game associated with it.
@@ -18,7 +18,7 @@ export class Player {
 
   constructor (
     private connection: ClientConnection,
-    completeGameInfo: CompleteGameInfo,
+    completeGameInfo: GameInfo,
     gameUpdate$: Observable<GameUpdate>,
     public colour: Colour
   ) {

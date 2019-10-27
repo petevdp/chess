@@ -65,11 +65,12 @@ export function getGameUpdatesFromPlayerAction (
     }
 
     console.log('details: ', playerDetails)
+    const player = playerDetails.find(p => p.user.id === playerId)
     throw new Error(`
       invalid player action:
-      ${playerId}
-      ${chess.ascii()}, \n${playerAction.move && playerAction.move.san}
-      ${chess.turn()}
+      ${player && player.user.username} (${player && player.colour})
+      ${playerAction.move && playerAction.move.san}
+      ${chess.ascii()}
     `)
   }
 

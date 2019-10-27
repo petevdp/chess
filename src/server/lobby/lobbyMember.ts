@@ -1,9 +1,10 @@
 import { BehaviorSubject, Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
+import { map, filter, first } from 'rxjs/operators'
 import { ClientConnection } from '../server/clientConnection'
 import { LobbyMemberDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage, EndState } from '../../common/types'
 export interface MemberState {
   currentGame: string | null;
+  gameHistory: string[];
   leftLobby: boolean;
 }
 
@@ -17,7 +18,12 @@ export class LobbyMember {
   ) {
     const { clientMessage$ } = connection
 
-    this.stateSubject = new BehaviorSubject({ currentGame: null, leftLobby: false } as MemberState)
+    // TODO persist gameHistory
+    this.stateSubject = new BehaviorSubject({
+      currentGame: null,
+      leftLobby: false,
+      gameHistory: []
+    } as MemberState)
 
     this.update$ = this.stateSubject.pipe(map(state => {
       if (state.leftLobby) {
@@ -38,25 +44,35 @@ export class LobbyMember {
    *  Keeps track of this LobbyMember's state and resolves
    *  when it becomse unavaliable to match
    */
-  resolveMatchedOrDisconnected () {
-    return new Promise<boolean>(resolve => {
-      if (this.state.currentGame) {
-        return resolve(true)
-      }
-      this.stateSubject.subscribe({
-        next: ({ currentGame, leftLobby }) => {
-          if (currentGame || leftLobby) {
-            resolve(true)
-          }
-        }
-      })
-    })
+  async resolveMatchedOrDisconnected () {
+    return this.stateSubject.pipe(
+      filter(({ currentGame, leftLobby }) => !!(currentGame || leftLobby)),
+      first()
+    ).toPromise()
+    // return new Promise<boolean>(resolve => {
+    //   this.stateSubject.subscribe({
+    //     next: ({ currentGame, leftLobby }) => {
+    //       if (currentGame || leftLobby) {
+    //         resolve(true)
+    //       }
+    //     }
+    //   })
+    // })
   }
 
   async joinGame (gameId: string, endPromise: Promise<EndState>) {
     this.stateSubject.next({ ...this.state, currentGame: gameId })
     await endPromise
-    this.stateSubject.next({ ...this.state, currentGame: null })
+    this.stateSubject.next({
+      ...this.state,
+      currentGame: null,
+      gameHistory: [...this.state.gameHistory, gameId]
+    })
+  }
+
+  get canJoinGame () {
+    const { currentGame, leftLobby } = this.state
+    return (!currentGame && !leftLobby)
   }
 
   get state () {

@@ -6,7 +6,7 @@ import {
   SocketClientMessage,
   UserDetails,
   GameMessage,
-  CompleteGameInfo,
+  GameInfo,
   GameUpdateWithId,
   BotDetails
 } from '../common/types'
@@ -71,7 +71,7 @@ export class BotClient {
     const gameMessage$ = serverMessage$.pipe(routeBy<GameMessage>('game'), share())
 
     return gameMessage$.pipe(
-      routeBy<CompleteGameInfo>('join'),
+      routeBy<GameInfo>('join'),
       map(info => {
         const gameUpdate$ = gameMessage$.pipe(
           routeBy<GameUpdateWithId>('update'),

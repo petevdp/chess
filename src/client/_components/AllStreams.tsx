@@ -1,11 +1,10 @@
 import React from 'react'
-import queryString from 'querystring'
 import { LobbyService } from "../_services/lobby.service"
 import { SmallGameDisplay } from './StreamedGame'
 import _ from 'lodash'
-import { Route, Link, useLocation, useParams, match } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { DISPLAYED_GAMES_PER_PAGE } from '../../common/config'
-import { RouteChildrenProps, RouteProps, Redirect } from 'react-router'
+import { Redirect } from 'react-router'
 
 export interface GamesRouteParams {
   pageNum?: string;
@@ -18,7 +17,6 @@ interface AllStreamsProps {
 
 function AllSmallGames ({ lobbyService, pageNum }: AllStreamsProps) {
   const gameStateArr = lobbyService.useStreamedGameStates()
-  console.log('gamestatArr: ', gameStateArr)
 
   if (!_.inRange(pageNum - 1, 0, gameStateArr.length)) {
     console.log(`${pageNum} is out of range`)
