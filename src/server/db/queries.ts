@@ -31,11 +31,11 @@ export class DBQueries {
     let row: QueryResultRowType<string> | null
     if (id) {
       row = await connection.maybeOne(sql`
-        SELECT * FROM users WHERE id = ${id}
+        SELECT * FROM main.users WHERE id = ${id}
       `)
     } else if (username) {
       row = await connection.maybeOne(sql`
-        SELECT * FROM users WHERE username = ${username}
+        SELECT * FROM main.users WHERE username = ${username}
       `)
     } else {
       throw new Error('needs at least one for query')
@@ -53,7 +53,7 @@ export class DBQueries {
     id = null
   ): Promise<void> {
     connection.query(sql`
-          INSERT INTO users(id, username, type)
+          INSERT INTO main.users(id, username, type)
           VALUES(${id || uuidv4()}, ${username}, ${type})
         `)
   }

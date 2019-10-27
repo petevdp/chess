@@ -4,11 +4,15 @@ const pool = createPool('postgres://chess_development:chess_development@localhos
 
 pool.connect(async connection => {
   await connection.query(sql`
-    DROP TABLE IF EXISTS users
+    DROP SCHEMA IF EXISTS main CASCADE
   `)
   await connection.query(sql`
-    CREATE TABLE users (
-      id varchar(36) CONSTRAINT firstkey PRIMARY KEY,
+    CREATE SCHEMA main
+  `)
+
+  await connection.query(sql`
+    CREATE TABLE main.users (
+      id varchar(36) PRIMARY KEY,
       username varchar(40) UNIQUE,
       type varchar(36)
     )
