@@ -112,11 +112,7 @@ describe('GameClient', () => {
         mockMoveMaker
       )
 
-      client.action$.subscribe({
-        complete: () => { }
-      })
-
-      client.complete()
+      client.action$.subscribe(() => { })
     })
 
     it('does not output action when opponent has yet to move', done => {
@@ -155,7 +151,7 @@ describe('GameClient', () => {
       })
     })
 
-    it('output actions when there are no legal moves', done => {
+    it('does not output actions when there are no legal moves', done => {
       const mockMovemaker = jest.fn(Engines.firstMoveEngine)
       const game = allGameInfo[1]
 

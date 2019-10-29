@@ -1,7 +1,7 @@
-import { Observable, BehaviorSubject, Subject } from 'rxjs'
+import { Observable, BehaviorSubject, Subject, ReplaySubject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
 import { EndState, ClientAction, GameInfo, UserDetails, Colour, GameUpdate, GameIdentifiers, GameUpdateType } from './types'
-import { map, filter, concatMap, shareReplay } from 'rxjs/operators'
+import { map, filter, concatMap, startWith } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
 
 const Chess = getChessConstructor()
@@ -120,13 +120,12 @@ export class GameClient {
     this.userId = user.id
     this.gameInfo = gameStream.gameInfo
     this.colour = GameClient.getColour(user, gameStream.gameInfo)
-    this._action$ = new Subject()
+    this._action$ = new ReplaySubject(1)
+    this.action$ = this._action$.asObservable()
     GameClient.createClientAction$(gameStream, makeMove, this.colour).subscribe({
       next: action => this._action$.next(action),
       complete: () => this._action$.complete()
     })
-
-    this.action$ = this._action$.asObservable()
   }
 
   private static getColour (user: UserDetails, gameInfo: GameInfo) {
@@ -143,6 +142,7 @@ export class GameClient {
     clientColour: Colour
   ) {
     const clientMove$: Observable<ClientAction> = gameStream.state$.pipe(
+      startWith(gameStream.state),
       filter(({ chess, lastUpdateType, end }) => {
         return !!(
           ['move', undefined].includes(lastUpdateType)
@@ -158,9 +158,7 @@ export class GameClient {
           type: 'move',
           move
         }
-      }),
-      // accounting for latency in listening for client actions
-      shareReplay(10)
+      })
     )
 
     // TODO add draw responses
