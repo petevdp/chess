@@ -8,7 +8,7 @@ import ExpressSessionFactory from 'express-session'
 import RedisStoreFactory from 'connect-redis'
 import ExpressWs from 'express-ws'
 
-import { DBQueries } from '../db/queries'
+import DBQueries from '../db/queries'
 import { SocketServer } from './socketServer'
 import { ClientConnection } from './clientConnection'
 import { Lobby } from '../lobby'
@@ -46,15 +46,15 @@ const http = HttpServer.createServer(app)
 app.use(session)
 
 // setup lobby and start server
-const queries = new DBQueries()
-const lobby = new Lobby()
+const dbQueries = new DBQueries()
+const lobby = new Lobby(dbQueries)
 
 app.use(express.static(BUILD_DIR))
-app.use('/api', api(queries))
+app.use('/api', api(dbQueries))
 
 const socketServer = new SocketServer(http, session)
 socketServer.rawConnection$.subscribe(async ({ socket, session }) => {
-  const [err, user] = await to(queries.getUser({ id: session.userId }))
+  const [err, user] = await to(dbQueries.getUser({ id: session.userId }))
   if (err) {
     console.log(err.toString())
     return

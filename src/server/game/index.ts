@@ -5,8 +5,9 @@ import {
   GameIdentifiers,
   GameUpdate,
   GameInfo,
-  PlayerDetails,
-  EndState
+  EndState,
+  CompletedGameInfo,
+  PlayerDetails
 } from '../../common/types'
 import { Chess, ChessInstance } from 'chess.js'
 import uuidv4 from 'uuid/v4'
@@ -14,6 +15,7 @@ import { Player } from './player'
 import { LobbyMember } from '../lobby/lobbyMember'
 import { getGameUpdatesFromPlayerAction } from './rules'
 import { routeBy } from '../../common/helpers'
+import { DBQueriesInterface } from '../db/queries'
 
 class Game {
   private players: Player[]
@@ -28,9 +30,16 @@ class Game {
   private gameController$ = new Subject<GameUpdate>()
   private chess: ChessInstance
 
-  constructor (gameMembers: [LobbyMember, Colour][]) {
+  constructor (
+    gameMembers: [LobbyMember, Colour][],
+    dbQueries: DBQueriesInterface,
+    startFEN: string|null = null
+  ) {
     this.id = uuidv4()
     this.chess = new Chess()
+    if (startFEN) {
+      this.chess.load(startFEN)
+    }
 
     this.details = this.createGameDetails(gameMembers)
 
@@ -44,7 +53,7 @@ class Game {
 
     this.players = this.createPlayers(
       gameMembers,
-      this.completeGameInfo,
+      this.info,
       gameUpdateSubject
     )
 
@@ -92,6 +101,11 @@ class Game {
       this.endPromise
     )
 
+    this.endPromise.then(() => {
+      // persist finished game to database
+      dbQueries.addCompletedGame(this.info as CompletedGameInfo)
+    })
+
     console.log('new game between ', this.playersDisplay)
     console.log('game id: ', this.id)
   }
@@ -115,7 +129,7 @@ class Game {
     })
   }
 
-  get completeGameInfo (): GameInfo {
+  get info (): GameInfo {
     return {
       ...this.details,
       pgn: this.chess.pgn()
@@ -131,13 +145,13 @@ class Game {
   }
 
   private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameIdentifiers {
-    const playerDetails: PlayerDetails[] = gameMembers.map(([member, colour]) => ({
+    const allPlayerDetails: PlayerDetails[] = gameMembers.map(([member, colour]) => ({
       user: member.userDetails,
       colour
     }))
 
     return {
-      playerDetails,
+      playerDetails: allPlayerDetails as [PlayerDetails, PlayerDetails],
       id: this.id
     }
   }

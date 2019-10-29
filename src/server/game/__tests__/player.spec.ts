@@ -1,4 +1,4 @@
-import { GameInfo, SocketServerMessage, SocketClientMessage, GameUpdate, ClientPlayerAction } from '../../../common/types'
+import { GameInfo, SocketServerMessage, SocketClientMessage, GameUpdate, ClientPlayerAction, PlayerDetails } from '../../../common/types'
 import { Chess } from 'chess.js'
 import { EMPTY, Subject, of } from 'rxjs'
 import { PlayerAction } from '../player'
@@ -7,7 +7,7 @@ import { getPlayerConnectionPair } from '../testHelpers'
 
 const game1: GameInfo = {
   id: 'game1',
-  playerDetails: allPlayerDetails.slice(0, 2),
+  playerDetails: allPlayerDetails.slice(0, 2) as [PlayerDetails, PlayerDetails],
   pgn: new Chess().pgn()
 }
 

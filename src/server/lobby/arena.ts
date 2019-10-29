@@ -1,12 +1,12 @@
-import _ from 'lodash'
 import { Observable, merge, of, from, BehaviorSubject } from 'rxjs'
 import { scan, map, filter, mergeMap, mapTo, share } from 'rxjs/operators'
 import { LobbyMember } from './lobbyMember'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
-import { EndState } from '../../common/types'
+import { EndState, Colour } from '../../common/types'
 import * as resolutionFormulas from './gameResolution'
+import { DBQueriesInterface } from '../db/queries'
 
 interface UnmatchedState {
   potentialGames: Array<Promise<Game | false>>;
@@ -23,6 +23,7 @@ export class Arena {
 
   constructor (
     lobbyMemberUpdate$: Observable<MemberUpdate>,
+    private dbQueries: DBQueriesInterface,
     resolutionFormula: GameResolutionTimeFormula = resolutionFormulas.fixedTime(0)
   ) {
     this.games$ = lobbyMemberUpdate$.pipe(
@@ -43,7 +44,11 @@ export class Arena {
         console.log('finding game for ', member.details.username, member.state)
 
         acc.potentialGames = [...allUnmatched.values()].map(unmatched => (
-          Arena.resolvePotentialGame([unmatched, member], resolutionFormula)
+          Arena.resolvePotentialGame(
+            [unmatched, member],
+            resolutionFormula,
+            this.dbQueries
+          )
         ))
         allUnmatched.set(id, member)
         return acc
@@ -93,7 +98,8 @@ export class Arena {
 
   private static async resolvePotentialGame (
     members: [LobbyMember, LobbyMember],
-    determineResolveTime: GameResolutionTimeFormula
+    determineResolveTime: GameResolutionTimeFormula,
+    dbQueries: DBQueriesInterface
   ) {
     const successfulResolution = await Promise.race([
       ...members.map(async (m) => {
@@ -105,7 +111,11 @@ export class Arena {
         return members.every(m => m.canJoinGame)
       })()
     ])
+    const gameMembers: [LobbyMember, Colour][] = [[members[0], 'w'], [members[1], 'b']]
 
-    return successfulResolution && new Game([[members[0], 'w'], [members[1], 'b']])
+    return (
+      successfulResolution
+      && new Game(gameMembers, dbQueries)
+    )
   }
 }

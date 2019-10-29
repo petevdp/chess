@@ -6,7 +6,20 @@ import { ClientConnection } from '../../server/clientConnection'
 import { SocketClientMessage, SocketServerMessage } from '../../../common/types'
 import { last, skip, toArray } from 'rxjs/operators'
 import Game from '../../game'
+import DBQueries, { DBQueriesInterface } from '../../db/queries'
 // import { last } from 'rxjs/operators'
+
+let dbQueries: DBQueriesInterface
+let lobby: Lobby
+
+beforeEach(() => {
+  dbQueries = new DBQueries()
+  lobby = new Lobby(dbQueries)
+})
+
+afterEach(() => {
+  lobby.complete()
+})
 
 describe('memberDetailsMap$', () => {
   it('updates memberDetailsMap$ with new entry when one is added', () => {
@@ -14,7 +27,7 @@ describe('memberDetailsMap$', () => {
     const user = userDetails[0]
     const mockConnection = new MockClientConnection(subject, user)
 
-    const lobby = new Lobby()
+    // const lobby = new Lobby(new DBQueries())
 
     lobby.addLobbyMember(mockConnection as unknown as ClientConnection)
     expect(lobby.memberDetailsMap.has(user.id)).toBeTruthy()
@@ -33,7 +46,7 @@ describe('member details connection updates', () => {
     const user2 = userDetails[1]
     const mockConnection2 = new MockClientConnection(s2, user2)
 
-    const lobby = new Lobby()
+    // const lobby = new Lobby()
 
     lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
     lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
@@ -66,7 +79,7 @@ describe('member details connection updates', () => {
     const user3 = userDetails[2]
     const mockConnection3 = new MockClientConnection(s3, user3)
 
-    const lobby = new Lobby()
+    // const lobby = new Lobby()
 
     lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
     lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
@@ -101,9 +114,9 @@ describe('displayedGameMessage$', () => {
 
   let lobby: Lobby
 
-  beforeEach(() => {
-    lobby = new Lobby()
-  })
+  // beforeEach(() => {
+  //   lobby = new Lobby()
+  // })
 
   afterEach(() => {
     mockConnection2.clean()

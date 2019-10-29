@@ -1,9 +1,8 @@
 import { Observable, BehaviorSubject, Subject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
 import { EndState, ClientAction, GameInfo, UserDetails, Colour, GameUpdate, GameIdentifiers, GameUpdateType } from './types'
-import { map, filter, concatMap, shareReplay, startWith, tap, share } from 'rxjs/operators'
+import { map, filter, concatMap, shareReplay } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
-import _ from 'lodash'
 
 const Chess = getChessConstructor()
 

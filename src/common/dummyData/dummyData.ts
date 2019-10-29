@@ -122,12 +122,12 @@ export const allMemberServerMessages: SocketServerMessage[] = [
 export const allGameInfo: GameInfo[] = [
   {
     id: 'game1',
-    playerDetails: allPlayerDetails,
+    playerDetails: allPlayerDetails.slice(0, 2) as [PlayerDetails, PlayerDetails],
     pgn: new Chess().pgn()
   },
   {
     id: 'casualGame',
-    playerDetails: allPlayerDetails.slice(0, 2),
+    playerDetails: allPlayerDetails.slice(0, 2) as [PlayerDetails, PlayerDetails],
     pgn: ['[Event "Casual Game"]',
       '[Site "Berlin GER"]',
       '[Date "1852.??.??"]',
@@ -182,9 +182,9 @@ export const endUpdateMessage: GameMessage = {
   update: endUpdates[0]
 }
 
-export function makeFakeGames (count: number): GameInfo[] {
+export function makeFakeGames (count: number, completed = false): GameInfo[] {
   return _.times(count).map((): GameInfo => ({
-    ...allGameInfo[0],
+    ...allGameInfo[completed ? 1 : 0],
     id: uuidv4()
   }))
 }

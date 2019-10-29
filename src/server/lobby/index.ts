@@ -18,6 +18,7 @@ import {
 } from '../../common/types'
 import { ClientConnection } from '../server/clientConnection'
 import { Arena } from './arena'
+import { DBQueriesInterface } from '../db/queries'
 
 export type MemberUpdate = [string, LobbyMember | null]
 
@@ -29,7 +30,7 @@ export class Lobby {
   private arena: Arena
   private memberUpdate$: Subject<MemberUpdate>
 
-  constructor () {
+  constructor (dbQueries: DBQueriesInterface) {
     this.memberUpdate$ = new Subject()
     this.memberDetailsMap$ = new BehaviorSubject(new Map())
 
@@ -64,7 +65,8 @@ export class Lobby {
     this.arena = new Arena(
       this.memberUpdate$.pipe(
         filter(([, member]) => !member || member.userDetails.type === 'bot')
-      )
+      ),
+      dbQueries
     )
 
     // TODO constrict which games are displayed
@@ -83,7 +85,7 @@ export class Lobby {
         return updateMessage$.pipe(
           startWith({
             type: 'add',
-            add: [game.completeGameInfo]
+            add: [game.info]
           } as DisplayedGameMessage)
         )
       }),
@@ -118,7 +120,7 @@ export class Lobby {
   }
 
   get displayedGameInfoArr (): GameInfo[] {
-    return this.arena.activeGames.map((g) => g.completeGameInfo)
+    return this.arena.activeGames.map((g) => g.info)
   }
 
   get memberDetailsMap () {

@@ -6,6 +6,7 @@ import { MemberUpdate } from ".."
 import { first, skip, toArray } from "rxjs/operators"
 import { MockClientConnection } from "../../server/__mocks__/clientConnection"
 import { LobbyMember } from "../lobbyMember"
+import DBQueries from '../../db/queries'
 
 describe('games creation and emmision', () => {
   let conn1: MockClientConnection
@@ -23,7 +24,7 @@ describe('games creation and emmision', () => {
 
     memberUpdate$ = new Subject<MemberUpdate>()
 
-    arena = new Arena(memberUpdate$)
+    arena = new Arena(memberUpdate$, new DBQueries())
   })
 
   afterEach(() => {
@@ -87,7 +88,7 @@ describe('games creation and emmision', () => {
 
 describe('complete', () => {
   it('completes activeGames$', () => {
-    const arena = new Arena(NEVER)
+    const arena = new Arena(NEVER, new DBQueries())
     const activeGamesSub = arena.activeGames$.subscribe()
     arena.complete()
     expect(activeGamesSub.closed).toBeTruthy()

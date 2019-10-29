@@ -1,17 +1,19 @@
 import uuidv4 from 'uuid/v4'
 import { createPool, sql, DatabasePoolConnectionType, QueryResultType, QueryResultRowType, DatabasePoolType } from 'slonik'
-import { UserDetails, UserDetailsPartial, UserType } from '../../common/types'
+import { UserDetails, UserDetailsPartial, UserType, CompletedGameInfo } from '../../common/types'
 
 const CONN_STRING = 'postgres://chess_development:chess_development@localhost:5432/chess_development'
 
 export type QueryOutput = Promise<QueryResultType<QueryResultRowType<string>>>;
-export interface QueriesInterface {
-  getUser: (id: string) => QueryOutput;
-  addUser: (userDetails: UserDetails) => QueryOutput;
-  deleteUser: (str: string) => QueryOutput;
+export interface DBQueriesInterface {
+  getUser: (details: UserDetailsPartial) => Promise<false | UserDetails>;
+  putUser: (username: string, type: UserType) => Promise<UserDetails>;
+  // deleteUser: (id: string) => Promise<QueryOutput>;
+  addCompletedGame: (info: CompletedGameInfo) => Promise<boolean>;
+  // getGame: (id: string) => Promise<CompletedGameInfo>;
+  getGame: (id: string) => Promise<void>;
 }
-
-export class DBQueries {
+export default class DBQueries implements DBQueriesInterface {
   private pool: DatabasePoolType;
   constructor () {
     this.pool = createPool(CONN_STRING)
@@ -64,7 +66,7 @@ export class DBQueries {
    * @param type
    * @returns UserDetails
    */
-  getOrAddUser (username: string, type: UserType): Promise<UserDetails> {
+  putUser (username: string, type: UserType): Promise<UserDetails> {
     return this.pool.connect(async (connection) => {
       let user = await this._getUser({ username }, connection)
       if (!user) {
@@ -73,5 +75,26 @@ export class DBQueries {
       }
       return user
     })
+  }
+
+  complete () {
+  }
+
+  async addCompletedGame ({ id, playerDetails, pgn, end }: CompletedGameInfo) {
+    const [white, black] = playerDetails.sort((a) => a.colour === 'w' ? -1 : 1)
+    const { reason, winnerId } = end
+    await this.pool.query(sql`
+      INSERT INTO main.games(id, white_id, black_id, pgn, winner_id, end_reason)
+      VALUES (${sql.valueList([id, white.user.id, black.user.id, pgn, winnerId, reason])})
+    `)
+    return true
+  }
+
+  async getGame (id: string) {
+    const out = await this.pool.maybeOne(sql`
+      SELECT * FROM main.games WHERE id = ${id}
+    `)
+    console.log('out: ')
+    console.log(out)
   }
 }

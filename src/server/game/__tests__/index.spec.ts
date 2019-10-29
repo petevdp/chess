@@ -1,16 +1,20 @@
+import { EMPTY, Subject, NEVER } from "rxjs"
+
 import { SocketClientMessage } from "../../../common/types"
 import { getLobbyMemberConnectionPair } from "../../lobby/testHelpers"
-import { EMPTY, Subject, NEVER } from "rxjs"
 import Game from ".."
+import DBQueries from '../../db/queries'
 import { userDetails, allGameInfo } from "../../../common/dummyData/dummyData"
 import { last } from "rxjs/operators"
 import { simulatePlayerActions } from "../testHelpers"
+
+jest.mock('../../db/queries')
 
 it('sends joinGame messages to connections on instantiation', () => {
   const [conn1, member1] = getLobbyMemberConnectionPair(EMPTY, userDetails[0])
   const [conn2, member2] = getLobbyMemberConnectionPair(EMPTY, userDetails[1])
 
-  const game = new Game([[member1, 'w'], [member2, 'b']])
+  const game = new Game([[member1, 'w'], [member2, 'b']], new DBQueries())
 
   expect(conn1.sendMessage.mock.calls[0][0].game.type).toEqual('join')
   expect(conn2.sendMessage.mock.calls[0][0].game.type).toEqual('join')
@@ -22,7 +26,7 @@ it('sets the lobbyMembers ingame state to the gameid', () => {
   const [, member1] = getLobbyMemberConnectionPair(EMPTY, userDetails[0])
   const [, member2] = getLobbyMemberConnectionPair(EMPTY, userDetails[1])
 
-  const game = new Game([[member1, 'w'], [member2, 'b']])
+  const game = new Game([[member1, 'w'], [member2, 'b']], new DBQueries())
 
   expect(member1.state.currentGame).toEqual(game.id)
 })
@@ -35,7 +39,7 @@ describe('game end', () => {
     const [, member1] = getLobbyMemberConnectionPair(connSubject1, userDetails[0])
     const [, member2] = getLobbyMemberConnectionPair(connSubject2, userDetails[1])
 
-    const game = new Game([[member1, 'w'], [member2, 'b']])
+    const game = new Game([[member1, 'w'], [member2, 'b']], new DBQueries())
     const gameInfo = allGameInfo[1]
 
     game.gameUpdate$.pipe(last()).subscribe(update => {
@@ -50,7 +54,7 @@ describe('game end', () => {
     const [, member1] = getLobbyMemberConnectionPair(NEVER, userDetails[0])
     const [, member2] = getLobbyMemberConnectionPair(NEVER, userDetails[1])
 
-    const game = new Game([[member1, 'w'], [member2, 'b']])
+    const game = new Game([[member1, 'w'], [member2, 'b']], new DBQueries())
     game.end()
     await game.endPromise
     done()

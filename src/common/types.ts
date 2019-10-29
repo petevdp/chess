@@ -116,12 +116,16 @@ export interface PlayerDetails {
 }
 export interface GameIdentifiers {
   id: string;
-  playerDetails: PlayerDetails[];
+  playerDetails: [PlayerDetails, PlayerDetails];
 }
 
 export interface GameInfo extends GameIdentifiers {
   pgn: string;
   end?: EndState;
+}
+export interface CompletedGameInfo extends GameIdentifiers {
+  pgn: string;
+  end: EndState;
 }
 export interface UserLogin {
   username: string;
