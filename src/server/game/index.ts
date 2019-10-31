@@ -75,7 +75,6 @@ class Game {
 
         return from(updates)
       }),
-      tap((update) => console.log('game update from game!', update)),
       shareReplay(10)
     )
 
@@ -90,6 +89,7 @@ class Game {
       routeBy<EndState>('end'),
       first(),
       tap((end) => {
+        console.log('')
         console.log(` Game ended between ${this.playersDisplay} `)
         console.log(`result: `, end)
         console.log(this.chess.ascii())
@@ -104,9 +104,6 @@ class Game {
 
     this.endPromise.then((end) => {
       // persist finished game to database
-      console.log('endpromise')
-      console.log(this.info)
-      console.log(end)
       dbQueries.addCompletedGame({ ...this.info, end } as CompletedGameInfo)
     })
 

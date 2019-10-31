@@ -87,8 +87,7 @@ export class Lobby {
           startWith({
             type: 'add',
             add: [game.info]
-          } as DisplayedGameMessage),
-          tap(() => console.log('update in merge'))
+          } as DisplayedGameMessage)
         )
       }),
       share()

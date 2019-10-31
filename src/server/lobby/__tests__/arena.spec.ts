@@ -1,5 +1,5 @@
 import { getLobbyMemberConnectionPair } from "../testHelpers"
-import { Subject, NEVER } from "rxjs"
+import { Subject, NEVER, EMPTY } from "rxjs"
 import { allUserDetails } from '../../../common/dummyData/dummyData'
 import { Arena } from "../arena"
 import { MemberUpdate } from ".."
@@ -7,6 +7,8 @@ import { first, skip, toArray } from "rxjs/operators"
 import { MockClientConnection } from "../../server/__mocks__/clientConnection"
 import { LobbyMember } from "../lobbyMember"
 import DBQueries from '../../db/queries'
+
+jest.mock('../../db/queries')
 
 describe('games creation and emmision', () => {
   let conn1: MockClientConnection
@@ -35,6 +37,16 @@ describe('games creation and emmision', () => {
   })
 
   describe('games$', () => {
+    it('does not attemt to put unavailable members into games', (done) => {
+      arena.games$.subscribe({
+        next: () => { throw new Error('should not emit new game, one member is unavailable') },
+        complete: () => done()
+      })
+      member1.joinGame('id', NEVER.toPromise())
+      memberUpdate$.next([member1.id, member1])
+      memberUpdate$.next([member2.id, member2])
+      memberUpdate$.complete()
+    })
     it('emits new games when two members join the arena', (done) => {
       arena.games$.subscribe(() => {
         done()

@@ -1,5 +1,5 @@
 import express, { Response, Request } from 'express'
-import { DBQueries } from '../db/queries'
+import DBQueries from '../db/queries'
 import to from 'await-to-js'
 import bodyParser from 'body-parser'
 import { check, validationResult } from 'express-validator'

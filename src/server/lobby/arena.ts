@@ -36,8 +36,8 @@ export class Arena {
           allUnmatched.delete(id)
           return acc
         }
-        if (allUnmatched.has(id)) {
-          if (member.state.currentGame || member.state.leftLobby) {
+        if (member.state.currentGame || member.state.leftLobby) {
+          if (allUnmatched.has(id)) {
             allUnmatched.delete(id)
           }
           return acc
@@ -88,7 +88,6 @@ export class Arena {
 
     this.games$.subscribe((game) => {
       console.log('new game!!!!', game.id)
-
     })
     this.games$Subscription = games$.connect()
   }

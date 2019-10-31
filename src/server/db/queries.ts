@@ -83,10 +83,12 @@ export default class DBQueries implements DBQueriesInterface {
   async addCompletedGame ({ id, playerDetails, pgn, end }: CompletedGameInfo) {
     const [white, black] = playerDetails.sort((a) => a.colour === 'w' ? -1 : 1)
     const { reason, winnerId } = end
+
     await this.pool.query(sql`
       INSERT INTO main.games(id, white_id, black_id, pgn, winner_id, end_reason)
       VALUES (${sql.valueList([id, white.user.id, black.user.id, pgn, winnerId, reason])})
     `)
+
     return true
   }
 
@@ -94,7 +96,5 @@ export default class DBQueries implements DBQueriesInterface {
     const out = await this.pool.maybeOne(sql`
       SELECT * FROM main.games WHERE id = ${id}
     `)
-    console.log('out: ')
-    console.log(out)
   }
 }

@@ -1,7 +1,7 @@
 import { Observable, BehaviorSubject, Subject, ReplaySubject } from 'rxjs'
 import { ChessInstance, Move } from 'chess.js'
 import { EndState, ClientAction, GameInfo, UserDetails, Colour, GameUpdate, GameIdentifiers, GameUpdateType } from './types'
-import { map, filter, concatMap, startWith } from 'rxjs/operators'
+import { map, filter, concatMap, takeWhile } from 'rxjs/operators'
 import { routeBy, getChessConstructor } from './helpers'
 
 const Chess = getChessConstructor()
@@ -30,7 +30,6 @@ export class GameStream {
     public gameInfo: GameInfo
   ) {
     // debugging purposes
-    const gameStreamClientNum = Math.random()
     this.chess = new Chess()
     this.chess.load_pgn(gameInfo.pgn)
 
@@ -55,11 +54,11 @@ export class GameStream {
     ).toPromise()
 
     gameUpdate$.pipe(
+      takeWhile(u => u.type !== 'end', false),
       filter(u => u.type !== 'offerDraw'),
       map((update): GameState => {
         const { move, type } = update
         if (move) {
-          console.log(`attempting to make move: client (${gameStreamClientNum})`, move)
           const out = this.chess.move(update.move as Move)
           if (!out) {
             throw new Error(`invalid move sent to GameStream: ${move.san}`)
@@ -132,9 +131,6 @@ export class GameClient {
         this._action$.complete()
       }
     })
-
-    console.log('client name: ', this.user.username)
-    console.log('colour: ', this.colour)
   }
 
   private static getColour (user: UserDetails, gameInfo: GameInfo) {
@@ -153,8 +149,6 @@ export class GameClient {
     const clientMove$: Observable<ClientAction> = gameStream.state$.pipe(
       // startWith(gameStream.state),
       filter(({ chess, lastUpdateType, end }) => {
-        console.log('filtering move')
-
         return !!(
           ['move', undefined].includes(lastUpdateType)
           && chess.moves().length > 0
@@ -164,15 +158,7 @@ export class GameClient {
         )
       }),
       concatMap(async ({ chess }): Promise<ClientAction> => {
-        console.log('')
-        console.log(`${clientColour} making move: `)
-        console.log('turn: ', chess.turn())
-
-        console.log(chess.ascii())
-
         const move = await makeMove(chess)
-        console.log(`move made for ${clientColour}: `, move.san)
-
         return {
           type: 'move',
           move
