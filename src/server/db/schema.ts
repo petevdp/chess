@@ -25,7 +25,7 @@ pool.connect(async connection => {
       black_id varchar(36) NOT NULL REFERENCES main.users(id),
       pgn text NOT NULL,
       winner_id varchar(36) REFERENCES main.users(id),
-      end_reason varchar(20) NOT NULL
+      end_reason varchar(30) NOT NULL
     )
   `)
 })
