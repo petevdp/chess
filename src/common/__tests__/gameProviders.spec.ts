@@ -1,10 +1,11 @@
 import { GameUpdateWithId, GameInfo, UserDetails, PlayerDetails, GameUpdate } from '../types'
 import { GameStream, GameClient, MoveMaker } from '../gameProviders'
-import { of, from, EMPTY, NEVER } from 'rxjs'
+import { of, from, EMPTY, NEVER, Subject } from 'rxjs'
 import * as Engines from '../../bots/engines'
 import { Chess, Move } from 'chess.js'
 import { allGameInfo } from '../dummyData/dummyData'
 import { getMoveHistoryFromPgn, replayMoveHistory } from '../helpers'
+import { share } from 'rxjs/operators'
 
 const chess = new Chess()
 const moveUpdates: GameUpdateWithId[] = [
@@ -101,16 +102,21 @@ describe('GameStream', () => {
 describe('GameClient', () => {
   describe('calls to getMove', () => {
     it('is called when opponent moves', (done) => {
+      const whiteMove$ = new Subject<GameUpdate>()
+
       const mockMoveMaker = jest.fn(move => {
         done()
+        whiteMove$.complete()
         return Engines.firstMoveEngine(move)
       })
 
       const client = new GameClient(
-        new GameStream(of(moveUpdates[0]), newGameInfo()),
+        new GameStream(whiteMove$, newGameInfo()),
         user2,
         mockMoveMaker
       )
+
+      whiteMove$.next(moveUpdates[0])
 
       client.action$.subscribe(() => { })
     })
