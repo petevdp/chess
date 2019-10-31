@@ -71,6 +71,7 @@ export function getGameUpdatesFromPlayerAction (
       ${player && player.user.username} (${player && player.colour})
       ${playerAction.move && playerAction.move.san}
       ${chess.ascii()}
+      ${chess.history()}
     `)
   }
 

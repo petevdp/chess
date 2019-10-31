@@ -21,7 +21,7 @@ export const api = (dbQueries: DBQueries) => {
       return res.status(422).json({ errors: validationErrors.array() })
     }
     const { username, userType } = req.body
-    const user = await dbQueries.getOrAddUser(username, userType) as UserDetails
+    const user = await dbQueries.putUser(username, userType) as UserDetails
     if (!req.session) {
       throw new Error('session not configured')
     }

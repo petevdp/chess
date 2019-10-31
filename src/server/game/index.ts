@@ -1,5 +1,5 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { concatMap, takeWhile, first, tap, share } from 'rxjs/operators'
+import { concatMap, takeWhile, first, tap, share, shareReplay } from 'rxjs/operators'
 import {
   Colour,
   GameIdentifiers,
@@ -75,7 +75,8 @@ class Game {
 
         return from(updates)
       }),
-      share()
+      tap((update) => console.log('game update from game!', update)),
+      shareReplay(10)
     )
 
     merge(playerUpdates, this.gameController$)
@@ -101,9 +102,12 @@ class Game {
       this.endPromise
     )
 
-    this.endPromise.then(() => {
+    this.endPromise.then((end) => {
       // persist finished game to database
-      dbQueries.addCompletedGame(this.info as CompletedGameInfo)
+      console.log('endpromise')
+      console.log(this.info)
+      console.log(end)
+      dbQueries.addCompletedGame({ ...this.info, end } as CompletedGameInfo)
     })
 
     console.log('new game between ', this.playersDisplay)

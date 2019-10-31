@@ -1,5 +1,5 @@
-import { Observable, merge, of, from, BehaviorSubject } from 'rxjs'
-import { scan, map, filter, mergeMap, mapTo, share } from 'rxjs/operators'
+import { Observable, merge, of, from, BehaviorSubject, Subject, MonoTypeOperatorFunction, OperatorFunction, Subscription } from 'rxjs'
+import { scan, map, filter, mergeMap, mapTo, share, publish } from 'rxjs/operators'
 import { LobbyMember } from './lobbyMember'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
@@ -18,6 +18,7 @@ export type GameResolutionTimeFormula = (members: [LobbyMember, LobbyMember]) =>
 export class Arena {
   games$: Observable<Game>;
   activeGames$: BehaviorSubject<Game[]>
+  private games$Subscription: Subscription
   // private unmatched$: Subject<MemberUpdate>
   // private lobbyMemberSubscription: Subscription
 
@@ -26,7 +27,7 @@ export class Arena {
     private dbQueries: DBQueriesInterface,
     resolutionFormula: GameResolutionTimeFormula = resolutionFormulas.fixedTime(0)
   ) {
-    this.games$ = lobbyMemberUpdate$.pipe(
+    const games$ = publish<Game>()(lobbyMemberUpdate$.pipe(
       scan((acc, [id, member]) => {
         const { allUnmatched } = acc
         acc.potentialGames = []
@@ -54,10 +55,10 @@ export class Arena {
         return acc
       }, { potentialGames: [], allUnmatched: new Map() } as UnmatchedState),
       mergeMap(({ potentialGames }) => merge(...potentialGames)),
-      filter(game => !!game),
-      map<false | Game, Game>(game => game as Game),
-      share()
-    )
+      filter(game => !!game) as OperatorFunction<Game|false, Game>
+    ))
+
+    this.games$ = games$.pipe()
 
     const gameAdditionsAndCompletions: Observable<[string, (Game|null)]> = this.games$.pipe(
       mergeMap((game) => {
@@ -84,11 +85,18 @@ export class Arena {
       }, new Map()),
       map(gameMap => [...gameMap.values()])
     ).subscribe(this.activeGames$)
+
+    this.games$.subscribe((game) => {
+      console.log('new game!!!!', game.id)
+
+    })
+    this.games$Subscription = games$.connect()
   }
 
   complete () {
     // this.lobbyMemberSubscription.unsubscribe()
     // this.unmatched$.complete()
+    this.games$Subscription.unsubscribe()
     this.activeGames$.complete()
   }
 

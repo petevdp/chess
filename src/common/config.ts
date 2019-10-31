@@ -20,6 +20,6 @@ export const SOCKET_URL_CLIENT = `ws://${HOST}:${SERVER_PORT}`
 
 export const DISPLAYED_GAMES_PER_PAGE = 8
 
-export const STARTING_BOTS: BotDetails[] = _.times(50).map(() => (
+export const STARTING_BOTS: BotDetails[] = _.times(2).map(() => (
   genFakeBot([1200, 1500])
 ))

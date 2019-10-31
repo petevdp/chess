@@ -1,6 +1,6 @@
 import { getLobbyMemberConnectionPair } from "../testHelpers"
 import { Subject, NEVER } from "rxjs"
-import { userDetails } from '../../../common/dummyData/dummyData'
+import { allUserDetails } from '../../../common/dummyData/dummyData'
 import { Arena } from "../arena"
 import { MemberUpdate } from ".."
 import { first, skip, toArray } from "rxjs/operators"
@@ -19,8 +19,8 @@ describe('games creation and emmision', () => {
   let arena: Arena
 
   beforeEach(() => {
-    [conn1, member1] = getLobbyMemberConnectionPair(NEVER, userDetails[0]);
-    [conn2, member2] = getLobbyMemberConnectionPair(NEVER, userDetails[1])
+    [conn1, member1] = getLobbyMemberConnectionPair(NEVER, allUserDetails[0]);
+    [conn2, member2] = getLobbyMemberConnectionPair(NEVER, allUserDetails[1])
 
     memberUpdate$ = new Subject<MemberUpdate>()
 

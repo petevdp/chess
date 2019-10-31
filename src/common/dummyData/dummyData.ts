@@ -9,7 +9,7 @@ import { getChessConstructor } from "../helpers"
 
 const Chess = getChessConstructor()
 
-export const userDetails: UserDetails[] = [
+export const allUserDetails: UserDetails[] = [
   {
     id: 'u1',
     username: 'user1',
@@ -29,17 +29,17 @@ export const userDetails: UserDetails[] = [
 
 export const allMemberDetails: LobbyMemberDetails[] = [
   {
-    ...userDetails[0],
+    ...allUserDetails[0],
     currentGame: null,
     leftLobby: false
   },
   {
-    ...userDetails[1],
+    ...allUserDetails[1],
     currentGame: null,
     leftLobby: false
   },
   {
-    ...userDetails[2],
+    ...allUserDetails[2],
     currentGame: null,
     leftLobby: false
   }
@@ -47,11 +47,11 @@ export const allMemberDetails: LobbyMemberDetails[] = [
 
 export const allPlayerDetails: PlayerDetails[] = [
   {
-    user: userDetails[0],
+    user: allUserDetails[0],
     colour: 'w'
   },
   {
-    user: userDetails[1],
+    user: allUserDetails[1],
     colour: 'b'
   }
 ]
@@ -81,7 +81,7 @@ export const endUpdates: GameUpdateWithId[] = [
     type: 'end',
     end: {
       reason: 'checkmate',
-      winnerId: userDetails[0].id
+      winnerId: allUserDetails[0].id
     }
   }
 ]

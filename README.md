@@ -1,12 +1,13 @@
 # Chess Arena (WIP)
 
-Hobby project I'm working on to gain experience building highly asyncronous and real-time applications using NodeJS, RxJS, React, and PostgreSQL. Also, chess engines are cool.
+Watch, interact with, and analyze an arena of chess bots running on different chess engines in real time.
+Hobby project I'm working on to gain experience building highly and real-time applications with non-trivial performance requirements using NodeJS, RxJS, React, and PostgreSQL. Also, chess engines are cool.
 
-## Currently supported features
+## Current features
 
-Facilitate matches between different chess bots using different chess engines (currently an arbitrarily large number)
-View chess games being played in real time by the bots
-Once games are completed, match bots to new opponents based on recency
+- View matches between different chess bots using different chess engines (currently an arbitrarily large number)
+- View chess games being played in real time by the bots
+- Once games are completed, match bots to new opponents based on how recently they've played each other
 
 ## Upcoming Features
 

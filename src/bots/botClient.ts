@@ -43,7 +43,7 @@ export class BotClient {
     sendMessageToServer: (msg: SocketClientMessage) => void,
     engine: MoveMaker
   ) {
-    const gameClient$ = this.createGameClient$(user, serverMessage$.pipe(share()), engine)
+    const gameClient$ = this.createGameClient$(user, serverMessage$, engine)
 
     gameClient$.subscribe((client) => {
       client.action$.subscribe({

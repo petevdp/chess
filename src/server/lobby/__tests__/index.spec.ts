@@ -1,12 +1,13 @@
-import { userDetails } from '../../../common/dummyData/dummyData'
+import { allUserDetails } from '../../../common/dummyData/dummyData'
 import { Subject, NEVER } from 'rxjs'
 import { Lobby } from '../index'
 import { MockClientConnection } from '../../server/__mocks__/clientConnection'
 import { ClientConnection } from '../../server/clientConnection'
 import { SocketClientMessage, SocketServerMessage } from '../../../common/types'
-import { last, skip, toArray } from 'rxjs/operators'
+import { last, skip, toArray, first } from 'rxjs/operators'
 import Game from '../../game'
 import DBQueries, { DBQueriesInterface } from '../../db/queries'
+jest.mock('../../db/queries')
 
 let dbQueries: DBQueriesInterface
 let lobby: Lobby
@@ -23,7 +24,7 @@ afterEach(() => {
 describe('memberDetailsMap$', () => {
   it('updates memberDetailsMap$ with new entry when one is added', () => {
     const subject = new Subject<SocketClientMessage>()
-    const user = userDetails[0]
+    const user = allUserDetails[0]
     const mockConnection = new MockClientConnection(subject, user)
 
     lobby.addLobbyMember(mockConnection as unknown as ClientConnection)
@@ -36,11 +37,11 @@ describe('memberDetailsMap$', () => {
 describe('member details connection updates', () => {
   it('sends all details on connection', () => {
     const s1 = new Subject<SocketClientMessage>()
-    const user1 = userDetails[0]
+    const user1 = allUserDetails[0]
     const mockConnection1 = new MockClientConnection(s1, user1)
 
     const s2 = new Subject<SocketClientMessage>()
-    const user2 = userDetails[1]
+    const user2 = allUserDetails[1]
     const mockConnection2 = new MockClientConnection(s2, user2)
 
     lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
@@ -63,15 +64,15 @@ describe('member details connection updates', () => {
 
   it('sends only new details after first update for each member', done => {
     const s1 = new Subject<SocketClientMessage>()
-    const user1 = userDetails[0]
+    const user1 = allUserDetails[0]
     const mockConnection1 = new MockClientConnection(s1, user1)
 
     const s2 = new Subject<SocketClientMessage>()
-    const user2 = userDetails[1]
+    const user2 = allUserDetails[1]
     const mockConnection2 = new MockClientConnection(s2, user2)
 
     const s3 = new Subject<SocketClientMessage>()
-    const user3 = userDetails[2]
+    const user3 = allUserDetails[2]
     const mockConnection3 = new MockClientConnection(s3, user3)
 
     lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
@@ -99,8 +100,8 @@ describe('member details connection updates', () => {
 })
 
 describe('displayedGameMessage$', () => {
-  const user1 = userDetails[0]
-  const user2 = userDetails[1]
+  const user1 = allUserDetails[0]
+  const user2 = allUserDetails[1]
 
   const mockConnection1 = new MockClientConnection(NEVER, user1)
   const mockConnection2 = new MockClientConnection(NEVER, user2)
@@ -123,12 +124,11 @@ describe('displayedGameMessage$', () => {
     lobby.complete()
   })
 
-  it('emits any updates to the game', done => {
+  it.only('emits any updates to the game', done => {
     const l = lobby as any
 
-    l.arena.games$.subscribe((game: Game) => {
+    l.arena.games$.pipe(first()).subscribe((game: Game) => {
       game.gameUpdate$.subscribe((msg) => console.log('gameUpdate: ', msg))
-      game.end()
       game.endPromise.then(() => console.log('endpromise resolved'))
     })
 
@@ -142,7 +142,6 @@ describe('displayedGameMessage$', () => {
 
     lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
     lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
-
     lobby.complete()
   })
 
@@ -160,11 +159,11 @@ describe('displayedGameMessage$', () => {
     const l = lobby as any
 
     l.arena.games$.subscribe((game: Game) => {
+      lobby.complete()
       game.end()
     })
 
     lobby.addLobbyMember(mockConnection1 as unknown as ClientConnection)
     lobby.addLobbyMember(mockConnection2 as unknown as ClientConnection)
-    lobby.complete()
   })
 })
