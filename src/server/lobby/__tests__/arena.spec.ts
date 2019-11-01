@@ -10,19 +10,23 @@ import DBQueries from '../../db/queries'
 
 jest.mock('../../db/queries')
 
+const memberToMemberUpdate = (member: LobbyMember): MemberUpdate => ([member.id, member])
+
 describe('games creation and emmision', () => {
   let conn1: MockClientConnection
   let conn2: MockClientConnection
 
   let member1: LobbyMember
   let member2: LobbyMember
+  let member3: LobbyMember
 
   let memberUpdate$: Subject<MemberUpdate>
   let arena: Arena
 
   beforeEach(() => {
     [conn1, member1] = getLobbyMemberConnectionPair(NEVER, allUserDetails[0]);
-    [conn2, member2] = getLobbyMemberConnectionPair(NEVER, allUserDetails[1])
+    [conn2, member2] = getLobbyMemberConnectionPair(NEVER, allUserDetails[1]);
+    [, member3] = getLobbyMemberConnectionPair(NEVER, allUserDetails[2])
 
     memberUpdate$ = new Subject<MemberUpdate>()
 
@@ -47,6 +51,21 @@ describe('games creation and emmision', () => {
       memberUpdate$.next([member2.id, member2])
       memberUpdate$.complete()
     })
+
+    it.only('does not attempt to match up a member that was just matched', done => {
+      arena.games$.pipe(skip(1)).subscribe({
+        next: () => {
+          throw new Error('should only emit one game, the other two matched up')
+        },
+        complete: () => done()
+      })
+
+      memberUpdate$.next(memberToMemberUpdate(member1))
+      memberUpdate$.next(memberToMemberUpdate(member2))
+      memberUpdate$.next(memberToMemberUpdate(member3))
+      memberUpdate$.complete()
+    })
+
     it('emits new games when two members join the arena', (done) => {
       arena.games$.subscribe(() => {
         done()

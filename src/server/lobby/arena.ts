@@ -1,10 +1,10 @@
-import { Observable, merge, of, from, BehaviorSubject, Subject, MonoTypeOperatorFunction, OperatorFunction, Subscription } from 'rxjs'
-import { scan, map, filter, mergeMap, mapTo, share, publish } from 'rxjs/operators'
+import { Observable, merge, of, from, BehaviorSubject, Subject, MonoTypeOperatorFunction, OperatorFunction, Subscription, concat } from 'rxjs'
+import { scan, map, filter, mergeMap, mapTo, share, publish, concatMap, toArray, first } from 'rxjs/operators'
 import { LobbyMember } from './lobbyMember'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
-import { EndState, Colour } from '../../common/types'
+import { EndState, Colour, GameUpdate } from '../../common/types'
 import * as resolutionFormulas from './gameResolution'
 import { DBQueriesInterface } from '../db/queries'
 
@@ -44,9 +44,9 @@ export class Arena {
         }
         console.log('finding game for ', member.details.username, member.state)
 
-        acc.potentialGames = [...allUnmatched.values()].map(unmatched => (
+        acc.potentialGames = [...allUnmatched.values()].map(unmatchedMember => (
           Arena.resolvePotentialGame(
-            [unmatched, member],
+            [member, unmatchedMember],
             resolutionFormula,
             this.dbQueries
           )
@@ -54,7 +54,7 @@ export class Arena {
         allUnmatched.set(id, member)
         return acc
       }, { potentialGames: [], allUnmatched: new Map() } as UnmatchedState),
-      mergeMap(({ potentialGames }) => merge(...potentialGames)),
+      concatMap(({ potentialGames }) => concat(...potentialGames)),
       filter(game => !!game) as OperatorFunction<Game|false, Game>
     ))
 
@@ -108,21 +108,16 @@ export class Arena {
     determineResolveTime: GameResolutionTimeFormula,
     dbQueries: DBQueriesInterface
   ) {
-    const successfulResolution = await Promise.race([
-      ...members.map(async (m) => {
-        await m.resolveMatchedOrDisconnected()
-        return false
-      }),
-      (async (): Promise<boolean> => {
-        await sleep(determineResolveTime(members))
-        return members.every(m => m.canJoinGame)
-      })()
-    ])
-    const gameMembers: [LobbyMember, Colour][] = [[members[0], 'w'], [members[1], 'b']]
+    console.log('resolving for ', members[0].userDetails.username)
+    console.log('potential match: ', members[1].userDetails.username)
 
-    return (
-      successfulResolution
-      && new Game(gameMembers, dbQueries)
-    )
+    await sleep(determineResolveTime(members))
+    console.log('done schleep')
+
+    if (!members.every(m => m.canJoinGame)) {
+      return false
+    }
+
+    return new Game([[members[0], 'w'], [members[1], 'b']], dbQueries)
   }
 }
