@@ -96,5 +96,6 @@ export default class DBQueries implements DBQueriesInterface {
     const out = await this.pool.maybeOne(sql`
       SELECT * FROM main.games WHERE id = ${id}
     `)
+    console.log('out: ', out)
   }
 }

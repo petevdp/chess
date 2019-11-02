@@ -1,5 +1,5 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { concatMap, takeWhile, first, tap, share, shareReplay } from 'rxjs/operators'
+import { concatMap, takeWhile, first, tap, shareReplay } from 'rxjs/operators'
 import {
   Colour,
   GameIdentifiers,
@@ -111,7 +111,7 @@ class Game {
     console.log('game id: ', this.id)
   }
 
-  private get playersDisplay () {
+  get playersDisplay () {
     return this.players.map(p => `${p.user.username}(${p.colour})`)
   }
 

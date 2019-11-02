@@ -5,7 +5,6 @@ import * as Engines from '../../bots/engines'
 import { Chess, Move } from 'chess.js'
 import { allGameInfo } from '../dummyData/dummyData'
 import { getMoveHistoryFromPgn, replayMoveHistory } from '../helpers'
-import { share } from 'rxjs/operators'
 
 const chess = new Chess()
 const moveUpdates: GameUpdateWithId[] = [

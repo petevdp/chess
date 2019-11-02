@@ -24,6 +24,21 @@ export const allUserDetails: UserDetails[] = [
     id: 'u3',
     username: 'user3',
     type: 'bot'
+  },
+  {
+    id: 'u4',
+    username: 'user4',
+    type: 'bot'
+  },
+  {
+    id: 'u5',
+    username: 'user5',
+    type: 'bot'
+  },
+  {
+    id: 'u6',
+    username: 'user6',
+    type: 'bot'
   }
 ]
 

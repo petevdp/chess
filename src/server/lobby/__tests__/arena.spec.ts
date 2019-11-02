@@ -1,5 +1,5 @@
 import { getLobbyMemberConnectionPair } from "../testHelpers"
-import { Subject, NEVER, EMPTY } from "rxjs"
+import { Subject, NEVER } from "rxjs"
 import { allUserDetails } from '../../../common/dummyData/dummyData'
 import { Arena } from "../arena"
 import { MemberUpdate } from ".."
@@ -19,6 +19,9 @@ describe('games creation and emmision', () => {
   let member1: LobbyMember
   let member2: LobbyMember
   let member3: LobbyMember
+  let member4: LobbyMember
+  let member5: LobbyMember
+  let member6: LobbyMember
 
   let memberUpdate$: Subject<MemberUpdate>
   let arena: Arena
@@ -26,7 +29,10 @@ describe('games creation and emmision', () => {
   beforeEach(() => {
     [conn1, member1] = getLobbyMemberConnectionPair(NEVER, allUserDetails[0]);
     [conn2, member2] = getLobbyMemberConnectionPair(NEVER, allUserDetails[1]);
-    [, member3] = getLobbyMemberConnectionPair(NEVER, allUserDetails[2])
+    [, member3] = getLobbyMemberConnectionPair(NEVER, allUserDetails[2]);
+    [, member4] = getLobbyMemberConnectionPair(NEVER, allUserDetails[3]);
+    [, member5] = getLobbyMemberConnectionPair(NEVER, allUserDetails[4]);
+    [, member6] = getLobbyMemberConnectionPair(NEVER, allUserDetails[5])
 
     memberUpdate$ = new Subject<MemberUpdate>()
 
@@ -52,7 +58,7 @@ describe('games creation and emmision', () => {
       memberUpdate$.complete()
     })
 
-    it.only('does not attempt to match up a member that was just matched', done => {
+    it('does not attempt to match up a member that was just matched', done => {
       arena.games$.pipe(skip(1)).subscribe({
         next: () => {
           throw new Error('should only emit one game, the other two matched up')
@@ -92,18 +98,27 @@ describe('games creation and emmision', () => {
   })
 
   describe('activeGames$', () => {
-    it('includes new games that haven\'t ended yet', () => {
-      arena.activeGames$.pipe(skip(1)).subscribe(arr => {
-        expect(arr).toHaveLength(1)
+    it('includes new games that haven\'t ended yet', (done) => {
+      arena.activeGames$.pipe(skip(3)).subscribe(arr => {
+        expect(arr).toHaveLength(3)
+        done()
       })
 
       memberUpdate$.next([member1.id, member1])
       memberUpdate$.next([member2.id, member2])
+      memberUpdate$.next([member3.id, member3])
+      memberUpdate$.next([member4.id, member4])
+      memberUpdate$.next([member5.id, member5])
+      memberUpdate$.next([member6.id, member6])
     })
 
-    it('does not included ended games', done => {
+    it('does not include ended games', done => {
       arena.activeGames$.pipe(skip(2)).subscribe(games => {
-        expect(games).toHaveLength(0)
+        try {
+          expect(games).toHaveLength(0)
+        } catch (e) {
+          done(e)
+        }
         done()
       })
 

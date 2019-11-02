@@ -1,10 +1,10 @@
-import { Observable, merge, of, from, BehaviorSubject, Subject, MonoTypeOperatorFunction, OperatorFunction, Subscription, concat } from 'rxjs'
-import { scan, map, filter, mergeMap, mapTo, share, publish, concatMap, toArray, first } from 'rxjs/operators'
+import { Observable, merge, of, from, BehaviorSubject, OperatorFunction, Subscription, concat } from 'rxjs'
+import { scan, map, filter, mergeMap, mapTo, publish } from 'rxjs/operators'
 import { LobbyMember } from './lobbyMember'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
-import { EndState, Colour, GameUpdate } from '../../common/types'
+import { EndState } from '../../common/types'
 import * as resolutionFormulas from './gameResolution'
 import { DBQueriesInterface } from '../db/queries'
 
@@ -18,9 +18,7 @@ export type GameResolutionTimeFormula = (members: [LobbyMember, LobbyMember]) =>
 export class Arena {
   games$: Observable<Game>;
   activeGames$: BehaviorSubject<Game[]>
-  private games$Subscription: Subscription
-  // private unmatched$: Subject<MemberUpdate>
-  // private lobbyMemberSubscription: Subscription
+  private lobbyMemberSubscription: Subscription
 
   constructor (
     lobbyMemberUpdate$: Observable<MemberUpdate>,
@@ -54,7 +52,7 @@ export class Arena {
         allUnmatched.set(id, member)
         return acc
       }, { potentialGames: [], allUnmatched: new Map() } as UnmatchedState),
-      concatMap(({ potentialGames }) => concat(...potentialGames)),
+      mergeMap(({ potentialGames }) => merge(...potentialGames)),
       filter(game => !!game) as OperatorFunction<Game|false, Game>
     ))
 
@@ -62,7 +60,7 @@ export class Arena {
 
     const gameAdditionsAndCompletions: Observable<[string, (Game|null)]> = this.games$.pipe(
       mergeMap((game) => {
-        return merge(
+        return concat(
           of([game.id, game]),
           from(game.endPromise).pipe(mapTo<EndState, [string, null]>([game.id, null]))
         ) as Observable<[string, (Game|null)]>
@@ -86,16 +84,12 @@ export class Arena {
       map(gameMap => [...gameMap.values()])
     ).subscribe(this.activeGames$)
 
-    this.games$.subscribe((game) => {
-      console.log('new game!!!!', game.id)
-    })
-    this.games$Subscription = games$.connect()
+    this.lobbyMemberSubscription = games$.connect()
   }
 
   complete () {
-    // this.lobbyMemberSubscription.unsubscribe()
-    // this.unmatched$.complete()
-    this.games$Subscription.unsubscribe()
+    this.lobbyMemberSubscription.unsubscribe()
+    this.activeGames.forEach(g => g.end())
     this.activeGames$.complete()
   }
 
@@ -108,11 +102,7 @@ export class Arena {
     determineResolveTime: GameResolutionTimeFormula,
     dbQueries: DBQueriesInterface
   ) {
-    console.log('resolving for ', members[0].userDetails.username)
-    console.log('potential match: ', members[1].userDetails.username)
-
     await sleep(determineResolveTime(members))
-    console.log('done schleep')
 
     if (!members.every(m => m.canJoinGame)) {
       return false

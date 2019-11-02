@@ -5,8 +5,7 @@ import {
   map,
   mergeMap,
   startWith,
-  share,
-  tap
+  share
 } from 'rxjs/operators'
 
 import { LobbyMember } from './lobbyMember'
@@ -82,7 +81,6 @@ export class Lobby {
             }
           }))
         )
-        console.log('game merged')
         return updateMessage$.pipe(
           startWith({
             type: 'add',

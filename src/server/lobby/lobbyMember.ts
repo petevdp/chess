@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable } from 'rxjs'
-import { map, filter, first } from 'rxjs/operators'
+import { map } from 'rxjs/operators'
 import { ClientConnection } from '../server/clientConnection'
 import { LobbyMemberDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage, EndState } from '../../common/types'
 export interface MemberState {
@@ -40,34 +40,16 @@ export class LobbyMember {
     })
   }
 
-  /**
-   *  Keeps track of this LobbyMember's state and resolves
-   *  when it becomse unavaliable to match
-   */
-  async resolveMatchedOrDisconnected () {
-    return this.stateSubject.pipe(
-      filter(({ currentGame, leftLobby }) => !!(currentGame || leftLobby)),
-      first()
-    ).toPromise()
-    // return new Promise<boolean>(resolve => {
-    //   this.stateSubject.subscribe({
-    //     next: ({ currentGame, leftLobby }) => {
-    //       if (currentGame || leftLobby) {
-    //         resolve(true)
-    //       }
-    //     }
-    //   })
-    // })
-  }
-
   async joinGame (gameId: string, endPromise: Promise<EndState>) {
     this.stateSubject.next({ ...this.state, currentGame: gameId })
-    await endPromise
-    this.stateSubject.next({
-      ...this.state,
-      currentGame: null,
-      gameHistory: [...this.state.gameHistory, gameId]
+    endPromise.then(() => {
+      this.stateSubject.next({
+        ...this.state,
+        currentGame: null,
+        gameHistory: [...this.state.gameHistory, gameId]
+      })
     })
+    return this.state.currentGame === gameId
   }
 
   get canJoinGame () {
