@@ -54,28 +54,37 @@ export class GameStream {
     ).toPromise()
 
     gameUpdate$.pipe(
-      takeWhile(u => u.type !== 'end', false),
-      filter(u => u.type !== 'offerDraw'),
+      takeWhile(u => u.type !== 'end', true),
       map((update): GameState => {
-        const { move, type } = update
-        if (move) {
-          const out = this.chess.move(update.move as Move)
-          if (!out) {
-            throw new Error(`invalid move sent to GameStream: ${move.san}`)
-          }
-          return {
-            ...this.state,
-            lastUpdateType: type
-          }
-        }
+        const { move, type, end } = update
         if (type === 'end') {
           return {
-            ...this.state,
-            lastUpdateType: type,
-            end: update.end
+            lastUpdateType: 'end',
+            chess: this.chess,
+            end
           }
         }
-        throw new Error('move and end should be the only update types let through')
+
+        if (type === 'offerDraw') {
+          return {
+            lastUpdateType: 'offerDraw',
+            chess: this.chess
+          }
+        }
+
+        if (!move) {
+          throw new Error('update must be of type move at this point')
+        }
+
+        // side effect changing this.chess here
+        const out = this.chess.move(update.move as Move)
+        if (!out) {
+          throw new Error(`invalid move sent to GameStream: ${move.san}`)
+        }
+        return {
+          chess: this.chess,
+          lastUpdateType: 'move'
+        }
       })
     ).subscribe({
       next: state => {
