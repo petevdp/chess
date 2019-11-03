@@ -5,7 +5,7 @@ import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
 import { EndState } from '../../common/types'
-import * as resolutionFormulas from './gameResolution'
+import * as resolutionFormulas from './resolutionTime'
 import { DBQueriesInterface } from '../db/queries'
 
 interface UnmatchedState {
@@ -13,7 +13,10 @@ interface UnmatchedState {
   allUnmatched: Map<string, LobbyMember>;
 }
 
-export type GameResolutionTimeFormula = (members: [LobbyMember, LobbyMember]) => number
+export type GameResolutionTimeFormula = (
+  potentialMatch: [LobbyMember, LobbyMember],
+  activeGames: Game[],
+) => number
 
 export class Arena {
   games$: Observable<Game>;
@@ -45,6 +48,7 @@ export class Arena {
         acc.potentialGames = [...allUnmatched.values()].map(unmatchedMember => (
           Arena.resolvePotentialGame(
             [member, unmatchedMember],
+            this.activeGames,
             resolutionFormula,
             this.dbQueries
           )
@@ -98,16 +102,17 @@ export class Arena {
   }
 
   private static async resolvePotentialGame (
-    members: [LobbyMember, LobbyMember],
-    determineResolveTime: GameResolutionTimeFormula,
+    potentialGameMembers: [LobbyMember, LobbyMember],
+    activeGames: Game[],
+    gameTimeResolutionFormula: GameResolutionTimeFormula,
     dbQueries: DBQueriesInterface
   ) {
-    await sleep(determineResolveTime(members))
+    await sleep(gameTimeResolutionFormula(potentialGameMembers, activeGames))
 
-    if (!members.every(m => m.canJoinGame)) {
+    if (!potentialGameMembers.every(m => m.canJoinGame)) {
       return false
     }
 
-    return new Game([[members[0], 'w'], [members[1], 'b']], dbQueries)
+    return new Game([[potentialGameMembers[0], 'w'], [potentialGameMembers[1], 'b']], dbQueries)
   }
 }
