@@ -4,7 +4,7 @@ import { LobbyMember } from './lobbyMember'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
-import { EndState } from '../../common/types'
+import { CompletedGameInfo } from '../../common/types'
 import * as resolutionFormulas from './resolutionTime'
 import { DBQueriesInterface } from '../db/queries'
 
@@ -66,7 +66,7 @@ export class Arena {
       mergeMap((game) => {
         return concat(
           of([game.id, game]),
-          from(game.endPromise).pipe(mapTo<EndState, [string, null]>([game.id, null]))
+          from(game.endPromise).pipe(mapTo<CompletedGameInfo, [string, null]>([game.id, null]))
         ) as Observable<[string, (Game|null)]>
       })
     )

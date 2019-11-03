@@ -73,6 +73,8 @@ export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0
 export interface LobbyMemberDetails extends UserDetails {
   currentGame: string | null;
   leftLobby: boolean;
+  elo: number;
+  gameHistory: CompletedGameInfo[];
 }
 
 export type LobbyMemberDetailsUpdate = [string, LobbyMemberDetails|null]

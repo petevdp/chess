@@ -44,19 +44,25 @@ export const allUserDetails: UserDetails[] = [
 
 export const allMemberDetails: LobbyMemberDetails[] = [
   {
+    elo: 1500,
     ...allUserDetails[0],
     currentGame: null,
-    leftLobby: false
+    leftLobby: false,
+    gameHistory: []
   },
   {
     ...allUserDetails[1],
     currentGame: null,
-    leftLobby: false
+    leftLobby: false,
+    elo: 2500,
+    gameHistory: []
   },
   {
     ...allUserDetails[2],
     currentGame: null,
-    leftLobby: false
+    leftLobby: false,
+    elo: 9000,
+    gameHistory: []
   }
 ]
 

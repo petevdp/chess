@@ -1,11 +1,12 @@
 import { BehaviorSubject, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ClientConnection } from '../server/clientConnection'
-import { LobbyMemberDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage, EndState } from '../../common/types'
+import { LobbyMemberDetails, LobbyMemberDetailsUpdate, DisplayedGameMessage, LobbyMessage, CompletedGameInfo } from '../../common/types'
 export interface MemberState {
   currentGame: string | null;
-  gameHistory: string[];
+  gameHistory: CompletedGameInfo[];
   leftLobby: boolean;
+  elo: number;
 }
 
 export class LobbyMember {
@@ -22,7 +23,8 @@ export class LobbyMember {
     this.stateSubject = new BehaviorSubject({
       currentGame: null,
       leftLobby: false,
-      gameHistory: []
+      gameHistory: [],
+      elo: 1500
     } as MemberState)
 
     this.update$ = this.stateSubject.pipe(map(state => {
@@ -40,15 +42,27 @@ export class LobbyMember {
     })
   }
 
-  async joinGame (gameId: string, endPromise: Promise<EndState>) {
+  async joinGame (gameId: string, endPromise: Promise<CompletedGameInfo>) {
     this.stateSubject.next({ ...this.state, currentGame: gameId })
-    endPromise.then(() => {
+    endPromise.then((gameInfo) => {
+      // TODO implement elo system
+      const { winnerId } = gameInfo.end
+      let elo = this.state.elo
+      if (winnerId) {
+        elo += winnerId === this.id ? 40 : -40
+      }
+
+      console.log('resolving endpromise')
+
       this.stateSubject.next({
         ...this.state,
         currentGame: null,
-        gameHistory: [...this.state.gameHistory, gameId]
+        elo,
+        gameHistory: [...this.state.gameHistory, gameInfo]
       })
     })
+    console.log('wtf')
+
     return this.state.currentGame === gameId
   }
 

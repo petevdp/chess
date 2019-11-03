@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { LobbyMember } from "./lobbyMember"
 import { GameResolutionTimeFormula } from "./arena"
 import Game from '../game'
+import { CompletedGameInfo } from '../../common/types'
 
 export function fixedTime (time: number) {
   return () => time
@@ -16,10 +17,10 @@ export function asymptote (exponent: number): GameResolutionTimeFormula {
     const enumeratedhistories = potentialMatch.map(m => (
       m.state.gameHistory
         .reverse()
-        .map((id, index): [string, number] => [id, index]))
+        .map((info, index): [CompletedGameInfo, number] => [info, index]))
     )
 
-    const gamesPlayed = _.intersectionBy(...enumeratedhistories, ([id]) => id)
+    const gamesPlayed = _.intersectionBy(...enumeratedhistories, ([info]) => info.id)
     if (gamesPlayed.length === 0) return 0
 
     const lastGame = _.minBy(gamesPlayed, ([, index]) => index)

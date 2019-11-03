@@ -1,5 +1,5 @@
 import { Observable, merge, Subject, from } from 'rxjs'
-import { concatMap, takeWhile, first, tap, shareReplay } from 'rxjs/operators'
+import { concatMap, takeWhile, first, tap, shareReplay, map } from 'rxjs/operators'
 import {
   Colour,
   GameIdentifiers,
@@ -24,7 +24,7 @@ class Game {
 
   // TODO make type for gamestate
   gameUpdate$: Observable<GameUpdate>
-  endPromise: Promise<EndState>
+  endPromise: Promise<CompletedGameInfo>
 
   private requiredPlayerCount = 2
   private gameController$ = new Subject<GameUpdate>()
@@ -93,6 +93,14 @@ class Game {
         console.log(` Game ended between ${this.playersDisplay} `)
         console.log(`result: `, end)
         console.log(this.chess.ascii())
+      }),
+      map((end): CompletedGameInfo => {
+        return {
+          id: this.id,
+          pgn: this.chess.pgn(),
+          playerDetails: this.info.playerDetails,
+          end
+        }
       })
     ).toPromise()
 
@@ -102,9 +110,9 @@ class Game {
       this.endPromise
     )
 
-    this.endPromise.then((end) => {
+    this.endPromise.then((gameInfo) => {
       // persist finished game to database
-      dbQueries.addCompletedGame({ ...this.info, end } as CompletedGameInfo)
+      dbQueries.addCompletedGame(gameInfo)
     })
 
     console.log('new game between ', this.playersDisplay)
@@ -140,7 +148,7 @@ class Game {
   private setLobbyMemberJoinedGameState (
     id: string,
     members: LobbyMember[],
-    endPromise: Promise<EndState>
+    endPromise: Promise<CompletedGameInfo>
   ) {
     members.forEach((m) => m.joinGame(id, endPromise))
   }

@@ -61,11 +61,14 @@ interface ActiveMemberDisplayProps {
 }
 
 function MemberDisplay ({ memberDetails }: ActiveMemberDisplayProps) {
-  const { username, currentGame } = memberDetails
+  const { username, currentGame, elo } = memberDetails
   return (
     <ListGroup.Item className="member-display">
       <i className="material-icons avatar">portrait</i>
       <label className="username">{username}</label>
+      <span className="elo">
+        {elo}
+      </span>
       <span className="status">
         { currentGame ? 'ingame' : 'searching for game' }
       </span>

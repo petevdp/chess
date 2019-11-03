@@ -1,8 +1,8 @@
-import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage, EndState } from '../../../common/types'
+import { UserDetails, LobbyMemberDetails, SocketServerMessage, SocketClientMessage, CompletedGameInfo } from '../../../common/types'
 import { EMPTY, NEVER, Subject } from 'rxjs'
 import { getLobbyMemberConnectionPair } from '../testHelpers'
-import { toArray, map, takeWhile } from 'rxjs/operators'
-import { displayedGameMessages } from '../../../common/dummyData/dummyData'
+import { toArray, map, takeWhile, first } from 'rxjs/operators'
+import { displayedGameMessages, allGameInfo } from '../../../common/dummyData/dummyData'
 import { MemberState } from '../lobbyMember'
 
 const user1 = {
@@ -63,7 +63,7 @@ describe('broadcasting', () => {
 describe('state', () => {
   it('is set to the correct values on instantiation', () => {
     const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
-    expect(member.state).toEqual({ currentGame: null, leftLobby: false, gameHistory: [] })
+    expect(member.state).toEqual({ currentGame: null, leftLobby: false, gameHistory: [], elo: 1500 })
   })
 
   it('set leftLobby to true when clientMessage$ completes', () => {
@@ -96,27 +96,23 @@ describe('joinGame', () => {
   const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
   const gameId = 'id'
   // const end$: ConnectableObservable<EndState> = rxOf<EndState>()
-  const end$ = new Subject<EndState>()
-  const checkmate: EndState = {
-    reason: 'checkmate',
-    winnerId: 'id'
-  }
+  const end$ = new Subject<CompletedGameInfo>()
+  const gameInfo: CompletedGameInfo = allGameInfo[1] as CompletedGameInfo
+  const endPromise = end$.pipe(first()).toPromise()
 
-  const out = member.joinGame(gameId, end$.toPromise())
+  member.joinGame(gameId, endPromise)
   it('sets currentGame back to null once the endPromise is resolved', async () => {
     expect(member.state.currentGame).toEqual(gameId)
 
-    end$.next(checkmate)
-    end$.complete()
-    await out
+    end$.next(gameInfo)
+    await endPromise
     expect(member.state.currentGame).toBeNull()
   })
 
   it('adds a game to the games history once the endPromise is resolved', async () => {
-    end$.next(checkmate)
-    await out
-    expect(member.state.gameHistory).toContain(gameId)
-    end$.complete()
+    end$.next(gameInfo)
+    await endPromise
+    expect(member.state.gameHistory[0].id).toEqual(gameInfo.id)
   })
 })
 
