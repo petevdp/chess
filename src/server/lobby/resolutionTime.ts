@@ -28,6 +28,6 @@ export function asymptote (exponent: number): GameResolutionTimeFormula {
       throw new Error('since games played isn\'t empty, this must have a min')
     }
     const [, index] = lastGame
-    return Math.floor((activeGames.length + 1) / (index ** exponent)) * 1000
+    return Math.floor((activeGames.length + 1) / ((index + 1) ** exponent)) * 1000
   }
 }

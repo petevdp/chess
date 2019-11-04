@@ -22,26 +22,17 @@ it('sends joinGame messages to connections on instantiation', () => {
   game.end()
 })
 
-it('sets each gameMembers currentGame to the gameid', () => {
-  const [, member1] = getLobbyMemberConnectionPair(EMPTY, allUserDetails[0])
-  const [, member2] = getLobbyMemberConnectionPair(EMPTY, allUserDetails[1])
+// describe('update$', () => {
+//   // it('outputs game updates', () => {
+//   //   const connSubject1 = new Subject<SocketClientMessage>()
+//   //   const connSubject2 = new Subject<SocketClientMessage>()
 
-  const game = new Game([[member1, 'w'], [member2, 'b']], new DBQueries())
+//   //   const [, member1] = getLobbyMemberConnectionPair(connSubject1, allUserDetails[0])
+//   //   const [, member2] = getLobbyMemberConnectionPair(connSubject2, allUserDetails[1])
 
-  expect(member1.state.currentGame).toEqual(game.id)
-})
-
-describe('update$', () => {
-  // it('outputs game updates', () => {
-  //   const connSubject1 = new Subject<SocketClientMessage>()
-  //   const connSubject2 = new Subject<SocketClientMessage>()
-
-  //   const [, member1] = getLobbyMemberConnectionPair(connSubject1, allUserDetails[0])
-  //   const [, member2] = getLobbyMemberConnectionPair(connSubject2, allUserDetails[1])
-
-  //   const game = new Game([[member1, 'w'], [member2, 'b']], new DBQueries())
-  // })
-})
+//   //   const game = new Game([[member1, 'w'], [member2, 'b']], new DBQueries())
+//   // })
+// })
 
 describe('game end', () => {
   it('outputs a reason for the game ending when the game is over on the board', done => {

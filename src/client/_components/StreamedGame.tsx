@@ -51,12 +51,12 @@ function SmallGameInfo ({ gameState }: SmallGameInfoProps) {
       <div className="player-info white-player-info">
         <i className="material-icons avatar">portrait</i>
         <span className="username">{white.user.username}</span>
-        <span className="elo">1001</span>
+        <span className="elo">{white.elo}</span>
       </div>
       {currentStateDisplay}
       <div className="player-info black-player-info">
         <span className="username">{black.user.username}</span>
-        <span className="elo">4200</span>
+        <span className="elo">{black.elo}</span>
         <i className="material-icons avatar">portrait</i>
       </div>
     </div>

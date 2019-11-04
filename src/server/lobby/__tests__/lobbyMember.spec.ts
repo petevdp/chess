@@ -92,7 +92,7 @@ describe('state', () => {
   })
 })
 
-describe('joinGame', () => {
+describe('playGame', () => {
   const [, member] = getLobbyMemberConnectionPair(NEVER, user1)
   const gameId = 'id'
   // const end$: ConnectableObservable<EndState> = rxOf<EndState>()
@@ -100,7 +100,7 @@ describe('joinGame', () => {
   const gameInfo: CompletedGameInfo = allGameInfo[1] as CompletedGameInfo
   const endPromise = end$.pipe(first()).toPromise()
 
-  member.joinGame(gameId, endPromise)
+  member.playGame(gameId, endPromise)
   it('sets currentGame back to null once the endPromise is resolved', async () => {
     expect(member.state.currentGame).toEqual(gameId)
 
@@ -116,7 +116,7 @@ describe('joinGame', () => {
   })
 })
 
-describe('update$', () => {
+describe.only('update$', () => {
   it('emits update when state is updated', done => {
     const subject = new Subject<SocketClientMessage>()
     const [, member] = getLobbyMemberConnectionPair(subject, user1)
@@ -127,7 +127,7 @@ describe('update$', () => {
         subject.complete()
       }
     })
-    member.joinGame('game', EMPTY.toPromise())
+    member.playGame('game', NEVER.toPromise())
   })
 
   it('broadcasts null update when user leaves, and then completes', done => {

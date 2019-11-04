@@ -7,7 +7,8 @@ export function genFakeUser (): UserDetails {
   return {
     id: uuidv4(),
     username: faker.fake("{{{internet.userName}}"),
-    type: 'bot'
+    type: 'bot',
+    description: faker.fake('{{{hacker.phrase}}}')
   }
 }
 

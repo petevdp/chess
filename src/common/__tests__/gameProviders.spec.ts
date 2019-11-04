@@ -28,7 +28,8 @@ const user1: UserDetails = {
 
 const player1: PlayerDetails = {
   user: user1,
-  colour: 'w'
+  colour: 'w',
+  elo: 1500
 }
 
 const user2: UserDetails = {
@@ -39,7 +40,8 @@ const user2: UserDetails = {
 
 const player2: PlayerDetails = {
   user: user2,
-  colour: 'b'
+  colour: 'b',
+  elo: 1500
 }
 
 const resignUpdate = {

@@ -69,11 +69,13 @@ export const allMemberDetails: LobbyMemberDetails[] = [
 export const allPlayerDetails: PlayerDetails[] = [
   {
     user: allUserDetails[0],
-    colour: 'w'
+    colour: 'w',
+    elo: 1500
   },
   {
     user: allUserDetails[1],
-    colour: 'b'
+    colour: 'b',
+    elo: 1500
   }
 ]
 

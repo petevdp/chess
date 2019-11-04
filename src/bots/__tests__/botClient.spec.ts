@@ -16,23 +16,27 @@ import { take, publish } from 'rxjs/operators'
 const user1: UserDetails = {
   id: 'u1',
   username: 'user1',
-  type: 'bot'
+  type: 'bot',
+  description: 'I\'m user1'
 }
 
 const player1: PlayerDetails = {
   user: user1,
+  elo: 1500,
   colour: 'w'
 }
 
 const user2: UserDetails = {
   id: 'u2',
   username: 'user2',
-  type: 'bot'
+  type: 'bot',
+  description: 'I\'m user2'
 }
 
 const player2: PlayerDetails = {
   user: user2,
-  colour: 'b'
+  colour: 'b',
+  elo: 1500
 }
 
 const game1: GameInfo = {

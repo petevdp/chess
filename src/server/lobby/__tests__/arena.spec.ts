@@ -7,6 +7,7 @@ import { first, skip, toArray } from "rxjs/operators"
 import { MockClientConnection } from "../../server/__mocks__/clientConnection"
 import { LobbyMember } from "../lobbyMember"
 import DBQueries from '../../db/queries'
+import { ELOFormula } from "../elo"
 
 jest.mock('../../db/queries')
 
@@ -52,7 +53,7 @@ describe('games creation and emmision', () => {
         next: () => { throw new Error('should not emit new game, one member is unavailable') },
         complete: () => done()
       })
-      member1.joinGame('id', NEVER.toPromise())
+      member1.playGame('id', NEVER.toPromise(), ELOFormula(24))
       memberUpdate$.next([member1.id, member1])
       memberUpdate$.next([member2.id, member2])
       memberUpdate$.complete()

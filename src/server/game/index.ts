@@ -104,12 +104,6 @@ class Game {
       })
     ).toPromise()
 
-    this.setLobbyMemberJoinedGameState(
-      this.id,
-      gameMembers.map(m => m[0]),
-      this.endPromise
-    )
-
     this.endPromise.then((gameInfo) => {
       // persist finished game to database
       dbQueries.addCompletedGame(gameInfo)
@@ -150,13 +144,14 @@ class Game {
     members: LobbyMember[],
     endPromise: Promise<CompletedGameInfo>
   ) {
-    members.forEach((m) => m.joinGame(id, endPromise))
+    members.forEach((m) => m.playGame(id, endPromise))
   }
 
   private createGameDetails (gameMembers: [LobbyMember, Colour][]): GameIdentifiers {
     const allPlayerDetails: PlayerDetails[] = gameMembers.map(([member, colour]) => ({
       user: member.userDetails,
-      colour
+      colour,
+      elo: member.details.elo
     }))
 
     return {

@@ -11,6 +11,7 @@ export type UserType = 'bot' | 'human';
 export interface UserDetails extends Details {
   username: string;
   type: UserType;
+  description?: string;
 }
 
 export interface EngineOptions {
@@ -114,6 +115,7 @@ export interface AuthPayload {
 
 export interface PlayerDetails {
   user: UserDetails;
+  elo: number;
   colour: Colour;
 }
 export interface GameIdentifiers {

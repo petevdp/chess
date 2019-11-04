@@ -19,7 +19,6 @@ import {
 import { ClientConnection } from '../server/clientConnection'
 import { Arena } from './arena'
 import { DBQueriesInterface } from '../db/queries'
-import { asymptote } from './resolutionTime'
 
 export type MemberUpdate = [string, LobbyMember | null]
 
@@ -67,8 +66,7 @@ export class Lobby {
       this.memberUpdate$.pipe(
         filter(([, member]) => !member || member.userDetails.type === 'bot')
       ),
-      dbQueries,
-      asymptote(2)
+      dbQueries
     )
 
     // TODO constrict which games are displayed

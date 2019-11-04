@@ -4,9 +4,11 @@ import { LobbyMember } from './lobbyMember'
 import Game from '../game'
 import { sleep } from '../../common/helpers'
 import { MemberUpdate } from '.'
-import { CompletedGameInfo } from '../../common/types'
+import { CompletedGameInfo, Colour } from '../../common/types'
 import * as resolutionFormulas from './resolutionTime'
 import { DBQueriesInterface } from '../db/queries'
+import { CalculateRatings, ELOFormula } from './elo'
+import _ from 'lodash'
 
 interface UnmatchedState {
   potentialGames: Array<Promise<Game | false>>;
@@ -25,9 +27,21 @@ export class Arena {
 
   constructor (
     lobbyMemberUpdate$: Observable<MemberUpdate>,
-    private dbQueries: DBQueriesInterface,
-    resolutionFormula: GameResolutionTimeFormula = resolutionFormulas.fixedTime(0)
+    dbQueries: DBQueriesInterface,
+    resolutionTimeFormula: GameResolutionTimeFormula = resolutionFormulas.asymptote(2),
+    calculateRatings: CalculateRatings = ELOFormula(24)
   ) {
+    const resolvePotentialGamesClosure = (
+      members: [LobbyMember, LobbyMember],
+      activeGames: Game[]
+    ) => Arena.resolvePotentialGame(
+      members,
+      activeGames,
+      resolutionTimeFormula,
+      calculateRatings,
+      dbQueries
+    )
+
     const games$ = publish<Game>()(lobbyMemberUpdate$.pipe(
       scan((acc, [id, member]) => {
         const { allUnmatched } = acc
@@ -46,12 +60,7 @@ export class Arena {
         console.log('finding game for ', member.details.username, member.state)
 
         acc.potentialGames = [...allUnmatched.values()].map(unmatchedMember => (
-          Arena.resolvePotentialGame(
-            [member, unmatchedMember],
-            this.activeGames,
-            resolutionFormula,
-            this.dbQueries
-          )
+          resolvePotentialGamesClosure([member, unmatchedMember], this.activeGames)
         ))
         allUnmatched.set(id, member)
         return acc
@@ -105,6 +114,7 @@ export class Arena {
     potentialGameMembers: [LobbyMember, LobbyMember],
     activeGames: Game[],
     gameTimeResolutionFormula: GameResolutionTimeFormula,
+    calculateRating: CalculateRatings,
     dbQueries: DBQueriesInterface
   ) {
     await sleep(gameTimeResolutionFormula(potentialGameMembers, activeGames))
@@ -113,6 +123,13 @@ export class Arena {
       return false
     }
 
-    return new Game([[potentialGameMembers[0], 'w'], [potentialGameMembers[1], 'b']], dbQueries)
+    const gameMembers = _.zip(potentialGameMembers, _.shuffle(['w', 'b'])) as [LobbyMember, Colour][]
+
+    const game = new Game(gameMembers, dbQueries)
+    potentialGameMembers.forEach(m => (
+      m.playGame(game.id, game.endPromise, calculateRating)
+    ))
+
+    return game
   }
 }
